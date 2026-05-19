@@ -6,7 +6,7 @@ class Settings(BaseSettings):
 
     app_name: str = "Family Plan API"
     database_url: str = "postgresql+psycopg://family_plan:family_plan@127.0.0.1:5433/family_plan"
-    jwt_secret: str = "dev-secret-change-me"
+    jwt_secret: str = ""
     access_token_expire_days: int = 7
     child_access_code_ttl_minutes: int = 15
 
