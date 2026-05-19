@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.1.4] - 2026-05-19
+
+### Bug Fixes
+
+- retry api health check in CI
+
+
 ## [v0.1.3] - 2026-05-19
 
 ### Bug Fixes
 
 - restore package-lock.json, anonymize paths
+
+
+### Maintenance
+
+- bump version to 0.1.3
 
 
 ## [v0.1.2] - 2026-05-19
