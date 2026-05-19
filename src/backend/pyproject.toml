@@ -13,6 +13,10 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "pydantic-settings>=2.4.0",
 ]
+test-dependencies = [
+    "pytest>=8.0.0",
+    "httpx>=0.27.0",
+]
 
 [tool.pyright]
 pythonVersion = "3.11"

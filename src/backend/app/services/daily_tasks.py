@@ -1,7 +1,7 @@
 from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import CursorResult, func, select, update
 from sqlalchemy.orm import Session
 
 from app.core.errors import api_error
@@ -58,11 +58,19 @@ def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | No
         raise api_error("not_found", "Task not found", 404)
     if task.status != "pending":
         raise api_error("conflict", "Task already completed", 409)
+    if task.created_by == "child" and not task.approved:
+        raise api_error("conflict", "Task not yet approved by parent", 409)
 
-    now = datetime.now(UTC)
-    task.status = "completed"
-    task.completed_at = now
-    task.child_feedback = feedback
+    result = db.execute(
+        update(DailyTask)
+        .where(DailyTask.id == task_id, DailyTask.status == "pending")
+        .values(status="completed", completed_at=datetime.now(UTC), child_feedback=feedback)
+    )
+    cursor_result: CursorResult = result  # type: ignore[assignment]
+    if cursor_result.rowcount != 1:
+        db.rollback()
+        raise api_error("conflict", "Task already completed", 409)
+    db.refresh(task)
 
     stars = task.reward_stars
     if stars > 0:
@@ -75,6 +83,11 @@ def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | No
                 reason=task.title,
             )
         )
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise api_error("conflict", "Task already completed", 409)
 
     streak = _get_or_create_streak(db, child_id)
     today = date.today()

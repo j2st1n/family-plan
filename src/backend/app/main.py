@@ -9,6 +9,22 @@ from app.routes.devices import router as devices_router
 from app.routes.health import router as health_router
 from app.routes.plans import router as plans_router
 
+FORBIDDEN_SECRETS = {"", "family-plan-dev", "change-me-in-production"}
+MIN_SECRET_LENGTH = 32
+
+
+def _validate_jwt_secret() -> None:
+    s = settings.jwt_secret
+    if not s:
+        raise RuntimeError("JWT_SECRET is required. Set it via environment variable.")
+    if s in FORBIDDEN_SECRETS:
+        raise RuntimeError(f"JWT_SECRET must not be a default value: {s!r}")
+    if len(s) < MIN_SECRET_LENGTH:
+        raise RuntimeError(f"JWT_SECRET must be at least {MIN_SECRET_LENGTH} characters (got {len(s)}).")
+
+
+_validate_jwt_secret()
+
 
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.app_name)
