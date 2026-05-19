@@ -1,0 +1,19 @@
+[project]
+name = "family-plan-backend"
+version = "0.1.0"
+description = "Backend API for Family Plan MVP"
+requires-python = ">=3.11"
+dependencies = [
+    "alembic>=1.14.0",
+    "fastapi>=0.115.0",
+    "python-jose[cryptography]>=3.3.0",
+    "uvicorn[standard]>=0.30.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg[binary]>=3.2.0",
+    "pydantic-settings>=2.4.0",
+]
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+include = ["app"]

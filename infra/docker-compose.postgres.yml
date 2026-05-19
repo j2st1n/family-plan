@@ -1,0 +1,27 @@
+# Family Plan MVP — PostgreSQL 测试数据库
+# 项目路径: /home/j2/projects/family-plan-mvp
+# 启动: docker compose -f infra/docker-compose.postgres.yml up -d
+# 连接: postgresql+psycopg://family_plan:family_plan@127.0.0.1:5433/family_plan
+name: family-plan-mvp-postgres
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: family-plan-mvp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${FAMILY_PLAN_POSTGRES_DB:-family_plan}
+      POSTGRES_USER: ${FAMILY_PLAN_POSTGRES_USER:-family_plan}
+      POSTGRES_PASSWORD: ${FAMILY_PLAN_POSTGRES_PASSWORD:-family_plan}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
