@@ -1,0 +1,22 @@
+# 开发用：仅启动 PostgreSQL，API 和前端本地跑
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: family-plan-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: family_plan
+      POSTGRES_USER: family_plan
+      POSTGRES_PASSWORD: family_plan
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U family_plan -d family_plan"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata_dev:

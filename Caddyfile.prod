@@ -1,0 +1,19 @@
+family.yourdomain.com {
+    encode gzip
+
+    handle /api/* {
+        reverse_proxy 127.0.0.1:8000
+    }
+
+    handle /parent* {
+        root * /opt/family-plan/parent-web/dist
+        try_files {path} /parent/index.html
+        file_server
+    }
+
+    handle {
+        root * /opt/family-plan/child-pwa/dist
+        try_files {path} /child/index.html
+        file_server
+    }
+}
