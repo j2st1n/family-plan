@@ -1,5 +1,4 @@
-# Family Plan MVP — PostgreSQL 测试数据库
-# 项目路径: /home/j2/projects/family-plan-mvp
+# Family Plan — PostgreSQL 测试数据库
 # 启动: docker compose -f infra/docker-compose.postgres.yml up -d
 # 连接: postgresql+psycopg://family_plan:family_plan@127.0.0.1:5433/family_plan
 name: family-plan-mvp-postgres

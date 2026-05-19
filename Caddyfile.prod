@@ -9,7 +9,7 @@ kids.example.com {
     }
 
     handle {
-        root * /home/j2/projects/family-plan/dist/child
+        root * /opt/family-plan/dist/child
         try_files {path} /index.html
         file_server
     }
@@ -23,7 +23,7 @@ mom.example.com {
     }
 
     handle {
-        root * /home/j2/projects/family-plan/dist/parent
+        root * /opt/family-plan/dist/parent
         try_files {path} /index.html
         file_server
     }
