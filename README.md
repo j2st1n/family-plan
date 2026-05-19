@@ -22,7 +22,7 @@
 
 ```bash
 # 1. 下载 docker-compose.yml
-curl -O https://raw.githubusercontent.com/j2st1n/family-plan/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/j2st1n/family-plan/master/docker-compose.yml
 
 # 2. 启动
 docker compose up -d
