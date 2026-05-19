@@ -1,19 +1,30 @@
-family.yourdomain.com {
+# Caddyfile for Family Plan
+# 复制到 /etc/caddy/Caddyfile 并替换域名后 systemctl reload caddy
+
+kids.example.com {
     encode gzip
 
     handle /api/* {
         reverse_proxy 127.0.0.1:8000
     }
 
-    handle /parent* {
-        root * /opt/family-plan/parent-web/dist
-        try_files {path} /parent/index.html
+    handle {
+        root * /home/j2/projects/family-plan/src/child-pwa/dist
+        try_files {path} /index.html
         file_server
+    }
+}
+
+mom.example.com {
+    encode gzip
+
+    handle /api/* {
+        reverse_proxy 127.0.0.1:8000
     }
 
     handle {
-        root * /opt/family-plan/child-pwa/dist
-        try_files {path} /child/index.html
+        root * /home/j2/projects/family-plan/src/parent-web/dist
+        try_files {path} /index.html
         file_server
     }
 }
