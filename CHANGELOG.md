@@ -2,16 +2,23 @@
 
 ## [v0.1.0] - 2026-05-19
 
-### Features
+### Other
 
-- Dual-role system: parent (JWT) + child (device token)
-- Parent web dashboard with child management
-- Child iPad PWA with task board and device binding
-- Daily tasks with manual creation and time scheduling
-- Recurring routine tasks with weekday patterns
-- Task completion with star rewards and streak tracking
-- Child-created tasks with parent approval flow
-- Completed task folding on both surfaces
-- Warm Soft color scheme from Open Design
-- iPad-responsive layout with safe area support
-- Docker deployment with PostgreSQL
+- Add dev compose, Caddyfile, fix CI branch
+
+- Bind API to 127.0.0.1 only, not public
+
+
+## [v0.1.0] - 2026-05-19
+
+### Other
+
+- Fix docker-compose download URL: main -> master
+
+- Add LICENSE, rewrite README, fix JWT_SECRET default
+
+- Remove lock files and cache from repo
+
+- Initial commit: Family Plan v0.1.0
+
+
