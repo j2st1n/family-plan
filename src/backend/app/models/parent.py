@@ -11,7 +11,9 @@ class Parent(Base):
     __tablename__ = "parents"
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    wechat_openid: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
+    wechat_openid: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True)
+    username: Mapped[str | None] = mapped_column(String(80), unique=True, nullable=True)
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     nickname: Mapped[str | None] = mapped_column(String(80))
     avatar_url: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

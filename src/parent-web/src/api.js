@@ -20,11 +20,19 @@ async function request(url, opts = {}) {
 }
 
 const api = {
-  login() {
-    return request("/auth/wechat", {
+  login(username, password) {
+    return request("/auth/login", {
       method: "POST",
       headers: h(),
-      body: JSON.stringify({ code: "dev" }),
+      body: JSON.stringify({ username, password }),
+    });
+  },
+
+  register(username, password) {
+    return request("/auth/register", {
+      method: "POST",
+      headers: h(),
+      body: JSON.stringify({ username, password }),
     });
   },
 
