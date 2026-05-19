@@ -2,16 +2,25 @@
 
 ## [v0.1.0] - 2026-05-19
 
+### Features
+
+- username/password registration and login
+
+
+### Maintenance
+
+- use placeholder domains in Caddyfile template
+
+- regenerate CHANGELOG with git-cliff
+
+
 ### Other
+
+- Build Docker image with GHCR, use image in compose
 
 - Add dev compose, Caddyfile, fix CI branch
 
 - Bind API to 127.0.0.1 only, not public
-
-
-## [v0.1.0] - 2026-05-19
-
-### Other
 
 - Fix docker-compose download URL: main -> master
 
