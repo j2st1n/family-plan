@@ -1,10 +1,24 @@
 # Changelog
 
+## [v0.1.5] - 2026-05-19
+
+### Other
+
+- Remove audit report from public repo
+
+- P0 fixes: JWT_SECRET validation, rate limiting, reward idempotency, unapproved task guard
+
+
 ## [v0.1.4] - 2026-05-19
 
 ### Bug Fixes
 
 - retry api health check in CI
+
+
+### Maintenance
+
+- bump version to 0.1.4
 
 
 ## [v0.1.3] - 2026-05-19
