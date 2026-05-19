@@ -1,6 +1,18 @@
 # Changelog
 
+## [v0.1.3] - 2026-05-19
+
+### Bug Fixes
+
+- restore package-lock.json, anonymize paths
+
+
 ## [v0.1.2] - 2026-05-19
+
+### Maintenance
+
+- bump version to 0.1.2
+
 
 ### Other
 
