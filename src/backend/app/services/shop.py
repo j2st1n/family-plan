@@ -16,11 +16,27 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
     child = db.get(Child, child_id)
     if child is None:
         return []
-    redeemed_ids = set(
+    redemptions = list(
         db.scalars(
-            select(Redemption.shop_item_id).where(Redemption.child_id == child_id)
+            select(Redemption).where(Redemption.child_id == child_id).order_by(Redemption.created_at.desc())
         )
     )
+    redeemed_ids = set(r.shop_item_id for r in redemptions)
+    result = []
+    if redeemed_ids:
+        redeemed_items = list(
+            db.scalars(
+                select(ShopItem).where(ShopItem.id.in_(redeemed_ids)).order_by(ShopItem.created_at.desc())
+            )
+        )
+        db.expunge_all()
+        for item in redeemed_items:
+            item.redeemed_by_child = True  # type: ignore[attr-defined]
+            for red in redemptions:
+                if str(red.shop_item_id) == str(item.id):
+                    item.redemption_id = red.id  # type: ignore[attr-defined]
+                    item.redemption_status = red.status  # type: ignore[attr-defined]
+            result.append(item)
     active = list(
         db.scalars(
             select(ShopItem)
@@ -31,18 +47,7 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
             .order_by(ShopItem.created_at.desc())
         )
     )
-    redeemed = list(
-        db.scalars(
-            select(ShopItem).where(ShopItem.id.in_(redeemed_ids)).order_by(ShopItem.created_at.desc())
-        )
-    ) if redeemed_ids else []
-    for item in redeemed:
-        item.redeemed_by_child = True
-        red = db.scalar(select(Redemption).where(Redemption.child_id == child_id, Redemption.shop_item_id == item.id).order_by(Redemption.created_at.desc()).limit(1))
-        if red:
-            item.redemption_id = red.id  # type: ignore[attr-defined]
-            item.redemption_status = red.status  # type: ignore[attr-defined]
-    return active + redeemed
+    return active + result
 
 
 def list_parent_shop(db: Session, parent_id: UUID) -> list[ShopItem]:
