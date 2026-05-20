@@ -1,6 +1,34 @@
 # Changelog
 
+## [v0.2.0] - 2026-05-20
+
+### Bug Fixes
+
+- template update/delete preserves today's tasks
+
+
+### Documentation
+
+- update all documentation to reflect current architecture
+
+
+### Features
+
+- star shop frontend — parent management and child store
+
+- child edit wish + parent edit shop item
+
+- star shop — redeem stars for items, child wishes
+
+- reliable test suite with PostgreSQL and unique test data
+
+
 ## [v0.1.11] - 2026-05-20
+
+### Maintenance
+
+- bump version to 0.1.11
+
 
 ### Other
 
