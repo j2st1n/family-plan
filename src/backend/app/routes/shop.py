@@ -10,7 +10,7 @@ from app.models.child import Child
 from app.models.child_device import ChildDevice
 from app.models.parent import Parent
 from app.schemas.shop import ShopItemCreate, ShopItemResponse, WishApprove, WishCreate
-from app.services.shop import approve_wish, create_shop_item, create_wish, list_parent_shop, list_shop_items, redeem_item, remove_shop_item
+from app.services.shop import approve_wish, create_shop_item, create_wish, list_parent_shop, list_shop_items, redeem_item, remove_shop_item, update_child_wish, update_parent_item
 
 router = APIRouter(prefix="/shop", tags=["shop"])
 child_router = APIRouter(prefix="/shop", tags=["child shop"])
@@ -29,6 +29,11 @@ def add_shop_item(payload: ShopItemCreate, parent: Parent = Depends(get_current_
 @router.delete("/items/{item_id}", status_code=204)
 def delete_shop_item(item_id: UUID, parent: Parent = Depends(get_current_parent), db: Session = Depends(get_db)):
     remove_shop_item(db, item_id, parent.id)
+
+
+@router.patch("/items/{item_id}", response_model=ShopItemResponse)
+def edit_shop_item(payload: ShopItemCreate, item_id: UUID, parent: Parent = Depends(get_current_parent), db: Session = Depends(get_db)):
+    return ShopItemResponse.model_validate(update_parent_item(db, item_id, parent.id, payload))
 
 
 @router.patch("/items/{item_id}/approve", response_model=ShopItemResponse)
@@ -54,3 +59,9 @@ def make_wish(payload: WishCreate, child_device: tuple[Child, ChildDevice] = Dep
     if child.parent is None or len(child.parent.children) == 0:
         raise api_error("not_found", "Parent not found", 404)
     return ShopItemResponse.model_validate(create_wish(db, child.id, child.parent_id, payload))
+
+
+@child_router.patch("/wishes/{item_id}", response_model=ShopItemResponse)
+def edit_wish(payload: WishCreate, item_id: UUID, child_device: tuple[Child, ChildDevice] = Depends(get_current_child), db: Session = Depends(get_db)):
+    child, _ = child_device
+    return ShopItemResponse.model_validate(update_child_wish(db, item_id, child.id, payload))

@@ -78,3 +78,27 @@ def remove_shop_item(db: Session, item_id: UUID, parent_id: UUID) -> None:
         raise api_error("not_found", "Item not found", 404)
     item.status = "removed"
     db.commit()
+
+
+def update_parent_item(db: Session, item_id: UUID, parent_id: UUID, data: ShopItemCreate) -> ShopItem:
+    item = db.scalar(select(ShopItem).where(ShopItem.id == item_id, ShopItem.parent_id == parent_id))
+    if item is None:
+        raise api_error("not_found", "Item not found", 404)
+    item.title = data.title
+    item.description = data.description
+    item.star_cost = data.star_cost
+    item.status = "active"
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+def update_child_wish(db: Session, item_id: UUID, child_id: UUID, data: WishCreate) -> ShopItem:
+    item = db.scalar(select(ShopItem).where(ShopItem.id == item_id, ShopItem.child_id == child_id, ShopItem.status == "pending"))
+    if item is None:
+        raise api_error("not_found", "Wish not found or not pending", 404)
+    item.title = data.title
+    item.description = data.description
+    db.commit()
+    db.refresh(item)
+    return item
