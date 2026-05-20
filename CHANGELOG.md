@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.2.4] - 2026-05-20
+
+### Features
+
+- shop stock, redemptions history, fulfill flow
+
+
 ## [v0.2.3] - 2026-05-20
 
 ### Bug Fixes
 
 - redeem also supports parent-created items
+
+
+### Maintenance
+
+- bump version to 0.2.3
 
 
 ## [v0.2.2] - 2026-05-20
