@@ -4,9 +4,11 @@
 kids.example.com {
     encode gzip
     reverse_proxy 127.0.0.1:8000
+    redir / /child/
 }
 
 mom.example.com {
     encode gzip
     reverse_proxy 127.0.0.1:8000
+    redir / /parent/
 }
