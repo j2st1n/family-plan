@@ -1,8 +1,10 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException
 
 from app.core.config import settings
 from app.routes.auth import router as auth_router
@@ -43,9 +45,22 @@ def create_app() -> FastAPI:
     app.include_router(plans_router, prefix="/api/v1")
     app.include_router(daily_tasks_router, prefix="/api/v1")
     app.include_router(parent_daily_router, prefix="/api/v1")
-    for path, name in [("/app/static-built/parent", "parent"), ("/app/static-built/child", "child")]:
-        if os.path.isdir(path):
-            app.mount(f"/{name}", StaticFiles(directory=path, html=True), name=name)
+
+    if os.path.isdir("/app/static-built/assets"):
+        app.mount("/assets", StaticFiles(directory="/app/static-built/assets"), name="assets")
+
+    @app.get("/{full_path:path}", response_class=HTMLResponse)
+    async def serve_frontend(request: Request, full_path: str):
+        host = request.headers.get("host", "")
+        is_kids = "kids" in host
+        is_mom = "mom" in host
+        if is_kids or is_mom:
+            frontend = "child" if is_kids else "parent"
+            index_path = f"/app/static-built/{frontend}/index.html"
+            if os.path.isfile(index_path):
+                return FileResponse(index_path)
+        raise HTTPException(status_code=404)
+
     return app
 
 

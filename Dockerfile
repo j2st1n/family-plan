@@ -20,6 +20,7 @@ RUN groupadd -g 1000 app \
 
 COPY --from=frontend /app/parent-web/dist /app/static-built/parent
 COPY --from=frontend /app/child-pwa/dist /app/static-built/child
+RUN mkdir -p /app/static-built/assets && cp -r /app/static-built/parent/assets/* /app/static-built/assets/ && cp -r /app/static-built/child/assets/* /app/static-built/assets/
 
 COPY src/backend/pyproject.toml src/backend/README.md ./
 RUN pip install --no-cache-dir -e .
