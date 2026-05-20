@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.2.1] - 2026-05-20
+
+### Bug Fixes
+
+- child shop route conflict + move shop to stars card
+
+
 ## [v0.2.0] - 2026-05-20
 
 ### Bug Fixes
@@ -21,6 +28,11 @@
 - star shop — redeem stars for items, child wishes
 
 - reliable test suite with PostgreSQL and unique test data
+
+
+### Maintenance
+
+- bump version to 0.2.0
 
 
 ## [v0.1.11] - 2026-05-20
