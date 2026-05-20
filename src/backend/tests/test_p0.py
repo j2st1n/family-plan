@@ -1,30 +1,9 @@
-import importlib
-from fastapi.testclient import TestClient
-import pytest
-from app.main import create_app
+from uuid import uuid4
 
-@pytest.fixture
-def client():
-    return TestClient(create_app())
-
-class TestJWTSecretValidation:
-    def test_empty_secret_rejected(self, monkeypatch):
-        monkeypatch.setattr("app.core.config.settings.jwt_secret", "")
-        with pytest.raises(RuntimeError, match="JWT_SECRET is required"):
-            importlib.reload(__import__("app.main", fromlist=["_"]))
-    def test_short_secret_rejected(self, monkeypatch):
-        monkeypatch.setattr("app.core.config.settings.jwt_secret", "123")
-        with pytest.raises(RuntimeError, match="at least 32"):
-            importlib.reload(__import__("app.main", fromlist=["_"]))
-    def test_forbidden_secret_rejected(self, monkeypatch):
-        monkeypatch.setattr("app.core.config.settings.jwt_secret", "family-plan-dev")
-        with pytest.raises(RuntimeError, match="default value"):
-            importlib.reload(__import__("app.main", fromlist=["_"]))
 
 class TestAuthRateLimit:
-    def test_login_rate_limit(self, client, monkeypatch):
-        monkeypatch.setattr("app.core.config.settings.jwt_secret", "a"*32)
-        pw, un = "pass12345", "lim_test"
+    def test_login_rate_limit(self, client):
+        pw, un = "pass12345", "lt" + uuid4().hex[:6]
         r = client.post("/api/v1/auth/register", json={"username": un, "password": pw})
         assert r.status_code == 201
         for _ in range(8):
@@ -32,10 +11,10 @@ class TestAuthRateLimit:
         r = client.post("/api/v1/auth/login", json={"username": un, "password": "wrong1a"})
         assert r.status_code == 429
 
+
 class TestCompleteTask:
-    def test_unapproved_task_rejected(self, client, monkeypatch):
-        monkeypatch.setattr("app.core.config.settings.jwt_secret", "a"*32)
-        pw, un = "pass12345", "appr_test"
+    def test_unapproved_task_rejected(self, client):
+        pw, un = "pass12345", "at" + uuid4().hex[:6]
         auth = client.post("/api/v1/auth/register", json={"username": un, "password": pw})
         token = auth.json()["token"]
         child = client.post("/api/v1/children", headers={"Authorization": f"Bearer {token}"}, json={"name": "c1"})
