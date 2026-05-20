@@ -72,7 +72,7 @@ def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
         select(ShopItem).where(
             ShopItem.id == item_id,
             ShopItem.status == "active",
-            ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None))) |
+            ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None)) & (ShopItem.status.in_(["active", "redeemed"]))) |
             (ShopItem.child_id == child_id),
         )
     )

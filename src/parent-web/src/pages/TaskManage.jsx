@@ -224,9 +224,9 @@ export default function TaskManage({ token, child, onBack }) {
 function ShopPanel({ token, plan, child }) {
   const [items, setItems] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ title: "", desc: "", stars: "" });
+  const [form, setForm] = useState({ title: "", stars: "", stock: "" });
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ title: "", desc: "", stars: "" });
+  const [editForm, setEditForm] = useState({ title: "", stars: "", stock: "" });
   const [approveStars, setApproveStars] = useState({});
   const [redemptions, setRedemptions] = useState([]);
 
@@ -241,14 +241,16 @@ function ShopPanel({ token, plan, child }) {
 
   async function handleAdd() {
     if (!form.title.trim() || !form.stars || parseInt(form.stars) < 1) return;
-    await api.createShopItem(token, { title: form.title.trim(), description: form.desc.trim() || null, star_cost: parseInt(form.stars) });
-    setForm({ title: "", desc: "", stars: "" }); setShowAdd(false); load();
+    const stock = form.stock ? parseInt(form.stock) : null;
+    await api.createShopItem(token, { title: form.title.trim(), star_cost: parseInt(form.stars), stock });
+    setForm({ title: "", stars: "", stock: "" }); setShowAdd(false); load();
   }
 
-  function startEdit(item) { setEditingId(item.id); setEditForm({ title: item.title, desc: item.description || "", stars: item.star_cost.toString() }); }
+  function startEdit(item) { setEditingId(item.id); setEditForm({ title: item.title, stars: item.star_cost.toString(), stock: item.stock?.toString() || "" }); }
   async function saveEdit() {
     if (!editForm.title.trim() || !editForm.stars || parseInt(editForm.stars) < 1) return;
-    await api.updateShopItem(token, editingId, { title: editForm.title.trim(), description: editForm.desc.trim() || null, star_cost: parseInt(editForm.stars) });
+    const stock = editForm.stock ? parseInt(editForm.stock) : null;
+    await api.updateShopItem(token, editingId, { title: editForm.title.trim(), star_cost: parseInt(editForm.stars), stock });
     setEditingId(null); load();
   }
 
@@ -271,7 +273,7 @@ function ShopPanel({ token, plan, child }) {
         <p style={{ fontSize: "0.8rem", color: "#c97070", marginBottom: "0.3rem" }}>许愿审核</p>
         {wishes.map(w => (
           <div key={w.id} style={s.shopRow}>
-            <div style={{ flex: 1 }}><p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{w.title}</p><p style={{ fontSize: "0.75rem", color: "#8c8985" }}>{w.child_id ? `${child.name}许愿` : ""}</p></div>
+            <div style={{ flex: 1 }}><p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{w.title}</p></div>
             <input type="number" placeholder="星星" value={approveStars[w.id] || ""} onChange={e => setApproveStars({ ...approveStars, [w.id]: e.target.value })} style={{ width: "3.5rem", padding: "0.2rem", fontSize: "0.85rem", border: "1px solid #e8e4df", borderRadius: "6px", textAlign: "center" }} />
             <button onClick={() => handleApprove(w.id)} style={s.shopAct}>✓</button>
             <button onClick={() => handleDelete(w.id)} style={s.shopDel}>✕</button>
@@ -285,8 +287,8 @@ function ShopPanel({ token, plan, child }) {
             <div style={{ flex: 1 }}>
               <input value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} placeholder="名称" style={s.shopEdit} autoFocus />
               <div style={{ display: "flex", gap: "0.3rem" }}>
-                <input value={editForm.desc} onChange={e => setEditForm({ ...editForm, desc: e.target.value })} placeholder="说明" style={{ ...s.shopEdit, flex: 1 }} />
-                <input type="number" value={editForm.stars} onChange={e => setEditForm({ ...editForm, stars: e.target.value })} placeholder="⭐" style={{ ...s.shopEdit, width: "3.5rem" }} />
+                <input type="number" value={editForm.stars} onChange={e => setEditForm({ ...editForm, stars: e.target.value })} placeholder="⭐" style={{ ...s.shopEdit, flex: 1 }} />
+                <input type="number" value={editForm.stock} onChange={e => setEditForm({ ...editForm, stock: e.target.value })} placeholder="库存" style={{ ...s.shopEdit, flex: 1 }} />
               </div>
               <button onClick={saveEdit} style={s.shopAct}>保存</button><button onClick={() => setEditingId(null)} style={s.shopDel}>取消</button>
             </div>
@@ -294,7 +296,6 @@ function ShopPanel({ token, plan, child }) {
             <>
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{item.title}</p>
-                {item.description && <p style={{ fontSize: "0.75rem", color: "#8c8985" }}>{item.description}</p>}
               </div>
               <span style={{ fontSize: "0.8rem", color: "#d4a853", whiteSpace: "nowrap" }}>⭐{item.star_cost}</span>
               <button onClick={() => startEdit(item)} style={s.shopAct}>✎</button>
@@ -309,8 +310,8 @@ function ShopPanel({ token, plan, child }) {
           <div style={{ background: "#f8f8fb", borderRadius: "10px", padding: "0.5rem" }}>
             <input placeholder="名称" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} style={s.shopEdit} autoFocus />
             <div style={{ display: "flex", gap: "0.3rem" }}>
-              <input placeholder="说明" value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} style={{ ...s.shopEdit, flex: 1 }} />
-              <input type="number" placeholder="⭐" value={form.stars} onChange={e => setForm({ ...form, stars: e.target.value })} style={{ ...s.shopEdit, width: "3.5rem" }} />
+              <input type="number" placeholder="⭐" value={form.stars} onChange={e => setForm({ ...form, stars: e.target.value })} style={{ ...s.shopEdit, flex: 1 }} />
+              <input type="number" placeholder="库存" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} style={{ ...s.shopEdit, flex: 1 }} />
             </div>
             <div style={{ display: "flex", gap: "0.3rem" }}>
               <button onClick={handleAdd} style={s.shopAct}>添加</button>

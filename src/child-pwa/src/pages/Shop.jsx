@@ -59,7 +59,6 @@ export default function Shop({ stars }) {
         <div key={item.id} style={s.card}>
           <div style={{ flex: 1 }}>
             <p style={{ fontWeight: 600, fontSize: "1rem" }}>{item.title}</p>
-            {item.description && <p style={{ fontSize: "0.8rem", color: "#8c8985" }}>{item.description}</p>}
             {item.stock != null && <p style={{ fontSize: "0.75rem", color: "#c97070" }}>仅剩 {item.stock} 件</p>}
           </div>
           <button onClick={() => handleRedeem(item)} style={s.redeemBtn}>⭐{item.star_cost} 兑换</button>
