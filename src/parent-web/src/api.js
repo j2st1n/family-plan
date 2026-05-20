@@ -133,6 +133,26 @@ const api = {
   deleteRoutineTask(token, planId, templateId) {
     return request(`/plans/${planId}/task-templates/${templateId}`, { method: "DELETE", headers: h(token) });
   },
+
+  fetchShop(token) {
+    return request("/shop/items", { headers: h(token) });
+  },
+
+  createShopItem(token, data) {
+    return request("/shop/items", { method: "POST", headers: h(token), body: JSON.stringify(data) });
+  },
+
+  updateShopItem(token, itemId, data) {
+    return request(`/shop/items/${itemId}`, { method: "PATCH", headers: h(token), body: JSON.stringify(data) });
+  },
+
+  deleteShopItem(token, itemId) {
+    return request(`/shop/items/${itemId}`, { method: "DELETE", headers: h(token) });
+  },
+
+  approveWish(token, itemId, starCost) {
+    return request(`/shop/items/${itemId}/approve`, { method: "PATCH", headers: h(token), body: JSON.stringify({ star_cost: starCost }) });
+  },
 };
 
 export default api;

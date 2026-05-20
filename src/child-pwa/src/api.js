@@ -75,3 +75,27 @@ export async function deleteChildTask(taskId) {
   const res = await fetch(`${API}/child/tasks/${taskId}`, { method: "DELETE", headers: headers() });
   if (!res.ok) throw new Error("删除失败");
 }
+
+export async function fetchShop() {
+  const res = await fetch(`${API}/shop/items`, { headers: headers() });
+  if (!res.ok) throw new Error("加载失败");
+  return res.json();
+}
+
+export async function redeemItem(itemId) {
+  const res = await fetch(`${API}/shop/items/${itemId}/redeem`, { method: "POST", headers: headers() });
+  if (!res.ok) throw new Error("兑换失败");
+  return res.json();
+}
+
+export async function makeWish(title, description) {
+  const res = await fetch(`${API}/shop/wishes`, { method: "POST", headers: headers(), body: JSON.stringify({ title, description }) });
+  if (!res.ok) throw new Error("许愿失败");
+  return res.json();
+}
+
+export async function editWish(itemId, title, description) {
+  const res = await fetch(`${API}/shop/wishes/${itemId}`, { method: "PATCH", headers: headers(), body: JSON.stringify({ title, description }) });
+  if (!res.ok) throw new Error("修改失败");
+  return res.json();
+}

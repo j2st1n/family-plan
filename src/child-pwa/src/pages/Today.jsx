@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchToday, completeTask, createChildTask, scheduleChildTask, updateChildTask, deleteChildTask } from "../api.js";
+import Shop from "./Shop.jsx";
 
 const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -18,6 +19,8 @@ export default function Today({ child, onExpired }) {
   const [scheduleForm, setScheduleForm] = useState({ start: "", end: "" });
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", minutes: "", stars: 1, start: "", end: "" });
+
+  const [showShop, setShowShop] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -72,6 +75,13 @@ export default function Today({ child, onExpired }) {
   if (loading) return <div style={{ textAlign: "center", paddingTop: "40vh", color: "#8c8985" }}>加载中…</div>;
   if (error) return <div style={{ textAlign: "center", paddingTop: "40vh" }}><p style={{ color: "#c97070", marginBottom: "1rem" }}>{error}</p><button onClick={load} style={{ color: "#7c6f97", fontSize: "1rem" }}>重试</button></div>;
 
+  if (showShop) return (
+    <div>
+      <div style={{ marginBottom: "1rem" }}><button onClick={() => setShowShop(false)} style={{ color: "#7c6f97", fontSize: "0.95rem", background: "none", border: "none", cursor: "pointer" }}>← 返回</button></div>
+      <Shop stars={data?.rewards?.stars_total ?? 0} />
+    </div>
+  );
+
   return (
     <div>
       <div style={{ marginBottom: "1.4rem" }}><h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#7c6f97" }}>你好，{child?.name ?? "小朋友"}</h1><p style={{ color: "#8c8985", marginTop: "0.3rem", fontSize: "0.95rem" }}>{dateStr}</p></div>
@@ -117,6 +127,10 @@ export default function Today({ child, onExpired }) {
       </div>
 
       {justCompleted && <div style={{ position: "fixed", bottom: "30px", left: "50%", transform: "translateX(-50%)", background: "#7c6f97", color: "#fff", padding: "0.8rem 1.5rem", borderRadius: "20px", fontSize: "1rem", fontWeight: 600, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>✅ {justCompleted.title} 完成！+{justCompleted.stars}⭐</div>}
+
+      <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
+        <button onClick={() => setShowShop(true)} style={{ padding: "0.5rem 1.5rem", borderRadius: "999px", background: "#7c6f97", color: "#fff", fontSize: "0.9rem", fontWeight: 600, border: "none", cursor: "pointer" }}>🛒 星星商城</button>
+      </div>
     </div>
   );
 }

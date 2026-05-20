@@ -214,7 +214,107 @@ export default function TaskManage({ token, child, onBack }) {
         </div>
 
         <div style={{ ...s.panel, marginTop: "0.8rem" }}><h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.6rem" }}>访问码</h3>{accessCode ? <p style={{ fontSize: "1.8rem", fontWeight: 700, letterSpacing: "0.3em", color: "#7c6f97", textAlign: "center" }}>{accessCode}</p> : <button onClick={generateCode} style={s.btn}>生成访问码</button>}{accessCode && <button onClick={generateCode} style={{ ...s.addBtn, marginTop: "0.4rem" }}>重新生成</button>}<p style={{ fontSize: "0.75rem", color: "#8c8985", marginTop: "0.4rem", textAlign: "center" }}>在 iPad 上打开孩子端，输入此码绑定</p></div>
+
+        <ShopPanel token={token} plan={plan} child={child} />
       </>)}
+    </div>
+  );
+}
+
+function ShopPanel({ token, plan, child }) {
+  const [items, setItems] = useState([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ title: "", desc: "", stars: "" });
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ title: "", desc: "", stars: "" });
+  const [approveStars, setApproveStars] = useState({});
+
+  const load = useCallback(async () => {
+    try { const list = await api.fetchShop(token); setItems(list); } catch {}
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function handleAdd() {
+    if (!form.title.trim() || !form.stars || parseInt(form.stars) < 1) return;
+    await api.createShopItem(token, { title: form.title.trim(), description: form.desc.trim() || null, star_cost: parseInt(form.stars) });
+    setForm({ title: "", desc: "", stars: "" }); setShowAdd(false); load();
+  }
+
+  function startEdit(item) { setEditingId(item.id); setEditForm({ title: item.title, desc: item.description || "", stars: item.star_cost.toString() }); }
+  async function saveEdit() {
+    if (!editForm.title.trim() || !editForm.stars || parseInt(editForm.stars) < 1) return;
+    await api.updateShopItem(token, editingId, { title: editForm.title.trim(), description: editForm.desc.trim() || null, star_cost: parseInt(editForm.stars) });
+    setEditingId(null); load();
+  }
+
+  async function handleDelete(id) { if (!window.confirm("下架此商品？")) return; await api.deleteShopItem(token, id); load(); }
+
+  async function handleApprove(id) {
+    const stars = approveStars[id] || 10;
+    await api.approveWish(token, id, parseInt(stars));
+    setApproveStars(p => { const n = { ...p }; delete n[id]; return n; }); load();
+  }
+
+  const wishes = items.filter(i => i.status === "pending");
+  const active = items.filter(i => i.status === "active");
+
+  return (
+    <div style={{ ...s.panel, marginTop: "0.8rem" }}>
+      <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.6rem" }}>星星商城</h3>
+
+      {wishes.length > 0 && <div style={{ marginBottom: "0.8rem" }}>
+        <p style={{ fontSize: "0.8rem", color: "#c97070", marginBottom: "0.3rem" }}>许愿审核</p>
+        {wishes.map(w => (
+          <div key={w.id} style={s.shopRow}>
+            <div style={{ flex: 1 }}><p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{w.title}</p><p style={{ fontSize: "0.75rem", color: "#8c8985" }}>{w.child_id ? `${child.name}许愿` : ""}</p></div>
+            <input type="number" placeholder="星星" value={approveStars[w.id] || ""} onChange={e => setApproveStars({ ...approveStars, [w.id]: e.target.value })} style={{ width: "3.5rem", padding: "0.2rem", fontSize: "0.85rem", border: "1px solid #e8e4df", borderRadius: "6px", textAlign: "center" }} />
+            <button onClick={() => handleApprove(w.id)} style={s.shopAct}>✓</button>
+            <button onClick={() => handleDelete(w.id)} style={s.shopDel}>✕</button>
+          </div>
+        ))}
+      </div>}
+
+      {active.map(item => (
+        <div key={item.id} style={s.shopRow}>
+          {editingId === item.id ? (
+            <div style={{ flex: 1 }}>
+              <input value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} placeholder="名称" style={s.shopEdit} autoFocus />
+              <div style={{ display: "flex", gap: "0.3rem" }}>
+                <input value={editForm.desc} onChange={e => setEditForm({ ...editForm, desc: e.target.value })} placeholder="说明" style={{ ...s.shopEdit, flex: 1 }} />
+                <input type="number" value={editForm.stars} onChange={e => setEditForm({ ...editForm, stars: e.target.value })} placeholder="⭐" style={{ ...s.shopEdit, width: "3.5rem" }} />
+              </div>
+              <button onClick={saveEdit} style={s.shopAct}>保存</button><button onClick={() => setEditingId(null)} style={s.shopDel}>取消</button>
+            </div>
+          ) : (
+            <>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{item.title}</p>
+                {item.description && <p style={{ fontSize: "0.75rem", color: "#8c8985" }}>{item.description}</p>}
+              </div>
+              <span style={{ fontSize: "0.8rem", color: "#d4a853", whiteSpace: "nowrap" }}>⭐{item.star_cost}</span>
+              <button onClick={() => startEdit(item)} style={s.shopAct}>✎</button>
+              <button onClick={() => handleDelete(item.id)} style={s.shopDel}>✕</button>
+            </>
+          )}
+        </div>
+      ))}
+
+      <div style={{ marginTop: "0.5rem" }}>
+        {!showAdd ? <button onClick={() => setShowAdd(true)} style={s.addBtn}>+ 上架商品</button> : (
+          <div style={{ background: "#f8f8fb", borderRadius: "10px", padding: "0.5rem" }}>
+            <input placeholder="名称" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} style={s.shopEdit} autoFocus />
+            <div style={{ display: "flex", gap: "0.3rem" }}>
+              <input placeholder="说明" value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} style={{ ...s.shopEdit, flex: 1 }} />
+              <input type="number" placeholder="⭐" value={form.stars} onChange={e => setForm({ ...form, stars: e.target.value })} style={{ ...s.shopEdit, width: "3.5rem" }} />
+            </div>
+            <div style={{ display: "flex", gap: "0.3rem" }}>
+              <button onClick={handleAdd} style={s.shopAct}>添加</button>
+              <button onClick={() => setShowAdd(false)} style={s.shopDel}>取消</button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -227,4 +327,8 @@ const s = {
   fb: { background: "#f8f8fb", borderRadius: "10px", padding: "0.6rem" }, fi: { padding: "0.4rem 0.5rem", fontSize: "0.85rem", border: "1px solid #e8e4df", borderRadius: "8px", outline: "none", marginBottom: "0.4rem", display: "block", width: "100%", background: "#fff" },
   fsb: { flex: 1, padding: "0.45rem", fontSize: "0.85rem", fontWeight: 600, color: "#fff", background: "#7c6f97", borderRadius: "8px" }, fcb: { flex: 1, padding: "0.45rem", fontSize: "0.85rem", fontWeight: 600, color: "#8c8985", background: "#efece8", borderRadius: "8px" },
   ib: { width: "1.4rem", height: "1.4rem", borderRadius: "50%", fontSize: "0.7rem", fontWeight: 600, color: "#8c8985", background: "transparent", border: "none", cursor: "pointer" },
+  shopRow: { display: "flex", alignItems: "center", gap: "0.4rem", background: "#f8f8fb", borderRadius: "10px", padding: "0.5rem 0.7rem", marginBottom: "0.3rem" },
+  shopEdit: { padding: "0.3rem 0.4rem", fontSize: "0.85rem", border: "1px solid #e8e4df", borderRadius: "6px", outline: "none", background: "#fff", marginBottom: "0.3rem", display: "block", width: "100%" },
+  shopAct: { padding: "0.25rem 0.4rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 600, color: "#fff", background: "#7c6f97" },
+  shopDel: { padding: "0.25rem 0.4rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 600, color: "#c97070", background: "#fef0f0" },
 };
