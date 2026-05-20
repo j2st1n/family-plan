@@ -1,5 +1,8 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.routes.auth import router as auth_router
@@ -40,6 +43,9 @@ def create_app() -> FastAPI:
     app.include_router(plans_router, prefix="/api/v1")
     app.include_router(daily_tasks_router, prefix="/api/v1")
     app.include_router(parent_daily_router, prefix="/api/v1")
+    for path, name in [("/app/static-built/parent", "parent"), ("/app/static-built/child", "child")]:
+        if os.path.isdir(path):
+            app.mount(f"/{name}", StaticFiles(directory=path, html=True), name=name)
     return app
 
 
