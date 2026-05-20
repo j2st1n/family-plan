@@ -16,19 +16,19 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
     child = db.get(Child, child_id)
     if child is None:
         return []
+    redeemed_ids = set(
+        db.scalars(
+            select(Redemption.shop_item_id).where(Redemption.child_id == child_id)
+        )
+    )
     active = list(
         db.scalars(
             select(ShopItem)
             .where(
-                ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None)) & (ShopItem.status == "active")) |
-                ((ShopItem.child_id == child_id) & (ShopItem.status == "active")),
+                ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None)) & (ShopItem.status == "active") & (~ShopItem.id.in_(redeemed_ids))) |
+                ((ShopItem.child_id == child_id) & (ShopItem.status == "active") & (~ShopItem.id.in_(redeemed_ids))),
             )
             .order_by(ShopItem.created_at.desc())
-        )
-    )
-    redeemed_ids = set(
-        db.scalars(
-            select(Redemption.shop_item_id).where(Redemption.child_id == child_id)
         )
     )
     redeemed = list(
