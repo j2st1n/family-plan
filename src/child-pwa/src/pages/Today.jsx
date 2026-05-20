@@ -86,7 +86,7 @@ export default function Today({ child, onExpired }) {
     <div>
       <div style={{ marginBottom: "1.4rem" }}><h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#7c6f97" }}>你好，{child?.name ?? "小朋友"}</h1><p style={{ color: "#8c8985", marginTop: "0.3rem", fontSize: "0.95rem" }}>{dateStr}</p></div>
       <div style={{ display: "flex", gap: "0.8rem", marginBottom: "1.4rem" }}>
-        <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#d4a853" }}>⭐ {data?.rewards?.stars_total ?? 0}</p><p style={{ fontSize: "0.8rem", color: "#8c8985" }}>星星</p></div>
+        <div onClick={() => setShowShop(true)} style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", cursor: "pointer" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#d4a853" }}>⭐ {data?.rewards?.stars_total ?? 0}</p><p style={{ fontSize: "0.75rem", color: "#7c6f97" }}>兑换</p></div>
         <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#7c6f97" }}>🔥 {data?.rewards?.current_streak_days ?? 0}</p><p style={{ fontSize: "0.8rem", color: "#8c8985" }}>连续天数</p></div>
       </div>
 
@@ -127,10 +127,6 @@ export default function Today({ child, onExpired }) {
       </div>
 
       {justCompleted && <div style={{ position: "fixed", bottom: "30px", left: "50%", transform: "translateX(-50%)", background: "#7c6f97", color: "#fff", padding: "0.8rem 1.5rem", borderRadius: "20px", fontSize: "1rem", fontWeight: 600, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>✅ {justCompleted.title} 完成！+{justCompleted.stars}⭐</div>}
-
-      <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
-        <button onClick={() => setShowShop(true)} style={{ padding: "0.5rem 1.5rem", borderRadius: "999px", background: "#7c6f97", color: "#fff", fontSize: "0.9rem", fontWeight: 600, border: "none", cursor: "pointer" }}>🛒 星星商城</button>
-      </div>
     </div>
   );
 }

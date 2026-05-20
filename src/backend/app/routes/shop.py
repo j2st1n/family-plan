@@ -13,7 +13,7 @@ from app.schemas.shop import ShopItemCreate, ShopItemResponse, WishApprove, Wish
 from app.services.shop import approve_wish, create_shop_item, create_wish, list_parent_shop, list_shop_items, redeem_item, remove_shop_item, update_child_wish, update_parent_item
 
 router = APIRouter(prefix="/shop", tags=["shop"])
-child_router = APIRouter(prefix="/shop", tags=["child shop"])
+child_router = APIRouter(prefix="/child/shop", tags=["child shop"])
 
 
 @router.get("/items", response_model=list[ShopItemResponse])
