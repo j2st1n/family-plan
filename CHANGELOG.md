@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.2.3] - 2026-05-20
+
+### Bug Fixes
+
+- redeem also supports parent-created items
+
+
 ## [v0.2.2] - 2026-05-20
 
 ### Bug Fixes
 
 - parent-created shop items now visible to child
+
+
+### Maintenance
+
+- bump version to 0.2.2
 
 
 ## [v0.2.1] - 2026-05-20
