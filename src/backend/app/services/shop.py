@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import api_error
 from app.models.child import Child
+from app.models.redemption import Redemption
 from app.models.reward_ledger import RewardLedger
 from app.models.shop_item import ShopItem
 from app.schemas.shop import ShopItemCreate, WishApprove, WishCreate
@@ -15,16 +16,29 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
     child = db.get(Child, child_id)
     if child is None:
         return []
-    return list(
+    active = list(
         db.scalars(
             select(ShopItem)
             .where(
-        ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None))) |
-            ((ShopItem.child_id == child_id) & (ShopItem.status.in_(["active", "redeemed"]))),
+                ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None)) & (ShopItem.status == "active")) |
+                ((ShopItem.child_id == child_id) & (ShopItem.status == "active")),
             )
             .order_by(ShopItem.created_at.desc())
         )
     )
+    redeemed_ids = set(
+        db.scalars(
+            select(Redemption.shop_item_id).where(Redemption.child_id == child_id)
+        )
+    )
+    redeemed = list(
+        db.scalars(
+            select(ShopItem).where(ShopItem.id.in_(redeemed_ids)).order_by(ShopItem.created_at.desc())
+        )
+    ) if redeemed_ids else []
+    for item in redeemed:
+        item.redeemed_by_child = True  # type: ignore[attr-defined]
+    return active + redeemed
 
 
 def list_parent_shop(db: Session, parent_id: UUID) -> list[ShopItem]:
@@ -86,6 +100,7 @@ def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
         raise api_error("conflict", "Not enough stars", 409)
 
     db.add(RewardLedger(child_id=child_id, source_type="shop_redeem", source_id=item.id, stars_delta=-item.star_cost, reason=item.title))
+    db.add(Redemption(child_id=child_id, shop_item_id=item.id))
     if item.stock is not None:
         item.stock -= 1
     if item.stock is None or (item.stock is not None and item.stock <= 0):
@@ -129,10 +144,17 @@ def update_child_wish(db: Session, item_id: UUID, child_id: UUID, data: WishCrea
 
 
 def list_redemptions(db: Session, parent_id: UUID) -> list[ShopItem]:
+    ids = db.scalars(
+        select(Redemption.shop_item_id)
+        .join(ShopItem, Redemption.shop_item_id == ShopItem.id)
+        .where(ShopItem.parent_id == parent_id)
+    ).all()
+    if not ids:
+        return []
     return list(
         db.scalars(
             select(ShopItem)
-            .where(ShopItem.parent_id == parent_id, ShopItem.status.in_(["redeemed", "fulfilled"]))
+            .where(ShopItem.id.in_(set(ids)))
             .order_by(ShopItem.updated_at.desc())
         )
     )

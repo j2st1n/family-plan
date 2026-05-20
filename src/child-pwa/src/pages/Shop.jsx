@@ -18,9 +18,9 @@ export default function Shop({ stars }) {
     setLoading(true);
     try {
       const all = await fetchShop();
-      setItems(all.filter(i => i.status === "active"));
+      setItems(all.filter(i => i.status === "active" && !i.redeemed_by_child));
       setWishes(all.filter(i => i.status === "pending"));
-      setRedeemed(all.filter(i => i.status === "redeemed" || i.status === "fulfilled"));
+      setRedeemed(all.filter(i => i.redeemed_by_child || i.status === "fulfilled"));
     } catch { setError("加载失败"); }
     finally { setLoading(false); }
   }, []);
