@@ -1,6 +1,18 @@
 # Changelog
 
+## [v0.1.6] - 2026-05-20
+
+### Other
+
+- Fix CI build: remove invalid test-dependencies, bind rate limit, bcrypt pin
+
+
 ## [v0.1.5] - 2026-05-19
+
+### Maintenance
+
+- bump version to 0.1.5
+
 
 ### Other
 
