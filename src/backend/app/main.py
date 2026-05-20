@@ -23,10 +23,8 @@ def _validate_jwt_secret() -> None:
         raise RuntimeError(f"JWT_SECRET must be at least {MIN_SECRET_LENGTH} characters (got {len(s)}).")
 
 
-_validate_jwt_secret()
-
-
 def create_app() -> FastAPI:
+    _validate_jwt_secret()
     app = FastAPI(title=settings.app_name)
     app.add_middleware(
         CORSMiddleware,
