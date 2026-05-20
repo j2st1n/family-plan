@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.1] - 2026-05-20
+
+### Bug Fixes
+
+- migration server_default for existing redemptions
+
+
 ## [v0.3.0] - 2026-05-20
 
 ### Bug Fixes
 
 - stock visibility + redemption status sync
+
+
+### Maintenance
+
+- bump version to 0.3.0
 
 
 ## [v0.2.8] - 2026-05-20
