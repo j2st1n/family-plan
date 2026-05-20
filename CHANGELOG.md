@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.2.6] - 2026-05-20
+
+### Features
+
+- redemption table for per-child redeem tracking
+
+
 ## [v0.2.5] - 2026-05-20
 
 ### Bug Fixes
 
 - filter shop items by status, add stock field, remove description
+
+
+### Maintenance
+
+- bump version to 0.2.5
 
 
 ## [v0.2.4] - 2026-05-20
