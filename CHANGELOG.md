@@ -1,10 +1,29 @@
 # Changelog
 
+## [v0.1.8] - 2026-05-20
+
+### Bug Fixes
+
+- host-based routing instead of sub-paths
+
+- Caddy redirect root to /child/ and /parent/ per subdomain
+
+
+### Documentation
+
+- update quick start and JWT_SECRET docs
+
+
 ## [v0.1.7] - 2026-05-20
 
 ### Bug Fixes
 
 - serve frontend via FastAPI StaticFiles, remove volume mount
+
+
+### Maintenance
+
+- bump version to 0.1.7
 
 
 ## [v0.1.6] - 2026-05-20
