@@ -127,7 +127,8 @@ def update_task_template(db: Session, plan: Plan, template_id: UUID, data: TaskT
     db.execute(
         delete(DailyTask).where(
             DailyTask.task_template_id == template.id,
-            DailyTask.task_date >= today,
+            DailyTask.task_date > today,
+            DailyTask.status == "pending",
         )
     )
     db.commit()
@@ -143,7 +144,8 @@ def delete_task_template(db: Session, plan: Plan, template_id: UUID) -> None:
     db.execute(
         delete(DailyTask).where(
             DailyTask.task_template_id == template.id,
-            DailyTask.task_date >= today,
+            DailyTask.task_date > today,
+            DailyTask.status == "pending",
         )
     )
     db.commit()
