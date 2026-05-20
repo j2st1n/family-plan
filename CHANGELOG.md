@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.2.8] - 2026-05-20
+
+### Bug Fixes
+
+- dedup active/redeemed items in child shop list
+
+
 ## [v0.2.7] - 2026-05-20
 
 ### Bug Fixes
 
 - unique constraint on redeem ledger, simplify query
+
+
+### Maintenance
+
+- bump version to 0.2.7
 
 
 ## [v0.2.6] - 2026-05-20
