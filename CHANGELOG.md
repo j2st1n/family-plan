@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.0] - 2026-05-20
+
+### Bug Fixes
+
+- stock visibility + redemption status sync
+
+
 ## [v0.2.8] - 2026-05-20
 
 ### Bug Fixes
 
 - dedup active/redeemed items in child shop list
+
+
+### Maintenance
+
+- bump version to 0.2.8
 
 
 ## [v0.2.7] - 2026-05-20
