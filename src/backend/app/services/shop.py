@@ -4,16 +4,23 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import api_error
+from app.models.child import Child
 from app.models.reward_ledger import RewardLedger
 from app.models.shop_item import ShopItem
 from app.schemas.shop import ShopItemCreate, WishApprove, WishCreate
 
 
 def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
+    child = db.get(Child, child_id)
+    if child is None:
+        return []
     return list(
         db.scalars(
             select(ShopItem)
-            .where(ShopItem.child_id == child_id, ShopItem.status == "active")
+            .where(
+                ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None))) |
+                ((ShopItem.child_id == child_id) & (ShopItem.status == "active")),
+            )
             .order_by(ShopItem.created_at.desc())
         )
     )
