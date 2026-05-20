@@ -86,7 +86,7 @@ def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
         select(ShopItem).where(
             ShopItem.id == item_id,
             ShopItem.status == "active",
-            ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None)) & (ShopItem.status.in_(["active", "redeemed"]))) |
+            ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None))) |
             (ShopItem.child_id == child_id),
         )
     )
@@ -99,8 +99,10 @@ def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
     if (int(total or 0)) < item.star_cost:
         raise api_error("conflict", "Not enough stars", 409)
 
-    db.add(RewardLedger(child_id=child_id, source_type="shop_redeem", source_id=item.id, stars_delta=-item.star_cost, reason=item.title))
-    db.add(Redemption(child_id=child_id, shop_item_id=item.id))
+    red = Redemption(child_id=child_id, shop_item_id=item.id)
+    db.add(red)
+    db.flush()
+    db.add(RewardLedger(child_id=child_id, source_type="shop_redeem", source_id=red.id, stars_delta=-item.star_cost, reason=item.title))
     if item.stock is not None:
         item.stock -= 1
     if item.stock is None or (item.stock is not None and item.stock <= 0):
