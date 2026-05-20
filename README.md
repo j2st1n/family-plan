@@ -24,10 +24,13 @@
 # 1. 下载 docker-compose.yml
 curl -O https://raw.githubusercontent.com/j2st1n/family-plan/master/docker-compose.yml
 
-# 2. 启动
+# 2. 设置 JWT_SECRET（必须）
+echo "JWT_SECRET=$(openssl rand -hex 32)" > .env
+
+# 3. 启动
 docker compose up -d
 
-# 3. 检查运行状态
+# 4. 检查运行状态
 curl http://127.0.0.1:8000/health
 ```
 
@@ -45,7 +48,7 @@ cd src/child-pwa && npx vite
 
 ## 使用流程
 
-1. 家长打开管理端 → 开发登录 → 添加孩子 → 点击孩子卡片
+1. 家长打开管理端 → 注册/登录 → 添加孩子 → 点击孩子卡片
 2. 在当日任务面板添加任务（名称、时长、难度、时间段）
 3. 或添加重复任务（每周几、星星数）
 4. 生成访问码 → 孩子在 iPad 打开 PWA → 输入码绑定
@@ -64,7 +67,7 @@ cp .env.example .env
 | 变量 | 说明 | 默认值 |
 |---|---|---|
 | `DATABASE_URL` | 数据库连接串 | docker 内自动 |
-| `JWT_SECRET` | JWT 签名密钥 | `family-plan-dev` |
+| `JWT_SECRET` | JWT 签名密钥 | **无默认值，生产必须设置** |
 
 ## 技术栈
 
