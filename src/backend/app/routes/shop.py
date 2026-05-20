@@ -46,9 +46,9 @@ def parent_redemptions(parent: Parent = Depends(get_current_parent), db: Session
     return [ShopItemResponse.model_validate(i) for i in list_redemptions(db, parent.id)]
 
 
-@router.patch("/items/{item_id}/fulfill", response_model=ShopItemResponse)
-def fulfill(item_id: UUID, parent: Parent = Depends(get_current_parent), db: Session = Depends(get_db)):
-    return ShopItemResponse.model_validate(fulfill_item(db, item_id, parent.id))
+@router.patch("/redemptions/{redemption_id}/fulfill", response_model=ShopItemResponse)
+def fulfill(redemption_id: UUID, parent: Parent = Depends(get_current_parent), db: Session = Depends(get_db)):
+    return ShopItemResponse.model_validate(fulfill_item(db, redemption_id, parent.id))
 
 
 @child_router.get("/items", response_model=list[ShopItemResponse])

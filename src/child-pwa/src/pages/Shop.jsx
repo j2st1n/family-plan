@@ -20,7 +20,7 @@ export default function Shop({ stars }) {
       const all = await fetchShop();
       setItems(all.filter(i => i.status === "active" && !i.redeemed_by_child));
       setWishes(all.filter(i => i.status === "pending"));
-      setRedeemed(all.filter(i => i.redeemed_by_child || i.status === "fulfilled"));
+      setRedeemed(all.filter(i => i.redeemed_by_child));
     } catch { setError("加载失败"); }
     finally { setLoading(false); }
   }, []);
@@ -75,11 +75,11 @@ export default function Shop({ stars }) {
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>{r.title}</p>
                 <p style={{ fontSize: "0.75rem", color: "#8c8985" }}>
-                  ⭐{r.star_cost} · {r.fulfilled_at ? `已兑现 ${fmtDate(r.fulfilled_at)}` : `待兑现 ${fmtDate(r.created_at)}`}
+                  ⭐{r.star_cost} · {r.redemption_status === "fulfilled" ? `已兑现 ${fmtDate(r.fulfilled_at)}` : `待兑现 ${fmtDate(r.created_at)}`}
                 </p>
               </div>
-              <span style={{ fontSize: "0.75rem", color: r.fulfilled_at ? "#6b8f71" : "#d4a853" }}>
-                {r.fulfilled_at ? "已兑现" : "待兑现"}
+              <span style={{ fontSize: "0.75rem", color: r.redemption_status === "fulfilled" ? "#6b8f71" : "#d4a853" }}>
+                {r.redemption_status === "fulfilled" ? "已兑现" : "待兑现"}
               </span>
             </div>
           ))}

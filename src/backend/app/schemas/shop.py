@@ -25,6 +25,8 @@ class ShopItemResponse(BaseModel):
     stock: int | None = None
     fulfilled_at: datetime | None = None
     redeemed_by_child: bool = False
+    redemption_id: UUID | None = None
+    redemption_status: str | None = None
     created_by: str
     created_at: datetime
 

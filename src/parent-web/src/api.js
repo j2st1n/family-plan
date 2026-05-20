@@ -158,8 +158,8 @@ const api = {
     return request("/shop/redemptions", { headers: h(token) });
   },
 
-  fulfillItem(token, itemId) {
-    return request(`/shop/items/${itemId}/fulfill`, { method: "PATCH", headers: h(token) });
+  fulfillItem(token, redemptionId) {
+    return request(`/shop/redemptions/${redemptionId}/fulfill`, { method: "PATCH", headers: h(token) });
   },
 };
 

@@ -25,8 +25,8 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
         db.scalars(
             select(ShopItem)
             .where(
-                ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None)) & (ShopItem.status == "active") & (~ShopItem.id.in_(redeemed_ids))) |
-                ((ShopItem.child_id == child_id) & (ShopItem.status == "active") & (~ShopItem.id.in_(redeemed_ids))),
+                ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None)) & (ShopItem.status == "active")) |
+                ((ShopItem.child_id == child_id) & (ShopItem.status == "active")),
             )
             .order_by(ShopItem.created_at.desc())
         )
@@ -37,7 +37,11 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
         )
     ) if redeemed_ids else []
     for item in redeemed:
-        item.redeemed_by_child = True  # type: ignore[attr-defined]
+        item.redeemed_by_child = True
+        red = db.scalar(select(Redemption).where(Redemption.child_id == child_id, Redemption.shop_item_id == item.id).order_by(Redemption.created_at.desc()).limit(1))
+        if red:
+            item.redemption_id = red.id  # type: ignore[attr-defined]
+            item.redemption_status = red.status  # type: ignore[attr-defined]
     return active + redeemed
 
 
@@ -105,8 +109,8 @@ def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
     db.add(RewardLedger(child_id=child_id, source_type="shop_redeem", source_id=red.id, stars_delta=-item.star_cost, reason=item.title))
     if item.stock is not None:
         item.stock -= 1
-    if item.stock is None or (item.stock is not None and item.stock <= 0):
-        item.status = "redeemed"
+        if item.stock <= 0:
+            item.status = "redeemed"
     db.commit()
     db.refresh(item)
     return item
@@ -146,28 +150,35 @@ def update_child_wish(db: Session, item_id: UUID, child_id: UUID, data: WishCrea
 
 
 def list_redemptions(db: Session, parent_id: UUID) -> list[ShopItem]:
-    ids = db.scalars(
-        select(Redemption.shop_item_id)
-        .join(ShopItem, Redemption.shop_item_id == ShopItem.id)
-        .where(ShopItem.parent_id == parent_id)
-    ).all()
-    if not ids:
-        return []
-    return list(
+    reds = list(
         db.scalars(
-            select(ShopItem)
-            .where(ShopItem.id.in_(set(ids)))
-            .order_by(ShopItem.updated_at.desc())
+            select(Redemption)
+            .join(ShopItem, Redemption.shop_item_id == ShopItem.id)
+            .where(ShopItem.parent_id == parent_id)
+            .order_by(Redemption.created_at.desc())
         )
     )
+    result = []
+    for red in reds:
+        item = db.get(ShopItem, red.shop_item_id)
+        if item:
+            item.redemption_id = red.id  # type: ignore[attr-defined]
+            item.redemption_status = red.status  # type: ignore[attr-defined]
+            result.append(item)
+    return result
 
 
-def fulfill_item(db: Session, item_id: UUID, parent_id: UUID) -> ShopItem:
-    item = db.scalar(select(ShopItem).where(ShopItem.id == item_id, ShopItem.parent_id == parent_id))
-    if item is None or item.status not in ("redeemed",):
-        raise api_error("not_found", "Item not found or not redeemed", 404)
-    item.status = "fulfilled"
-    item.fulfilled_at = datetime.now(UTC)
+def fulfill_item(db: Session, redemption_id: UUID, parent_id: UUID) -> ShopItem:
+    red = db.scalar(select(Redemption).where(Redemption.id == redemption_id))
+    if red is None:
+        raise api_error("not_found", "Redemption not found", 404)
+    item = db.get(ShopItem, red.shop_item_id)
+    if item is None or item.parent_id != parent_id:
+        raise api_error("not_found", "Item not found", 404)
+    if red.status != "pending":
+        raise api_error("conflict", "Already fulfilled", 409)
+    red.status = "fulfilled"
+    red.fulfilled_at = datetime.now(UTC)
     db.commit()
     db.refresh(item)
     return item

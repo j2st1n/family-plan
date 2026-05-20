@@ -329,8 +329,8 @@ function ShopPanel({ token, plan, child }) {
               <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{r.title}</p>
               <p style={{ fontSize: "0.75rem", color: "#8c8985" }}>⭐{r.star_cost} · {r.child_id ? "孩子" : ""}</p>
             </div>
-            {r.status === "redeemed" ? (
-              <button onClick={() => handleFulfill(r.id)} style={s.shopAct}>已兑现</button>
+            {r.redemption_status === "pending" ? (
+              <button onClick={() => handleFulfill(r.redemption_id)} style={s.shopAct}>兑现</button>
             ) : (
               <span style={{ fontSize: "0.75rem", color: "#6b8f71" }}>已兑现</span>
             )}
