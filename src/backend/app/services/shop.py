@@ -64,7 +64,17 @@ def approve_wish(db: Session, item_id: UUID, parent_id: UUID, data: WishApprove)
 
 
 def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
-    item = db.scalar(select(ShopItem).where(ShopItem.id == item_id, ShopItem.child_id == child_id, ShopItem.status == "active"))
+    child = db.get(Child, child_id)
+    if child is None:
+        raise api_error("not_found", "Child not found", 404)
+    item = db.scalar(
+        select(ShopItem).where(
+            ShopItem.id == item_id,
+            ShopItem.status == "active",
+            ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None))) |
+            (ShopItem.child_id == child_id),
+        )
+    )
     if item is None:
         raise api_error("not_found", "Item not found", 404)
 
