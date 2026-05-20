@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.1.9] - 2026-05-20
+
+### Bug Fixes
+
+- auto-run alembic migrations on startup
+
+
 ## [v0.1.8] - 2026-05-20
 
 ### Bug Fixes
@@ -12,6 +19,11 @@
 ### Documentation
 
 - update quick start and JWT_SECRET docs
+
+
+### Maintenance
+
+- bump version to 0.1.8
 
 
 ## [v0.1.7] - 2026-05-20
