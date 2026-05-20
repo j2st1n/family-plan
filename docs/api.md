@@ -17,15 +17,41 @@ All responses are JSON. All timestamps are UTC ISO-8601 strings.
 
 ## 2. Parent Auth
 
-### POST /auth/wechat
+### POST /auth/register
 
-Exchange WeChat login code for parent JWT.
+Register with username and password.
 
 Request:
 
 ```json
 {
-  "code": "wx-login-code"
+  "username": "j2st1n",
+  "password": "secret123"
+}
+```
+
+Response (201):
+
+```json
+{
+  "token": "jwt",
+  "parent": {
+    "id": "uuid",
+    "nickname": "j2st1n"
+  }
+}
+```
+
+### POST /auth/login
+
+Login with username and password.
+
+Request:
+
+```json
+{
+  "username": "j2st1n",
+  "password": "secret123"
 }
 ```
 
@@ -36,7 +62,7 @@ Response:
   "token": "jwt",
   "parent": {
     "id": "uuid",
-    "nickname": "妈妈"
+    "nickname": "j2st1n"
   }
 }
 ```

@@ -5,7 +5,7 @@
 - Use UUID primary keys.
 - Use UTC timestamps.
 - Keep MVP schema small and explicit.
-- Parent identity comes from WeChat.
+- Parent identity via username/password.
 - Child identity is a profile plus device binding, not a login account.
 
 ## 2. Core Tables
@@ -15,7 +15,9 @@
 ```sql
 CREATE TABLE parents (
     id UUID PRIMARY KEY,
-    wechat_openid VARCHAR(128) UNIQUE NOT NULL,
+    wechat_openid VARCHAR(128) UNIQUE,
+    username VARCHAR(80) UNIQUE,
+    password_hash VARCHAR(255),
     nickname VARCHAR(80),
     avatar_url TEXT,
     created_at TIMESTAMP NOT NULL,
@@ -117,6 +119,11 @@ CREATE TABLE daily_tasks (
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
     completed_at TIMESTAMP,
     child_feedback VARCHAR(20),
+    created_by VARCHAR(20) NOT NULL DEFAULT 'parent',
+    approved BOOLEAN NOT NULL DEFAULT TRUE,
+    schedule_by VARCHAR(20),
+    scheduled_start TIME,
+    scheduled_end TIME,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );

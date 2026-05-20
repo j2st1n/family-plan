@@ -21,7 +21,7 @@ Done when:
 
 Target: 3-4 days.
 
-- Parent WeChat auth stub.
+- Parent username/password auth.
 - Children CRUD.
 - Child access code generation.
 - Child device binding.

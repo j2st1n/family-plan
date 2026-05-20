@@ -7,8 +7,7 @@ FastAPI backend for Family Plan MVP.
 Start PostgreSQL:
 
 ```bash
-cd /home/j2/docker
-docker compose -f family-plan-mvp-postgres.yml up -d
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 Run API from this directory:
