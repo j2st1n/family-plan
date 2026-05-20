@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.3] - 2026-05-20
+
+### Bug Fixes
+
+- per-redemption shop items with independent status
+
+
 ## [v0.3.2] - 2026-05-20
 
 ### Bug Fixes
 
 - expunge redeemed items to prevent identity map pollution
+
+
+### Maintenance
+
+- bump version to 0.3.2
 
 
 ## [v0.3.1] - 2026-05-20
