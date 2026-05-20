@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import Depends, Header, status
@@ -47,6 +48,13 @@ def get_current_child(
     )
     if device is None:
         raise api_error("unauthorized", "Invalid device token", status.HTTP_401_UNAUTHORIZED)
+    if device.created_at and datetime.now(UTC) - device.created_at.replace(tzinfo=UTC) > timedelta(days=30):
+        device.revoked_at = datetime.now(UTC)
+        db.commit()
+        raise api_error("unauthorized", "Device token expired, please re-bind", status.HTTP_401_UNAUTHORIZED)
+    if device.last_seen_at is None or datetime.now(UTC) - device.last_seen_at.replace(tzinfo=UTC) > timedelta(hours=1):
+        device.last_seen_at = datetime.now(UTC)
+        db.commit()
     child = db.get(Child, device.child_id)
     if child is None:
         raise api_error("unauthorized", "Child not found", status.HTTP_401_UNAUTHORIZED)
