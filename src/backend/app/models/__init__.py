@@ -8,6 +8,9 @@ from app.models.reward_ledger import RewardLedger
 from app.models.streak import Streak
 from app.models.task_template import TaskTemplate
 
+from app.models.shop_item import ShopItem
+
+
 __all__ = [
     "Child",
     "ChildAccessCode",
@@ -16,6 +19,7 @@ __all__ = [
     "Parent",
     "Plan",
     "RewardLedger",
+    "ShopItem",
     "Streak",
     "TaskTemplate",
 ]

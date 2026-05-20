@@ -13,6 +13,7 @@ from app.routes.daily_tasks import parent_router as parent_daily_router, router 
 from app.routes.devices import router as devices_router
 from app.routes.health import router as health_router
 from app.routes.plans import router as plans_router
+from app.routes.shop import child_router as child_shop_router, router as shop_router
 
 FORBIDDEN_SECRETS = {"", "family-plan-dev", "change-me-in-production"}
 MIN_SECRET_LENGTH = 32
@@ -45,6 +46,8 @@ def create_app() -> FastAPI:
     app.include_router(plans_router, prefix="/api/v1")
     app.include_router(daily_tasks_router, prefix="/api/v1")
     app.include_router(parent_daily_router, prefix="/api/v1")
+    app.include_router(shop_router, prefix="/api/v1")
+    app.include_router(child_shop_router, prefix="/api/v1")
 
     if os.path.isdir("/app/static-built/assets"):
         app.mount("/assets", StaticFiles(directory="/app/static-built/assets"), name="assets")

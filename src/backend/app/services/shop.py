@@ -1,0 +1,80 @@
+from uuid import UUID
+
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from app.core.errors import api_error
+from app.models.reward_ledger import RewardLedger
+from app.models.shop_item import ShopItem
+from app.schemas.shop import ShopItemCreate, WishApprove, WishCreate
+
+
+def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
+    return list(
+        db.scalars(
+            select(ShopItem)
+            .where(ShopItem.child_id == child_id, ShopItem.status == "active")
+            .order_by(ShopItem.created_at.desc())
+        )
+    )
+
+
+def list_parent_shop(db: Session, parent_id: UUID) -> list[ShopItem]:
+    return list(
+        db.scalars(
+            select(ShopItem)
+            .where(ShopItem.parent_id == parent_id)
+            .order_by(ShopItem.created_at.desc())
+        )
+    )
+
+
+def create_shop_item(db: Session, parent_id: UUID, data: ShopItemCreate) -> ShopItem:
+    item = ShopItem(parent_id=parent_id, title=data.title, description=data.description, star_cost=data.star_cost, child_id=data.child_id, created_by="parent")
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+def create_wish(db: Session, child_id: UUID, parent_id: UUID, data: WishCreate) -> ShopItem:
+    item = ShopItem(parent_id=parent_id, child_id=child_id, title=data.title, description=data.description, star_cost=0, status="pending", created_by="child")
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+def approve_wish(db: Session, item_id: UUID, parent_id: UUID, data: WishApprove) -> ShopItem:
+    item = db.scalar(select(ShopItem).where(ShopItem.id == item_id, ShopItem.parent_id == parent_id))
+    if item is None or item.status != "pending":
+        raise api_error("not_found", "Wish not found or not pending", 404)
+    item.star_cost = data.star_cost
+    item.status = "active"
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
+    item = db.scalar(select(ShopItem).where(ShopItem.id == item_id, ShopItem.child_id == child_id, ShopItem.status == "active"))
+    if item is None:
+        raise api_error("not_found", "Item not found", 404)
+
+    total = db.scalar(select(func.coalesce(func.sum(RewardLedger.stars_delta), 0)).where(RewardLedger.child_id == child_id))
+    if (int(total or 0)) < item.star_cost:
+        raise api_error("conflict", "Not enough stars", 409)
+
+    db.add(RewardLedger(child_id=child_id, source_type="shop_redeem", source_id=item.id, stars_delta=-item.star_cost, reason=item.title))
+    item.status = "redeemed"
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+def remove_shop_item(db: Session, item_id: UUID, parent_id: UUID) -> None:
+    item = db.scalar(select(ShopItem).where(ShopItem.id == item_id, ShopItem.parent_id == parent_id))
+    if item is None:
+        raise api_error("not_found", "Item not found", 404)
+    item.status = "removed"
+    db.commit()
