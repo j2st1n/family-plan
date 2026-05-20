@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.1.10] - 2026-05-20
+
+### Bug Fixes
+
+- use alembic instead of uv in Docker CMD
+
+
 ## [v0.1.9] - 2026-05-20
 
 ### Bug Fixes
 
 - auto-run alembic migrations on startup
+
+
+### Maintenance
+
+- bump version to 0.1.9
 
 
 ## [v0.1.8] - 2026-05-20
