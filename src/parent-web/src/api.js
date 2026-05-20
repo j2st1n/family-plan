@@ -153,6 +153,14 @@ const api = {
   approveWish(token, itemId, starCost) {
     return request(`/shop/items/${itemId}/approve`, { method: "PATCH", headers: h(token), body: JSON.stringify({ star_cost: starCost }) });
   },
+
+  fetchRedemptions(token) {
+    return request("/shop/redemptions", { headers: h(token) });
+  },
+
+  fulfillItem(token, itemId) {
+    return request(`/shop/items/${itemId}/fulfill`, { method: "PATCH", headers: h(token) });
+  },
 };
 
 export default api;

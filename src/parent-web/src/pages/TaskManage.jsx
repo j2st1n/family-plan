@@ -228,10 +228,14 @@ function ShopPanel({ token, plan, child }) {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", desc: "", stars: "" });
   const [approveStars, setApproveStars] = useState({});
+  const [redemptions, setRedemptions] = useState([]);
 
   const load = useCallback(async () => {
     try { const list = await api.fetchShop(token); setItems(list); } catch {}
+    try { const reds = await api.fetchRedemptions(token); setRedemptions(reds); } catch {}
   }, [token]);
+
+  async function handleFulfill(id) { await api.fulfillItem(token, id); load(); }
 
   useEffect(() => { load(); }, [load]);
 
@@ -315,6 +319,23 @@ function ShopPanel({ token, plan, child }) {
           </div>
         )}
       </div>
+
+      {redemptions.length > 0 && <div style={{ marginTop: "0.8rem", borderTop: "1px solid #e8e4df", paddingTop: "0.6rem" }}>
+        <p style={{ fontSize: "0.8rem", color: "#8c8985", marginBottom: "0.3rem" }}>已兑换</p>
+        {redemptions.map(r => (
+          <div key={r.id} style={s.shopRow}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{r.title}</p>
+              <p style={{ fontSize: "0.75rem", color: "#8c8985" }}>⭐{r.star_cost} · {r.child_id ? "孩子" : ""}</p>
+            </div>
+            {r.status === "redeemed" ? (
+              <button onClick={() => handleFulfill(r.id)} style={s.shopAct}>已兑现</button>
+            ) : (
+              <span style={{ fontSize: "0.75rem", color: "#6b8f71" }}>已兑现</span>
+            )}
+          </div>
+        ))}
+      </div>}
     </div>
   );
 }

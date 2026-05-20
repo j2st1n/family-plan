@@ -17,6 +17,8 @@ class ShopItem(Base):
     description: Mapped[str | None] = mapped_column(Text)
     star_cost: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    stock: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    fulfilled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_by: Mapped[str] = mapped_column(String(20), nullable=False, default="parent")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

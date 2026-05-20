@@ -10,7 +10,7 @@ from app.models.child import Child
 from app.models.child_device import ChildDevice
 from app.models.parent import Parent
 from app.schemas.shop import ShopItemCreate, ShopItemResponse, WishApprove, WishCreate
-from app.services.shop import approve_wish, create_shop_item, create_wish, list_parent_shop, list_shop_items, redeem_item, remove_shop_item, update_child_wish, update_parent_item
+from app.services.shop import approve_wish, create_shop_item, create_wish, fulfill_item, list_parent_shop, list_redemptions, list_shop_items, redeem_item, remove_shop_item, update_child_wish, update_parent_item
 
 router = APIRouter(prefix="/shop", tags=["shop"])
 child_router = APIRouter(prefix="/child/shop", tags=["child shop"])
@@ -39,6 +39,16 @@ def edit_shop_item(payload: ShopItemCreate, item_id: UUID, parent: Parent = Depe
 @router.patch("/items/{item_id}/approve", response_model=ShopItemResponse)
 def approve(payload: WishApprove, item_id: UUID, parent: Parent = Depends(get_current_parent), db: Session = Depends(get_db)):
     return ShopItemResponse.model_validate(approve_wish(db, item_id, parent.id, payload))
+
+
+@router.get("/redemptions", response_model=list[ShopItemResponse])
+def parent_redemptions(parent: Parent = Depends(get_current_parent), db: Session = Depends(get_db)):
+    return [ShopItemResponse.model_validate(i) for i in list_redemptions(db, parent.id)]
+
+
+@router.patch("/items/{item_id}/fulfill", response_model=ShopItemResponse)
+def fulfill(item_id: UUID, parent: Parent = Depends(get_current_parent), db: Session = Depends(get_db)):
+    return ShopItemResponse.model_validate(fulfill_item(db, item_id, parent.id))
 
 
 @child_router.get("/items", response_model=list[ShopItemResponse])

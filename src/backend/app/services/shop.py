@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -18,8 +19,8 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
         db.scalars(
             select(ShopItem)
             .where(
-                ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None))) |
-                ((ShopItem.child_id == child_id) & (ShopItem.status == "active")),
+        ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None))) |
+            ((ShopItem.child_id == child_id) & (ShopItem.status.in_(["active", "redeemed"]))),
             )
             .order_by(ShopItem.created_at.desc())
         )
@@ -37,7 +38,7 @@ def list_parent_shop(db: Session, parent_id: UUID) -> list[ShopItem]:
 
 
 def create_shop_item(db: Session, parent_id: UUID, data: ShopItemCreate) -> ShopItem:
-    item = ShopItem(parent_id=parent_id, title=data.title, description=data.description, star_cost=data.star_cost, child_id=data.child_id, created_by="parent")
+    item = ShopItem(parent_id=parent_id, title=data.title, description=data.description, star_cost=data.star_cost, child_id=data.child_id, stock=data.stock, created_by="parent")
     db.add(item)
     db.commit()
     db.refresh(item)
@@ -77,13 +78,18 @@ def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
     )
     if item is None:
         raise api_error("not_found", "Item not found", 404)
+    if item.stock is not None and item.stock <= 0:
+        raise api_error("conflict", "Out of stock", 409)
 
     total = db.scalar(select(func.coalesce(func.sum(RewardLedger.stars_delta), 0)).where(RewardLedger.child_id == child_id))
     if (int(total or 0)) < item.star_cost:
         raise api_error("conflict", "Not enough stars", 409)
 
     db.add(RewardLedger(child_id=child_id, source_type="shop_redeem", source_id=item.id, stars_delta=-item.star_cost, reason=item.title))
-    item.status = "redeemed"
+    if item.stock is not None:
+        item.stock -= 1
+    if item.stock is None or (item.stock is not None and item.stock <= 0):
+        item.status = "redeemed"
     db.commit()
     db.refresh(item)
     return item
@@ -104,6 +110,7 @@ def update_parent_item(db: Session, item_id: UUID, parent_id: UUID, data: ShopIt
     item.title = data.title
     item.description = data.description
     item.star_cost = data.star_cost
+    item.stock = data.stock
     item.status = "active"
     db.commit()
     db.refresh(item)
@@ -116,6 +123,27 @@ def update_child_wish(db: Session, item_id: UUID, child_id: UUID, data: WishCrea
         raise api_error("not_found", "Wish not found or not pending", 404)
     item.title = data.title
     item.description = data.description
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+def list_redemptions(db: Session, parent_id: UUID) -> list[ShopItem]:
+    return list(
+        db.scalars(
+            select(ShopItem)
+            .where(ShopItem.parent_id == parent_id, ShopItem.status.in_(["redeemed", "fulfilled"]))
+            .order_by(ShopItem.updated_at.desc())
+        )
+    )
+
+
+def fulfill_item(db: Session, item_id: UUID, parent_id: UUID) -> ShopItem:
+    item = db.scalar(select(ShopItem).where(ShopItem.id == item_id, ShopItem.parent_id == parent_id))
+    if item is None or item.status not in ("redeemed",):
+        raise api_error("not_found", "Item not found or not redeemed", 404)
+    item.status = "fulfilled"
+    item.fulfilled_at = datetime.now(UTC)
     db.commit()
     db.refresh(item)
     return item

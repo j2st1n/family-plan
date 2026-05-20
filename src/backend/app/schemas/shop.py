@@ -9,6 +9,7 @@ class ShopItemCreate(BaseModel):
     description: str | None = Field(default=None, max_length=2000)
     star_cost: int = Field(ge=1)
     child_id: UUID | None = None
+    stock: int | None = Field(default=None, ge=0)
 
 
 class ShopItemResponse(BaseModel):
@@ -21,6 +22,8 @@ class ShopItemResponse(BaseModel):
     description: str | None = None
     star_cost: int
     status: str
+    stock: int | None = None
+    fulfilled_at: datetime | None = None
     created_by: str
     created_at: datetime
 

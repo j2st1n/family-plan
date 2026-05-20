@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchShop, redeemItem, makeWish, editWish } from "../api.js";
 
+function fmtDate(s) { if (!s) return ""; return new Date(s).toLocaleDateString("zh-CN", { month: "short", day: "numeric" }); }
+
 export default function Shop({ stars }) {
   const [items, setItems] = useState([]);
   const [wishes, setWishes] = useState([]);
+  const [redeemed, setRedeemed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showWish, setShowWish] = useState(false);
@@ -16,7 +19,8 @@ export default function Shop({ stars }) {
     try {
       const all = await fetchShop();
       setItems(all.filter(i => i.status === "active"));
-      setWishes(all.filter(i => i.status !== "active"));
+      setWishes(all.filter(i => i.status === "pending"));
+      setRedeemed(all.filter(i => i.status === "redeemed" || i.status === "fulfilled"));
     } catch { setError("加载失败"); }
     finally { setLoading(false); }
   }, []);
@@ -56,12 +60,32 @@ export default function Shop({ stars }) {
           <div style={{ flex: 1 }}>
             <p style={{ fontWeight: 600, fontSize: "1rem" }}>{item.title}</p>
             {item.description && <p style={{ fontSize: "0.8rem", color: "#8c8985" }}>{item.description}</p>}
+            {item.stock != null && <p style={{ fontSize: "0.75rem", color: "#c97070" }}>仅剩 {item.stock} 件</p>}
           </div>
           <button onClick={() => handleRedeem(item)} style={s.redeemBtn}>⭐{item.star_cost} 兑换</button>
         </div>
       ))}
 
       {items.length === 0 && <p style={{ color: "#8c8985", textAlign: "center" }}>暂无商品</p>}
+
+      {redeemed.length > 0 && (
+        <div style={{ marginTop: "1.5rem", borderTop: "1px solid #e8e4df", paddingTop: "1rem" }}>
+          <h3 style={{ fontWeight: 600, marginBottom: "0.4rem" }}>已兑换</h3>
+          {redeemed.map(r => (
+            <div key={r.id} style={{ ...s.card, background: "#fafafa", opacity: 0.7 }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>{r.title}</p>
+                <p style={{ fontSize: "0.75rem", color: "#8c8985" }}>
+                  ⭐{r.star_cost} · {r.fulfilled_at ? `已兑现 ${fmtDate(r.fulfilled_at)}` : `待兑现 ${fmtDate(r.created_at)}`}
+                </p>
+              </div>
+              <span style={{ fontSize: "0.75rem", color: r.fulfilled_at ? "#6b8f71" : "#d4a853" }}>
+                {r.fulfilled_at ? "已兑现" : "待兑现"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={{ marginTop: "1.5rem", borderTop: "1px solid #e8e4df", paddingTop: "1rem" }}>
         <h3 style={{ fontWeight: 600, marginBottom: "0.4rem" }}>我的许愿</h3>
@@ -81,11 +105,9 @@ export default function Shop({ stars }) {
                 <div style={{ flex: 1 }}>
                   <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>{w.title}</p>
                   {w.description && <p style={{ fontSize: "0.8rem", color: "#8c8985" }}>{w.description}</p>}
-                  <p style={{ fontSize: "0.75rem", color: w.status === "pending" ? "#c97070" : "#6b8f71", marginTop: "0.15rem" }}>
-                    {w.status === "pending" ? "审核中" : `⭐${w.star_cost}`}
-                  </p>
+                  <p style={{ fontSize: "0.75rem", color: "#c97070", marginTop: "0.15rem" }}>审核中</p>
                 </div>
-                {w.status === "pending" && <button onClick={() => startEdit(w)} style={s.smallBtn}>修改</button>}
+                <button onClick={() => startEdit(w)} style={s.smallBtn}>修改</button>
               </>
             )}
           </div>
