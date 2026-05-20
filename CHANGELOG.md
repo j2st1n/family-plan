@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.2.2] - 2026-05-20
+
+### Bug Fixes
+
+- parent-created shop items now visible to child
+
+
 ## [v0.2.1] - 2026-05-20
 
 ### Bug Fixes
 
 - child shop route conflict + move shop to stars card
+
+
+### Maintenance
+
+- bump version to 0.2.1
 
 
 ## [v0.2.0] - 2026-05-20
