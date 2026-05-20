@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.1.11] - 2026-05-20
+
+### Other
+
+- security headers + device token 30-day expiration
+
+
 ## [v0.1.10] - 2026-05-20
 
 ### Bug Fixes
 
 - use alembic instead of uv in Docker CMD
+
+
+### Maintenance
+
+- bump version to 0.1.10
 
 
 ## [v0.1.9] - 2026-05-20
