@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.2] - 2026-05-20
+
+### Bug Fixes
+
+- expunge redeemed items to prevent identity map pollution
+
+
 ## [v0.3.1] - 2026-05-20
 
 ### Bug Fixes
 
 - migration server_default for existing redemptions
+
+
+### Maintenance
+
+- bump version to 0.3.1
 
 
 ## [v0.3.0] - 2026-05-20
