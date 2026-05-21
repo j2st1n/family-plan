@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.4] - 2026-05-21
+
+### Bug Fixes
+
+- expunge_all before redeemed query to isolate identity map
+
+
 ## [v0.3.3] - 2026-05-20
 
 ### Bug Fixes
 
 - per-redemption shop items with independent status
+
+
+### Maintenance
+
+- bump version to 0.3.3
 
 
 ## [v0.3.2] - 2026-05-20
