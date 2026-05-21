@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.5] - 2026-05-21
+
+### Features
+
+- streak threshold — parent sets completion rate requirement
+
+
 ## [v0.3.4] - 2026-05-21
 
 ### Bug Fixes
 
 - expunge_all before redeemed query to isolate identity map
+
+
+### Maintenance
+
+- bump version to 0.3.4
 
 
 ## [v0.3.3] - 2026-05-20
