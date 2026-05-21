@@ -110,11 +110,25 @@ def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | No
 
 
 def get_reward_summary(db: Session, child_id: UUID) -> dict:
+    from app.models.child import Child
+
     stars_total = _get_stars_total(db, child_id)
     streak = _get_or_create_streak(db, child_id)
+    child = db.get(Child, child_id)
+    threshold = child.streak_threshold if child and child.streak_threshold else 0
+
     if streak.last_completed_date and streak.last_completed_date < date.today():
         streak.current_days = 0
         db.commit()
+    elif threshold > 0 and streak.last_completed_date == date.today():
+        today = date.today()
+        tasks = list(db.scalars(select(DailyTask).where(DailyTask.child_id == child_id, DailyTask.task_date == today)))
+        if tasks:
+            completed = sum(1 for t in tasks if t.status == "completed")
+            rate = int((completed / len(tasks)) * 100)
+            if rate < threshold:
+                streak.current_days = 0
+                db.commit()
     return {"stars_total": stars_total, "current_streak_days": streak.current_days}
 
 

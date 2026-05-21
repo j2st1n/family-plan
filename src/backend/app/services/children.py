@@ -40,6 +40,8 @@ def update_child(db: Session, child_id: UUID, parent_id: UUID, data: ChildUpdate
         child.name = data.name
     if data.grade_label is not None:
         child.grade_label = data.grade_label
+    if data.streak_threshold is not None:
+        child.streak_threshold = data.streak_threshold
     db.commit()
     db.refresh(child)
     return child

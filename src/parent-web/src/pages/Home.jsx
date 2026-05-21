@@ -11,7 +11,7 @@ export default function Home({ token, onLogout }) {
   const [selectedChild, setSelectedChild] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editingChild, setEditingChild] = useState(null);
-  const [editForm, setEditForm] = useState({ name: "", grade: "" });
+  const [editForm, setEditForm] = useState({ name: "", grade: "", threshold: "80" });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -27,11 +27,11 @@ export default function Home({ token, onLogout }) {
   useEffect(() => { load(); }, [load]);
 
   function toggleView(childId) { setToggles(p => ({ ...p, [childId]: !p[childId] })); }
-  function startEdit(c) { setEditingChild(c.id); setEditForm({ name: c.name, grade: c.grade_label || "" }); }
+  function startEdit(c) { setEditingChild(c.id); setEditForm({ name: c.name, grade: c.grade_label || "", threshold: c.streak_threshold?.toString() || "80" }); }
 
   async function saveEdit() {
     if (!editingChild || !editForm.name.trim()) return;
-    await api.updateChild(token, editingChild, { name: editForm.name.trim(), grade_label: editForm.grade.trim() || null });
+    await api.updateChild(token, editingChild, { name: editForm.name.trim(), grade_label: editForm.grade.trim() || null, streak_threshold: parseInt(editForm.threshold) || 0 });
     setEditingChild(null); load();
   }
 
@@ -75,6 +75,7 @@ export default function Home({ token, onLogout }) {
               <div>
                 <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} style={styles.ei} autoFocus />
                 <input value={editForm.grade} onChange={e => setEditForm({ ...editForm, grade: e.target.value })} placeholder="年级（选填）" style={styles.ei} />
+                <input value={editForm.threshold} onChange={e => setEditForm({ ...editForm, threshold: e.target.value })} placeholder="打卡阈值 0-100" style={styles.ei} />
                 <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.4rem" }}>
                   <button onClick={saveEdit} style={styles.sb}>保存</button>
                   <button onClick={() => setEditingChild(null)} style={styles.cb}>取消</button>

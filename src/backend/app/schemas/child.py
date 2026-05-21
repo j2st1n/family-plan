@@ -12,6 +12,7 @@ class ChildCreate(BaseModel):
 class ChildUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=80)
     grade_label: str | None = Field(default=None, max_length=40)
+    streak_threshold: int | None = Field(default=None, ge=0, le=100)
 
 
 class ChildResponse(BaseModel):
