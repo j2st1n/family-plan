@@ -26,6 +26,7 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
             .order_by(ShopItem.created_at.desc())
         )
     )
+    db.expunge_all()
     redemptions = list(
         db.scalars(
             select(Redemption).where(Redemption.child_id == child_id).order_by(Redemption.created_at.desc())
@@ -36,7 +37,6 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
         item = db.get(ShopItem, red.shop_item_id)
         if item is None:
             continue
-        db.expunge(item)
         item.redeemed_by_child = True  # type: ignore[attr-defined]
         item.redemption_id = red.id  # type: ignore[attr-defined]
         item.redemption_status = red.status  # type: ignore[attr-defined]
