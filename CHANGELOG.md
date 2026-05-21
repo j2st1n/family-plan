@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.6] - 2026-05-21
+
+### Bug Fixes
+
+- migration server_default for streak_threshold
+
+
 ## [v0.3.5] - 2026-05-21
 
 ### Features
 
 - streak threshold — parent sets completion rate requirement
+
+
+### Maintenance
+
+- bump version to 0.3.5
 
 
 ## [v0.3.4] - 2026-05-21
