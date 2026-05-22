@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.13] - 2026-05-22
+
+### Bug Fixes
+
+- translate shop error messages to Chinese for child PWA
+
+
 ## [v0.3.12] - 2026-05-22
 
 ### Bug Fixes
 
 - child shop errors show reason, banner instead of full-page, wish catches
+
+
+### Maintenance
+
+- bump version to 0.3.12
 
 
 ## [v0.3.11] - 2026-05-22
