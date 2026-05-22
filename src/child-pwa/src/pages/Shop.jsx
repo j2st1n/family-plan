@@ -16,7 +16,7 @@ export default function Shop({ active }) {
   const [editForm, setEditForm] = useState({ title: "", desc: "" });
 
   const load = useCallback(async () => {
-    setLoading(true);
+    setLoading(true); setError("");
     try {
       const all = await fetchShop();
       setItems(all.filter(i => i.status === "active" && !i.redeemed_by_child));
@@ -31,27 +31,36 @@ export default function Shop({ active }) {
 
   async function handleRedeem(item) {
     if (!window.confirm(`用 ${item.star_cost}⭐ 兑换「${item.title}」？`)) return;
-    try { await redeemItem(item.id); load(); } catch { setError("兑换失败"); }
+    try { await redeemItem(item.id); load(); } catch (err) { setError(err.message); }
   }
 
   async function handleWish() {
     if (!wishForm.title.trim()) return;
-    await makeWish(wishForm.title.trim(), wishForm.desc.trim() || null);
-    setWishForm({ title: "", desc: "" }); setShowWish(false); load();
+    try {
+      await makeWish(wishForm.title.trim(), wishForm.desc.trim() || null);
+      setWishForm({ title: "", desc: "" }); setShowWish(false); load();
+    } catch (err) { setError(err.message); }
   }
 
   function startEdit(w) { setEditingId(w.id); setEditForm({ title: w.title, desc: w.description || "" }); }
   async function saveEdit() {
     if (!editForm.title.trim()) return;
-    await editWish(editingId, editForm.title.trim(), editForm.desc.trim() || null);
-    setEditingId(null); load();
+    try {
+      await editWish(editingId, editForm.title.trim(), editForm.desc.trim() || null);
+      setEditingId(null); load();
+    } catch (err) { setError(err.message); }
   }
 
   if (loading) return <p style={{ color: "#73706b", textAlign: "center", paddingTop: "3rem" }}>加载中…</p>;
-  if (error) return <p style={{ color: "#c97070", textAlign: "center", paddingTop: "3rem" }}>{error}</p>;
 
   return (
     <div>
+      {error && (
+        <div style={{ background: "#fef0f0", borderRadius: "12px", padding: "0.7rem 1rem", marginBottom: "0.8rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span style={{ flex: 1, fontSize: "0.85rem", color: "#c97070" }}>{error}</span>
+          <button onClick={() => setError("")} style={{ color: "#c97070", fontSize: "1rem", fontWeight: 700, padding: "0.1rem 0.3rem" }}>✕</button>
+        </div>
+      )}
       <div style={{ marginBottom: "1rem" }}>
         <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#3d9e6b" }}>星星商城</h2>
         <p style={{ fontSize: "0.9rem", color: "#c4912a", marginTop: "0.2rem" }}>余额 ⭐{stars}</p>

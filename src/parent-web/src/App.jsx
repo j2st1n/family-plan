@@ -35,7 +35,7 @@ export default function App() {
       </div>
       <nav className="nav-tabs" role="navigation">
         <button className={`nav-tab${tab === "home" ? " on" : ""}`} onClick={() => setTab("home")}>首页</button>
-        <button className={`nav-tab${tab === "shop" ? " on" : ""}`} onClick={() => setTab("shop")}>商城</button>
+        <button className={`nav-tab${tab === "shop" ? " on" : ""}`} onClick={() => setTab("shop")}>星星商城</button>
       </nav>
     </>
   );

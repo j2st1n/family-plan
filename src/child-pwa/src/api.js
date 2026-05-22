@@ -82,20 +82,29 @@ export async function fetchShop() {
   return res.json();
 }
 
+async function extractError(res, fallback) {
+  try {
+    const body = await res.json();
+    return body.error?.message || body.detail?.message || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function redeemItem(itemId) {
   const res = await fetch(`${API}/child/shop/items/${itemId}/redeem`, { method: "POST", headers: headers() });
-  if (!res.ok) throw new Error("兑换失败");
+  if (!res.ok) throw new Error(await extractError(res, "兑换失败"));
   return res.json();
 }
 
 export async function makeWish(title, description) {
   const res = await fetch(`${API}/child/shop/wishes`, { method: "POST", headers: headers(), body: JSON.stringify({ title, description }) });
-  if (!res.ok) throw new Error("许愿失败");
+  if (!res.ok) throw new Error(await extractError(res, "许愿失败"));
   return res.json();
 }
 
 export async function editWish(itemId, title, description) {
   const res = await fetch(`${API}/child/shop/wishes/${itemId}`, { method: "PATCH", headers: headers(), body: JSON.stringify({ title, description }) });
-  if (!res.ok) throw new Error("修改失败");
+  if (!res.ok) throw new Error(await extractError(res, "修改失败"));
   return res.json();
 }
