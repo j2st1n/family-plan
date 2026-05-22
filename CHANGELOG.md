@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.11] - 2026-05-22
+
+### Bug Fixes
+
+- keep tabs mounted to avoid state loss on switch
+
+
 ## [v0.3.10] - 2026-05-22
 
 ### Features
 
 - grade cascade select, input labels, threshold display on child card
+
+
+### Maintenance
+
+- bump version to 0.3.10
 
 
 ## [v0.3.9] - 2026-05-22
