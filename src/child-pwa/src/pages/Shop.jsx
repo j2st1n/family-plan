@@ -3,7 +3,7 @@ import { fetchShop, fetchToday, redeemItem, makeWish, editWish } from "../api.js
 
 function fmtDate(s) { if (!s) return ""; return new Date(s).toLocaleDateString("zh-CN", { month: "short", day: "numeric" }); }
 
-export default function Shop() {
+export default function Shop({ active }) {
   const [items, setItems] = useState([]);
   const [wishes, setWishes] = useState([]);
   const [redeemed, setRedeemed] = useState([]);
@@ -27,7 +27,7 @@ export default function Shop() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (active) load(); }, [load, active]);
 
   async function handleRedeem(item) {
     if (!window.confirm(`用 ${item.star_cost}⭐ 兑换「${item.title}」？`)) return;

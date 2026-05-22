@@ -27,8 +27,12 @@ export default function App() {
 
   return (
     <>
-      {tab === "home" && <Home token={token} onLogout={() => { localStorage.removeItem("parent_token"); setToken(null); }} />}
-      {tab === "shop" && <Shop token={token} />}
+      <div style={{ display: tab === "home" ? undefined : "none" }}>
+        <Home token={token} onLogout={() => { localStorage.removeItem("parent_token"); setToken(null); }} />
+      </div>
+      <div style={{ display: tab === "shop" ? undefined : "none" }}>
+        <Shop token={token} />
+      </div>
       <nav className="nav-tabs" role="navigation">
         <button className={`nav-tab${tab === "home" ? " on" : ""}`} onClick={() => setTab("home")}>首页</button>
         <button className={`nav-tab${tab === "shop" ? " on" : ""}`} onClick={() => setTab("shop")}>商城</button>

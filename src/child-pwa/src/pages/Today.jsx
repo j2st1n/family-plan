@@ -6,7 +6,7 @@ const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
 function pad(n) { return String(n).padStart(2, "0"); }
 function minutesToTime(m) { return `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`; }
 
-export default function Today({ child, onExpired }) {
+export default function Today({ child, onExpired, active }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -26,7 +26,7 @@ export default function Today({ child, onExpired }) {
     finally { setLoading(false); }
   }, [onExpired]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (active) load(); }, [load, active]);
 
   async function handleComplete(task) {
     setCompletingId(task.id);
