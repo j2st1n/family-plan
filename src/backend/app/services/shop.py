@@ -1,3 +1,4 @@
+from copy import copy as shallow_copy
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -37,10 +38,11 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
         item = db.get(ShopItem, red.shop_item_id)
         if item is None:
             continue
-        item.redeemed_by_child = True  # type: ignore[attr-defined]
-        item.redemption_id = red.id  # type: ignore[attr-defined]
-        item.redemption_status = red.status  # type: ignore[attr-defined]
-        result.append(item)
+        entry = shallow_copy(item)
+        entry.redeemed_by_child = True  # type: ignore[attr-defined]
+        entry.redemption_id = red.id  # type: ignore[attr-defined]
+        entry.redemption_status = red.status  # type: ignore[attr-defined]
+        result.append(entry)
     return active + result
 
 
