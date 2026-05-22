@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchToday, completeTask, createChildTask, scheduleChildTask, updateChildTask, deleteChildTask } from "../api.js";
-import Shop from "./Shop.jsx";
 
 const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -19,8 +18,6 @@ export default function Today({ child, onExpired }) {
   const [scheduleForm, setScheduleForm] = useState({ start: "", end: "" });
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", minutes: "", stars: 1, start: "", end: "" });
-
-  const [showShop, setShowShop] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -75,18 +72,11 @@ export default function Today({ child, onExpired }) {
   if (loading) return <div style={{ textAlign: "center", paddingTop: "40vh", color: "#73706b" }}>加载中…</div>;
   if (error) return <div style={{ textAlign: "center", paddingTop: "40vh" }}><p style={{ color: "#c97070", marginBottom: "1rem" }}>{error}</p><button onClick={load} style={{ color: "#3d9e6b", fontSize: "1rem" }}>重试</button></div>;
 
-  if (showShop) return (
-    <div>
-      <div style={{ marginBottom: "1rem" }}><button onClick={() => setShowShop(false)} style={{ color: "#3d9e6b", fontSize: "0.95rem", background: "none", border: "none", cursor: "pointer" }}>← 返回</button></div>
-      <Shop stars={data?.rewards?.stars_total ?? 0} />
-    </div>
-  );
-
   return (
     <div>
       <div style={{ marginBottom: "1.4rem" }}><h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>你好，{child?.name ?? "小朋友"}</h1><p style={{ color: "#73706b", marginTop: "0.3rem", fontSize: "0.95rem" }}>{dateStr}</p></div>
       <div style={{ display: "flex", gap: "0.8rem", marginBottom: "1.4rem" }}>
-        <div onClick={() => setShowShop(true)} style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", cursor: "pointer" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#c4912a" }}>⭐ {data?.rewards?.stars_total ?? 0}</p><p style={{ fontSize: "0.75rem", color: "#3d9e6b" }}>兑换</p></div>
+        <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#c4912a" }}>⭐ {data?.rewards?.stars_total ?? 0}</p><p style={{ fontSize: "0.75rem", color: "#73706b" }}>星星</p></div>
         <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>🔥 {data?.rewards?.current_streak_days ?? 0}</p><p style={{ fontSize: "0.8rem", color: "#73706b" }}>连续天数</p></div>
       </div>
 

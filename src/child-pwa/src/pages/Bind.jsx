@@ -26,20 +26,13 @@ export default function Bind({ onBound }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ textAlign: "center", paddingTop: "32vh" }}>
-      <h1
-        style={{
-          fontSize: "2rem",
-          fontWeight: 700,
-          color: "#3d9e6b",
-          marginBottom: "0.4rem",
-        }}
-      >
-        Family Plan
-      </h1>
-      <p style={{ fontSize: "1rem", color: "#73706b", marginBottom: "2rem" }}>
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "20vh" }}>
+      <div className="brand-icon">🌟</div>
+      <h1 style={{ fontSize: "1.7rem", fontWeight: 700, fontFamily: "\"Noto Sans SC\", \"PingFang SC\", -apple-system, BlinkMacSystemFont, sans-serif", letterSpacing: "-0.02em", marginBottom: 6 }}>Family Plan</h1>
+      <p style={{ fontSize: "0.9rem", color: "#73706b", marginBottom: "2rem" }}>
         输入家长给您的访问码
       </p>
+      <div style={{ width: "100%", maxWidth: 380 }}>
       <input
         type="text"
         inputMode="numeric"
@@ -83,6 +76,7 @@ export default function Bind({ onBound }) {
       >
         {loading ? "绑定中…" : "绑定"}
       </button>
+      </div>
     </form>
   );
 }

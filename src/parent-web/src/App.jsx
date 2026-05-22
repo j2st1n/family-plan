@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
+import Shop from "./pages/Shop.jsx";
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem("parent_token"));
+  const [tab, setTab] = useState("home");
 
   useEffect(() => {
     if (!token) return;
@@ -23,5 +25,14 @@ export default function App() {
     return <Login onLogin={setToken} />;
   }
 
-  return <Home token={token} onLogout={() => { localStorage.removeItem("parent_token"); setToken(null); }} />;
+  return (
+    <>
+      {tab === "home" && <Home token={token} onLogout={() => { localStorage.removeItem("parent_token"); setToken(null); }} />}
+      {tab === "shop" && <Shop token={token} />}
+      <nav className="nav-tabs" role="navigation">
+        <button className={`nav-tab${tab === "home" ? " on" : ""}`} onClick={() => setTab("home")}>首页</button>
+        <button className={`nav-tab${tab === "shop" ? " on" : ""}`} onClick={() => setTab("shop")}>商城</button>
+      </nav>
+    </>
+  );
 }

@@ -22,21 +22,25 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ textAlign: "center", paddingTop: "30vh" }}>
-      <h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b", marginBottom: "0.5rem" }}>Family Plan</h1>
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "18vh" }}>
+      <div className="brand-icon">🌟</div>
+      <h1 style={{ fontSize: "1.5rem", fontWeight: 700, fontFamily: "\"Noto Sans SC\", \"PingFang SC\", -apple-system, BlinkMacSystemFont, sans-serif", letterSpacing: "-0.02em", marginBottom: 6 }}>Family Plan</h1>
+      <p style={{ color: "#73706b", fontSize: "0.9rem", marginBottom: 28 }}>家长端 · 亲子计划管理</p>
 
-      <input placeholder="用户名" value={username} onChange={e => setUsername(e.target.value)} autoFocus style={st} />
-      <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} style={st} />
+      <div style={{ width: "100%", maxWidth: 340 }}>
+        <input placeholder="用户名" value={username} onChange={e => setUsername(e.target.value)} autoFocus style={st} />
+        <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} style={st} />
 
-      {error && <p style={{ color: "#c97070", marginBottom: "0.6rem", fontSize: "0.9rem" }}>{error}</p>}
+        {error && <p style={{ color: "#c97070", marginBottom: "0.6rem", fontSize: "0.9rem", textAlign: "center" }}>{error}</p>}
 
-      <button type="submit" disabled={loading} style={{ width: "100%", padding: "0.7rem", fontSize: "1rem", fontWeight: 600, color: "#fff", background: loading ? "#8cb99a" : "#3d9e6b", borderRadius: "12px", marginBottom: "0.6rem" }}>
-        {loading ? "处理中…" : mode === "login" ? "登录" : "注册"}
-      </button>
+        <button type="submit" disabled={loading} style={{ width: "100%", padding: "0.75rem", fontSize: "1rem", fontWeight: 650, color: "#fff", background: loading ? "#8cb99a" : "#3d9e6b", borderRadius: "14px", marginBottom: "0.8rem", fontFamily: "\"Noto Sans SC\", \"PingFang SC\", -apple-system, BlinkMacSystemFont, sans-serif", letterSpacing: "-0.01em" }}>
+          {loading ? "处理中…" : mode === "login" ? "登录" : "注册"}
+        </button>
 
-      <button type="button" onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }} style={{ color: "#3d9e6b", fontSize: "0.9rem", background: "none", border: "none", cursor: "pointer" }}>
-        {mode === "login" ? "没有账号？注册" : "已有账号？登录"}
-      </button>
+        <button type="button" onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }} style={{ width: "100%", color: "#3d9e6b", fontSize: "0.88rem", fontWeight: 550, background: "none", border: "none", cursor: "pointer", textAlign: "center" }}>
+          {mode === "login" ? "没有账号？注册" : "已有账号？登录"}
+        </button>
+      </div>
     </form>
   );
 }

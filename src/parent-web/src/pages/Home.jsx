@@ -3,6 +3,8 @@ import api from "../api.js";
 import ChildCreate from "./ChildCreate.jsx";
 import TaskManage from "./TaskManage.jsx";
 
+const AVATARS = ["#3d9e6b", "#c4912a", "#5b8fb9", "#c97070", "#8b6f9e", "#4b9c64"];
+
 export default function Home({ token, onLogout }) {
   const [children, setChildren] = useState([]);
   const [dashboards, setDashboards] = useState({});
@@ -83,16 +85,19 @@ export default function Home({ token, onLogout }) {
               </div>
             ) : (
               <>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                  <div className="child-avatar" style={{ background: AVATARS[c.id.charCodeAt?.(0) % AVATARS.length || 0] }}>{c.name[0]}</div>
                   <div onClick={() => { setSelectedChild(c); setView("task-manage"); }} style={{ cursor: "pointer", flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", flexWrap: "wrap" }}>
-                      <span style={{ fontSize: "1.1rem", fontWeight: 600 }}>{c.name}</span>
-                      {c.grade_label && <span style={{ fontSize: "0.8rem", color: "#73706b" }}>{c.grade_label}</span>}
-                      <span style={{ fontSize: "0.85rem", color: "#c4912a" }}>⭐{stars}</span>
-                      <span style={{ fontSize: "0.85rem", color: "#3d9e6b" }}>🔥{streak}</span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", flexWrap: "wrap", marginBottom: 2 }}>
+                      <span style={{ fontSize: "1rem", fontWeight: 700, fontFamily: "\"Noto Sans SC\", \"PingFang SC\", -apple-system, BlinkMacSystemFont, sans-serif" }}>{c.name}</span>
+                      {c.grade_label && <span style={{ fontSize: "0.78rem", color: "#73706b" }}>{c.grade_label}</span>}
+                    </div>
+                    <div style={{ display: "flex", gap: "0.4rem" }}>
+                      <span className="stat-chip">⭐ {stars}</span>
+                      <span className="stat-chip green">🔥 {streak}</span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: "0.3rem", alignItems: "center", flexShrink: 0, marginLeft: "0.5rem" }}>
+                  <div style={{ display: "flex", gap: "0.2rem", alignItems: "center", flexShrink: 0 }}>
                     <button onClick={() => toggleView(c.id)} style={{ ...styles.tg, background: isCumulative ? "#3d9e6b" : "#efece8", color: isCumulative ? "#fff" : "#73706b" }}>
                       {isCumulative ? "累计" : "今日"}
                     </button>
@@ -101,11 +106,11 @@ export default function Home({ token, onLogout }) {
                   </div>
                 </div>
                 {rate !== null && !isCumulative && (
-                  <div style={{ marginTop: "0.6rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <div style={{ marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px solid #f0ece6", display: "flex", alignItems: "center", gap: "0.6rem" }}>
                     <ProgressRing percent={rate} />
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: "0.9rem", fontWeight: 650, letterSpacing: "-0.01em" }}>{completed}/{total} 项完成</p>
-                      <p style={{ fontSize: "0.75rem", color: "#73706b", marginTop: "0.1rem" }}>当日进度</p>
+                      <p style={{ fontSize: "0.85rem", fontWeight: 650, letterSpacing: "-0.01em" }}>{completed}/{total} 项完成</p>
+                      <p style={{ fontSize: "0.72rem", color: "#73706b", marginTop: "0.05rem" }}>当日进度</p>
                     </div>
                   </div>
                 )}

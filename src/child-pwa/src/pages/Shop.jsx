@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchShop, redeemItem, makeWish, editWish } from "../api.js";
+import { fetchShop, fetchToday, redeemItem, makeWish, editWish } from "../api.js";
 
 function fmtDate(s) { if (!s) return ""; return new Date(s).toLocaleDateString("zh-CN", { month: "short", day: "numeric" }); }
 
-export default function Shop({ stars }) {
+export default function Shop() {
   const [items, setItems] = useState([]);
   const [wishes, setWishes] = useState([]);
   const [redeemed, setRedeemed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [stars, setStars] = useState(0);
   const [showWish, setShowWish] = useState(false);
   const [wishForm, setWishForm] = useState({ title: "", desc: "" });
   const [editingId, setEditingId] = useState(null);
@@ -21,6 +22,7 @@ export default function Shop({ stars }) {
       setItems(all.filter(i => i.status === "active" && !i.redeemed_by_child));
       setWishes(all.filter(i => i.status === "pending"));
       setRedeemed(all.filter(i => i.redeemed_by_child));
+      try { const today = await fetchToday(); setStars(today.rewards?.stars_total ?? 0); } catch {}
     } catch { setError("加载失败"); }
     finally { setLoading(false); }
   }, []);

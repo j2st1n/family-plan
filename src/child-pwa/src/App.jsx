@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Bind from "./pages/Bind.jsx";
 import Today from "./pages/Today.jsx";
+import Shop from "./pages/Shop.jsx";
 
 export default function App() {
   const [deviceToken, setDeviceToken] = useState(() => localStorage.getItem("device_token"));
@@ -11,6 +12,7 @@ export default function App() {
       return null;
     }
   });
+  const [tab, setTab] = useState("today");
 
   function handleBound(token, profile) {
     localStorage.setItem("device_token", token);
@@ -30,5 +32,14 @@ export default function App() {
     return <Bind onBound={handleBound} />;
   }
 
-  return <Today child={child} onExpired={handleExpired} />;
+  return (
+    <>
+      {tab === "today" && <Today child={child} onExpired={handleExpired} />}
+      {tab === "shop" && <Shop />}
+      <nav className="nav-tabs" role="navigation">
+        <button className={`nav-tab${tab === "today" ? " on" : ""}`} onClick={() => setTab("today")}>今日任务</button>
+        <button className={`nav-tab${tab === "shop" ? " on" : ""}`} onClick={() => setTab("shop")}>星星商城</button>
+      </nav>
+    </>
+  );
 }
