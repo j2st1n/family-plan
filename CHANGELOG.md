@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.7] - 2026-05-22
+
+### Other
+
+- green accent color scheme
+
+
 ## [v0.3.6] - 2026-05-21
 
 ### Bug Fixes
 
 - migration server_default for streak_threshold
+
+
+### Maintenance
+
+- bump version to 0.3.6
 
 
 ## [v0.3.5] - 2026-05-21
