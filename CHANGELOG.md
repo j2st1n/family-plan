@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.10] - 2026-05-22
+
+### Features
+
+- grade cascade select, input labels, threshold display on child card
+
+
 ## [v0.3.9] - 2026-05-22
 
 ### Bug Fixes
 
 - shallow copy per redemption to isolate identity map
+
+
+### Maintenance
+
+- bump version to 0.3.9
 
 
 ## [v0.3.8] - 2026-05-22
