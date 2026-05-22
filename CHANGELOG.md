@@ -1,6 +1,18 @@
 # Changelog
 
+## [v0.3.8] - 2026-05-22
+
+### Features
+
+- structural redesign — tab navigation, shop page, login polish
+
+
 ## [v0.3.7] - 2026-05-22
+
+### Maintenance
+
+- bump version to 0.3.7
+
 
 ### Other
 
