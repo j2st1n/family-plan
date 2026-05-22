@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.9] - 2026-05-22
+
+### Bug Fixes
+
+- shallow copy per redemption to isolate identity map
+
+
 ## [v0.3.8] - 2026-05-22
 
 ### Features
 
 - structural redesign — tab navigation, shop page, login polish
+
+
+### Maintenance
+
+- bump version to 0.3.8
 
 
 ## [v0.3.7] - 2026-05-22
