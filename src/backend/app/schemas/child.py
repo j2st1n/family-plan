@@ -21,6 +21,7 @@ class ChildResponse(BaseModel):
     id: UUID
     name: str
     grade_label: str | None = None
+    streak_threshold: int = 80
     status: str
     created_at: datetime
 
