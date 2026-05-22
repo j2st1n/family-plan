@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.12] - 2026-05-22
+
+### Bug Fixes
+
+- child shop errors show reason, banner instead of full-page, wish catches
+
+
 ## [v0.3.11] - 2026-05-22
 
 ### Bug Fixes
 
 - keep tabs mounted to avoid state loss on switch
+
+
+### Maintenance
+
+- bump version to 0.3.11
 
 
 ## [v0.3.10] - 2026-05-22
