@@ -23,18 +23,18 @@ export default function Login({ onLogin }) {
 
   return (
     <form onSubmit={handleSubmit} style={{ textAlign: "center", paddingTop: "30vh" }}>
-      <h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#7c6f97", marginBottom: "0.5rem" }}>Family Plan</h1>
+      <h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b", marginBottom: "0.5rem" }}>Family Plan</h1>
 
       <input placeholder="用户名" value={username} onChange={e => setUsername(e.target.value)} autoFocus style={st} />
       <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} style={st} />
 
       {error && <p style={{ color: "#c97070", marginBottom: "0.6rem", fontSize: "0.9rem" }}>{error}</p>}
 
-      <button type="submit" disabled={loading} style={{ width: "100%", padding: "0.7rem", fontSize: "1rem", fontWeight: 600, color: "#fff", background: loading ? "#b0aeb8" : "#7c6f97", borderRadius: "12px", marginBottom: "0.6rem" }}>
+      <button type="submit" disabled={loading} style={{ width: "100%", padding: "0.7rem", fontSize: "1rem", fontWeight: 600, color: "#fff", background: loading ? "#8cb99a" : "#3d9e6b", borderRadius: "12px", marginBottom: "0.6rem" }}>
         {loading ? "处理中…" : mode === "login" ? "登录" : "注册"}
       </button>
 
-      <button type="button" onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }} style={{ color: "#7c6f97", fontSize: "0.9rem", background: "none", border: "none", cursor: "pointer" }}>
+      <button type="button" onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }} style={{ color: "#3d9e6b", fontSize: "0.9rem", background: "none", border: "none", cursor: "pointer" }}>
         {mode === "login" ? "没有账号？注册" : "已有账号？登录"}
       </button>
     </form>

@@ -31,13 +31,13 @@ export default function Bind({ onBound }) {
         style={{
           fontSize: "2rem",
           fontWeight: 700,
-          color: "#7c6f97",
+          color: "#3d9e6b",
           marginBottom: "0.4rem",
         }}
       >
         Family Plan
       </h1>
-      <p style={{ fontSize: "1rem", color: "#8c8985", marginBottom: "2rem" }}>
+      <p style={{ fontSize: "1rem", color: "#73706b", marginBottom: "2rem" }}>
         输入家长给您的访问码
       </p>
       <input
@@ -76,7 +76,7 @@ export default function Bind({ onBound }) {
           fontSize: "1.15rem",
           fontWeight: 600,
           color: "#fff",
-          background: loading ? "#8c8985" : "#7c6f97",
+          background: loading ? "#73706b" : "#3d9e6b",
           borderRadius: "14px",
           transition: "background 0.15s",
         }}

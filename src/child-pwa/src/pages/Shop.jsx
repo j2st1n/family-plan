@@ -45,14 +45,14 @@ export default function Shop({ stars }) {
     setEditingId(null); load();
   }
 
-  if (loading) return <p style={{ color: "#8c8985", textAlign: "center", paddingTop: "3rem" }}>加载中…</p>;
+  if (loading) return <p style={{ color: "#73706b", textAlign: "center", paddingTop: "3rem" }}>加载中…</p>;
   if (error) return <p style={{ color: "#c97070", textAlign: "center", paddingTop: "3rem" }}>{error}</p>;
 
   return (
     <div>
       <div style={{ marginBottom: "1rem" }}>
-        <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#7c6f97" }}>星星商城</h2>
-        <p style={{ fontSize: "0.9rem", color: "#d4a853", marginTop: "0.2rem" }}>余额 ⭐{stars}</p>
+        <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#3d9e6b" }}>星星商城</h2>
+        <p style={{ fontSize: "0.9rem", color: "#c4912a", marginTop: "0.2rem" }}>余额 ⭐{stars}</p>
       </div>
 
       {items.map(item => (
@@ -65,7 +65,7 @@ export default function Shop({ stars }) {
         </div>
       ))}
 
-      {items.length === 0 && <p style={{ color: "#8c8985", textAlign: "center" }}>暂无商品</p>}
+      {items.length === 0 && <p style={{ color: "#73706b", textAlign: "center" }}>暂无商品</p>}
 
       {redeemed.length > 0 && (
         <div style={{ marginTop: "1.5rem", borderTop: "1px solid #e8e4df", paddingTop: "1rem" }}>
@@ -74,11 +74,11 @@ export default function Shop({ stars }) {
             <div key={r.id} style={{ ...s.card, background: "#fafafa", opacity: 0.7 }}>
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>{r.title}</p>
-                <p style={{ fontSize: "0.75rem", color: "#8c8985" }}>
+                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>
                   ⭐{r.star_cost} · {r.redemption_status === "fulfilled" ? `已兑现 ${fmtDate(r.fulfilled_at)}` : `待兑现 ${fmtDate(r.created_at)}`}
                 </p>
               </div>
-              <span style={{ fontSize: "0.75rem", color: r.redemption_status === "fulfilled" ? "#6b8f71" : "#d4a853" }}>
+              <span style={{ fontSize: "0.75rem", color: r.redemption_status === "fulfilled" ? "#4b9c64" : "#c4912a" }}>
                 {r.redemption_status === "fulfilled" ? "已兑现" : "待兑现"}
               </span>
             </div>
@@ -103,7 +103,7 @@ export default function Shop({ stars }) {
               <>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>{w.title}</p>
-                  {w.description && <p style={{ fontSize: "0.8rem", color: "#8c8985" }}>{w.description}</p>}
+                  {w.description && <p style={{ fontSize: "0.8rem", color: "#73706b" }}>{w.description}</p>}
                   <p style={{ fontSize: "0.75rem", color: "#c97070", marginTop: "0.15rem" }}>审核中</p>
                 </div>
                 <button onClick={() => startEdit(w)} style={s.smallBtn}>修改</button>
@@ -121,8 +121,8 @@ export default function Shop({ stars }) {
             <input placeholder="想要什么" value={wishForm.title} onChange={e => setWishForm({ ...wishForm, title: e.target.value })} style={{ width: "100%", padding: "0.5rem", fontSize: "0.95rem", border: "1px solid #e8e4df", borderRadius: "10px", marginBottom: "0.4rem" }} autoFocus />
             <input placeholder="说明（选填）" value={wishForm.desc} onChange={e => setWishForm({ ...wishForm, desc: e.target.value })} style={{ width: "100%", padding: "0.5rem", fontSize: "0.95rem", border: "1px solid #e8e4df", borderRadius: "10px", marginBottom: "0.4rem" }} />
             <div style={{ display: "flex", gap: "0.4rem" }}>
-              <button onClick={handleWish} style={{ flex: 1, padding: "0.45rem", fontSize: "0.9rem", fontWeight: 600, color: "#fff", background: "#7c6f97", borderRadius: "10px" }}>许愿</button>
-              <button onClick={() => setShowWish(false)} style={{ flex: 1, padding: "0.45rem", fontSize: "0.9rem", fontWeight: 600, color: "#8c8985", background: "#efece8", borderRadius: "10px" }}>取消</button>
+              <button onClick={handleWish} style={{ flex: 1, padding: "0.45rem", fontSize: "0.9rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "10px" }}>许愿</button>
+              <button onClick={() => setShowWish(false)} style={{ flex: 1, padding: "0.45rem", fontSize: "0.9rem", fontWeight: 600, color: "#73706b", background: "#efece8", borderRadius: "10px" }}>取消</button>
             </div>
           </div>
         )}
@@ -133,8 +133,8 @@ export default function Shop({ stars }) {
 
 const s = {
   card: { background: "#fff", borderRadius: "14px", padding: "0.8rem 1rem", marginBottom: "0.5rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", display: "flex", alignItems: "center", gap: "0.5rem" },
-  redeemBtn: { padding: "0.4rem 0.8rem", borderRadius: "999px", background: "#7c6f97", color: "#fff", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" },
-  addBtn: { width: "100%", padding: "0.6rem", fontSize: "0.95rem", color: "#7c6f97", border: "1px dashed #7c6f97", borderRadius: "14px", background: "transparent" },
-  smallBtn: { padding: "0.3rem 0.6rem", borderRadius: "8px", background: "#7c6f97", color: "#fff", fontSize: "0.8rem", fontWeight: 600 },
-  cancelBtn: { padding: "0.3rem 0.6rem", borderRadius: "8px", background: "#efece8", color: "#8c8985", fontSize: "0.8rem" },
+  redeemBtn: { padding: "0.4rem 0.8rem", borderRadius: "999px", background: "#3d9e6b", color: "#fff", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" },
+  addBtn: { width: "100%", padding: "0.6rem", fontSize: "0.95rem", color: "#3d9e6b", border: "1px dashed #3d9e6b", borderRadius: "14px", background: "transparent" },
+  smallBtn: { padding: "0.3rem 0.6rem", borderRadius: "8px", background: "#3d9e6b", color: "#fff", fontSize: "0.8rem", fontWeight: 600 },
+  cancelBtn: { padding: "0.3rem 0.6rem", borderRadius: "8px", background: "#efece8", color: "#73706b", fontSize: "0.8rem" },
 };

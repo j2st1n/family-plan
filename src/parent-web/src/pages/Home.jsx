@@ -48,15 +48,15 @@ export default function Home({ token, onLogout }) {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.2rem" }}>
         <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>Family Plan</h1>
-        <button onClick={onLogout} style={{ color: "#8c8985", fontSize: "0.85rem" }}>退出</button>
+        <button onClick={onLogout} style={{ color: "#73706b", fontSize: "0.85rem" }}>退出</button>
       </div>
 
-      {loading && <p style={{ color: "#8c8985", textAlign: "center", paddingTop: "2rem" }}>加载中…</p>}
+      {loading && <p style={{ color: "#73706b", textAlign: "center", paddingTop: "2rem" }}>加载中…</p>}
 
       {!loading && children.length === 0 && (
         <div style={{ textAlign: "center", paddingTop: "3rem" }}>
-          <p style={{ color: "#8c8985", marginBottom: "1rem" }}>还没有添加人员</p>
-          <button onClick={() => setView("create-child")} style={{ color: "#7c6f97", fontSize: "1rem", fontWeight: 600 }}>+ 添加</button>
+          <p style={{ color: "#73706b", marginBottom: "1rem" }}>还没有添加人员</p>
+          <button onClick={() => setView("create-child")} style={{ color: "#3d9e6b", fontSize: "1rem", fontWeight: 600 }}>+ 添加</button>
         </div>
       )}
 
@@ -87,13 +87,13 @@ export default function Home({ token, onLogout }) {
                   <div onClick={() => { setSelectedChild(c); setView("task-manage"); }} style={{ cursor: "pointer", flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", flexWrap: "wrap" }}>
                       <span style={{ fontSize: "1.1rem", fontWeight: 600 }}>{c.name}</span>
-                      {c.grade_label && <span style={{ fontSize: "0.8rem", color: "#8c8985" }}>{c.grade_label}</span>}
-                      <span style={{ fontSize: "0.85rem", color: "#d4a853" }}>⭐{stars}</span>
-                      <span style={{ fontSize: "0.85rem", color: "#7c6f97" }}>🔥{streak}</span>
+                      {c.grade_label && <span style={{ fontSize: "0.8rem", color: "#73706b" }}>{c.grade_label}</span>}
+                      <span style={{ fontSize: "0.85rem", color: "#c4912a" }}>⭐{stars}</span>
+                      <span style={{ fontSize: "0.85rem", color: "#3d9e6b" }}>🔥{streak}</span>
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: "0.3rem", alignItems: "center", flexShrink: 0, marginLeft: "0.5rem" }}>
-                    <button onClick={() => toggleView(c.id)} style={{ ...styles.tg, background: isCumulative ? "#7c6f97" : "#efece8", color: isCumulative ? "#fff" : "#8c8985" }}>
+                    <button onClick={() => toggleView(c.id)} style={{ ...styles.tg, background: isCumulative ? "#3d9e6b" : "#efece8", color: isCumulative ? "#fff" : "#73706b" }}>
                       {isCumulative ? "累计" : "今日"}
                     </button>
                     <button onClick={() => startEdit(c)} style={styles.ib}>✎</button>
@@ -101,13 +101,11 @@ export default function Home({ token, onLogout }) {
                   </div>
                 </div>
                 {rate !== null && !isCumulative && (
-                  <div style={{ marginTop: "0.35rem" }}>
-                    <div style={styles.bb}>
-                      <div style={{ ...styles.bf, width: `${rate}%` }} />
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "#8c8985", marginTop: "0.15rem" }}>
-                      <span>{completed}/{total} 项完成</span>
-                      <span>{rate}%</span>
+                  <div style={{ marginTop: "0.6rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    <ProgressRing percent={rate} />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: "0.9rem", fontWeight: 650, letterSpacing: "-0.01em" }}>{completed}/{total} 项完成</p>
+                      <p style={{ fontSize: "0.75rem", color: "#73706b", marginTop: "0.1rem" }}>当日进度</p>
                     </div>
                   </div>
                 )}
@@ -124,14 +122,32 @@ export default function Home({ token, onLogout }) {
   );
 }
 
+function ProgressRing({ percent, size = 52 }) {
+  const r = 22;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - percent / 100);
+  return (
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} viewBox="0 0 52 52" style={{ transform: "rotate(-90deg)" }}>
+        <circle cx="26" cy="26" r={r} fill="none" stroke="#e8e4df" strokeWidth="4" />
+        <circle cx="26" cy="26" r={r} fill="none" stroke="#3d9e6b" strokeWidth="4"
+          strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 0.5s ease" }} />
+      </svg>
+      <div style={{
+        position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: "0.75rem", fontWeight: 700, fontFamily: "SF Mono, ui-monospace, Menlo, monospace", color: "#2d2b28"
+      }}>{percent}%</div>
+    </div>
+  );
+}
+
 const styles = {
   card: { background: "#fff", borderRadius: "14px", padding: "0.9rem 1rem", marginBottom: "0.7rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
   tg: { padding: "0.2rem 0.55rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 600, border: "none", cursor: "pointer" },
-  ib: { width: "1.6rem", height: "1.6rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 600, color: "#8c8985", background: "transparent", border: "none", cursor: "pointer" },
+  ib: { width: "1.6rem", height: "1.6rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 600, color: "#73706b", background: "transparent", border: "none", cursor: "pointer" },
   ei: { width: "100%", padding: "0.4rem 0.6rem", fontSize: "0.95rem", border: "1px solid #e8e4df", borderRadius: "8px", outline: "none", marginBottom: "0.3rem", display: "block" },
-  sb: { flex: 1, padding: "0.35rem", fontSize: "0.85rem", fontWeight: 600, color: "#fff", background: "#7c6f97", borderRadius: "8px" },
-  cb: { flex: 1, padding: "0.35rem", fontSize: "0.85rem", fontWeight: 600, color: "#8c8985", background: "#efece8", borderRadius: "8px" },
-  bb: { height: "5px", background: "#efece8", borderRadius: "3px", overflow: "hidden" },
-  bf: { height: "100%", background: "#7c6f97", borderRadius: "3px", transition: "width 0.3s" },
-  ab: { width: "100%", padding: "0.7rem", fontSize: "0.95rem", fontWeight: 600, color: "#fff", background: "#7c6f97", borderRadius: "12px", marginTop: "0.6rem" },
+  sb: { flex: 1, padding: "0.35rem", fontSize: "0.85rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "8px" },
+  cb: { flex: 1, padding: "0.35rem", fontSize: "0.85rem", fontWeight: 600, color: "#73706b", background: "#efece8", borderRadius: "8px" },
+  ab: { width: "100%", padding: "0.7rem", fontSize: "0.95rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "12px", marginTop: "0.6rem" },
 };

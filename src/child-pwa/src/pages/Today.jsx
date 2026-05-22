@@ -72,43 +72,43 @@ export default function Today({ child, onExpired }) {
   const completed = (data?.tasks || []).filter(t => t.status === "completed");
   const [showCompleted, setShowCompleted] = useState(false);
 
-  if (loading) return <div style={{ textAlign: "center", paddingTop: "40vh", color: "#8c8985" }}>加载中…</div>;
-  if (error) return <div style={{ textAlign: "center", paddingTop: "40vh" }}><p style={{ color: "#c97070", marginBottom: "1rem" }}>{error}</p><button onClick={load} style={{ color: "#7c6f97", fontSize: "1rem" }}>重试</button></div>;
+  if (loading) return <div style={{ textAlign: "center", paddingTop: "40vh", color: "#73706b" }}>加载中…</div>;
+  if (error) return <div style={{ textAlign: "center", paddingTop: "40vh" }}><p style={{ color: "#c97070", marginBottom: "1rem" }}>{error}</p><button onClick={load} style={{ color: "#3d9e6b", fontSize: "1rem" }}>重试</button></div>;
 
   if (showShop) return (
     <div>
-      <div style={{ marginBottom: "1rem" }}><button onClick={() => setShowShop(false)} style={{ color: "#7c6f97", fontSize: "0.95rem", background: "none", border: "none", cursor: "pointer" }}>← 返回</button></div>
+      <div style={{ marginBottom: "1rem" }}><button onClick={() => setShowShop(false)} style={{ color: "#3d9e6b", fontSize: "0.95rem", background: "none", border: "none", cursor: "pointer" }}>← 返回</button></div>
       <Shop stars={data?.rewards?.stars_total ?? 0} />
     </div>
   );
 
   return (
     <div>
-      <div style={{ marginBottom: "1.4rem" }}><h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#7c6f97" }}>你好，{child?.name ?? "小朋友"}</h1><p style={{ color: "#8c8985", marginTop: "0.3rem", fontSize: "0.95rem" }}>{dateStr}</p></div>
+      <div style={{ marginBottom: "1.4rem" }}><h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>你好，{child?.name ?? "小朋友"}</h1><p style={{ color: "#73706b", marginTop: "0.3rem", fontSize: "0.95rem" }}>{dateStr}</p></div>
       <div style={{ display: "flex", gap: "0.8rem", marginBottom: "1.4rem" }}>
-        <div onClick={() => setShowShop(true)} style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", cursor: "pointer" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#d4a853" }}>⭐ {data?.rewards?.stars_total ?? 0}</p><p style={{ fontSize: "0.75rem", color: "#7c6f97" }}>兑换</p></div>
-        <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#7c6f97" }}>🔥 {data?.rewards?.current_streak_days ?? 0}</p><p style={{ fontSize: "0.8rem", color: "#8c8985" }}>连续天数</p></div>
+        <div onClick={() => setShowShop(true)} style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", cursor: "pointer" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#c4912a" }}>⭐ {data?.rewards?.stars_total ?? 0}</p><p style={{ fontSize: "0.75rem", color: "#3d9e6b" }}>兑换</p></div>
+        <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>🔥 {data?.rewards?.current_streak_days ?? 0}</p><p style={{ fontSize: "0.8rem", color: "#73706b" }}>连续天数</p></div>
       </div>
 
-      {data?.tasks?.length === 0 && <p style={{ textAlign: "center", color: "#8c8985", marginTop: "2rem" }}>今天没有任务</p>}
+      {data?.tasks?.length === 0 && <p style={{ textAlign: "center", color: "#73706b", marginTop: "2rem" }}>今天没有任务</p>}
 
       {timed.length > 0 && (
         <div style={{ marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.8rem", color: "#8c8985", marginBottom: "0.4rem" }}>已安排时间</p>
+          <p style={{ fontSize: "0.8rem", color: "#73706b", marginBottom: "0.4rem" }}>已安排时间</p>
           {timed.map(task => <TaskCard key={task.id} task={task} child={child} completingId={completingId} schedulingId={schedulingId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} editingId={editingId} editForm={editForm} setEditForm={setEditForm} onComplete={handleComplete} onSchedule={startSchedule} onSaveSchedule={handleSchedule} onCancelSchedule={() => setSchedulingId(null)} onEdit={startEdit} onSaveEdit={handleSaveEdit} onCancelEdit={() => setEditingId(null)} onDelete={handleDelete} scheduleLabel={scheduleLabel} />)}
         </div>
       )}
 
       {free.length > 0 && (
         <div style={{ marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.8rem", color: "#8c8985", marginBottom: "0.4rem" }}>自由安排</p>
+          <p style={{ fontSize: "0.8rem", color: "#73706b", marginBottom: "0.4rem" }}>自由安排</p>
       {free.map(task => <TaskCard key={task.id} task={task} child={child} completingId={completingId} schedulingId={schedulingId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} editingId={editingId} editForm={editForm} setEditForm={setEditForm} onComplete={handleComplete} onSchedule={startSchedule} onSaveSchedule={handleSchedule} onCancelSchedule={() => setSchedulingId(null)} onEdit={startEdit} onSaveEdit={handleSaveEdit} onCancelEdit={() => setEditingId(null)} onDelete={handleDelete} scheduleLabel={scheduleLabel} />)}
           </div>
         )}
 
         {completed.length > 0 && (
           <div style={{ borderTop: "1px solid #e8e4df", paddingTop: "0.5rem", marginBottom: "1rem" }}>
-            <button onClick={() => setShowCompleted(c => !c)} style={{ width: "100%", textAlign: "left", padding: "0.3rem 0", background: "none", border: "none", cursor: "pointer", fontSize: "0.85rem", color: "#8c8985" }}>
+            <button onClick={() => setShowCompleted(c => !c)} style={{ width: "100%", textAlign: "left", padding: "0.3rem 0", background: "none", border: "none", cursor: "pointer", fontSize: "0.85rem", color: "#73706b" }}>
               {showCompleted ? "▼" : "▶"} 已完成 {completed.length} 项
             </button>
             {showCompleted && <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}>{completed.map(task => <div key={task.id} style={{ flex: "1 1 280px", minWidth: 0 }}><TaskCard key={task.id} task={task} child={child} completingId={completingId} schedulingId={schedulingId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} editingId={editingId} editForm={editForm} setEditForm={setEditForm} onComplete={handleComplete} onSchedule={startSchedule} onSaveSchedule={handleSchedule} onCancelSchedule={() => setSchedulingId(null)} onEdit={startEdit} onSaveEdit={handleSaveEdit} onCancelEdit={() => setEditingId(null)} onDelete={handleDelete} scheduleLabel={scheduleLabel} /></div>)}</div>}
@@ -116,7 +116,7 @@ export default function Today({ child, onExpired }) {
         )}
 
       <div style={{ marginTop: "1rem" }}>
-        {!showAdd ? <button onClick={() => setShowAdd(true)} style={{ width: "100%", padding: "0.6rem", fontSize: "0.95rem", color: "#7c6f97", border: "1px dashed #7c6f97", borderRadius: "14px", background: "transparent" }}>+ 添加任务</button> : (
+        {!showAdd ? <button onClick={() => setShowAdd(true)} style={{ width: "100%", padding: "0.6rem", fontSize: "0.95rem", color: "#3d9e6b", border: "1px dashed #3d9e6b", borderRadius: "14px", background: "transparent" }}>+ 添加任务</button> : (
           <div style={{ background: "#fff", borderRadius: "16px", padding: "1rem", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
             <input placeholder="任务名 *" value={newForm.title} onChange={e => setNewForm({ ...newForm, title: e.target.value })} style={st.fi} autoFocus />
             <div style={{ display: "flex", gap: "0.5rem" }}><input type="number" placeholder="分钟 *" value={newForm.minutes} onChange={e => setNewForm({ ...newForm, minutes: e.target.value })} style={{ ...st.fi, flex: 1 }} /><select value={newForm.stars} onChange={e => setNewForm({ ...newForm, stars: parseInt(e.target.value) })} style={{ ...st.fi, flex: 1 }}><option value={1}>⭐</option><option value={2}>⭐⭐</option><option value={3}>⭐⭐⭐</option></select></div>
@@ -126,7 +126,7 @@ export default function Today({ child, onExpired }) {
         )}
       </div>
 
-      {justCompleted && <div style={{ position: "fixed", bottom: "30px", left: "50%", transform: "translateX(-50%)", background: "#7c6f97", color: "#fff", padding: "0.8rem 1.5rem", borderRadius: "20px", fontSize: "1rem", fontWeight: 600, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>✅ {justCompleted.title} 完成！+{justCompleted.stars}⭐</div>}
+      {justCompleted && <div style={{ position: "fixed", bottom: "30px", left: "50%", transform: "translateX(-50%)", background: "#3d9e6b", color: "#fff", padding: "0.8rem 1.5rem", borderRadius: "20px", fontSize: "1rem", fontWeight: 600, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>✅ {justCompleted.title} 完成！+{justCompleted.stars}⭐</div>}
     </div>
   );
 }
@@ -154,29 +154,29 @@ function TaskCard({ task, child, completingId, schedulingId, scheduleForm, setSc
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: "1.1rem", fontWeight: 600, color: task.status === "completed" ? "#8c8985" : "#2d2b28", textDecoration: task.status === "completed" ? "line-through" : "none" }}>
+            <p style={{ fontSize: "1.1rem", fontWeight: 600, color: task.status === "completed" ? "#73706b" : "#2d2b28", textDecoration: task.status === "completed" ? "line-through" : "none" }}>
               {isUnapproved && <span style={{ fontSize: "0.65rem", color: "#c97070", marginRight: "0.2rem" }}>待确认</span>}
               {task.title}
             </p>
-            <p style={{ fontSize: "0.8rem", color: "#8c8985", marginTop: "0.15rem" }}>
+            <p style={{ fontSize: "0.8rem", color: "#73706b", marginTop: "0.15rem" }}>
               {task.expected_minutes ? `${task.expected_minutes}分钟 · ` : ""}⭐{task.reward_stars}
               {isScheduled ? ` · ${scheduleLabel(task)}${src ? ` (${src})` : ""}` : " · 自由安排"}
             </p>
           </div>
           {isScheduled && task.status !== "completed" && (
-            <span style={{ padding: "0.35rem 0.8rem", borderRadius: "999px", background: "#e8e4f4", color: "#7c6f97", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" }}>{task.scheduled_start}</span>
+            <span style={{ padding: "0.35rem 0.8rem", borderRadius: "999px", background: "#d4e8da", color: "#3d9e6b", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" }}>{task.scheduled_start}</span>
           )}
           {task.status === "completed" ? (
-            <span style={{ padding: "0.35rem 0.8rem", borderRadius: "999px", background: "#eaf0ea", color: "#6b8f71", fontSize: "0.85rem", fontWeight: 600 }}>已完成</span>
+            <span style={{ padding: "0.35rem 0.8rem", borderRadius: "999px", background: "#def0e3", color: "#4b9c64", fontSize: "0.85rem", fontWeight: 600 }}>已完成</span>
           ) : (
             <>
-              {isUnapproved && <button onClick={() => onEdit(task)} style={{ padding: "0.35rem 0.6rem", borderRadius: "999px", background: "#f0f0f5", color: "#7c6f97", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap", border: "none", cursor: "pointer" }}>修改</button>}
+              {isUnapproved && <button onClick={() => onEdit(task)} style={{ padding: "0.35rem 0.6rem", borderRadius: "999px", background: "#e3f0e8", color: "#3d9e6b", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap", border: "none", cursor: "pointer" }}>修改</button>}
               {isUnapproved && <button onClick={() => onDelete(task.id)} style={{ padding: "0.35rem 0.6rem", borderRadius: "999px", background: "#fef0f0", color: "#c97070", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap", border: "none", cursor: "pointer" }}>删除</button>}
               {!isUnapproved && !isScheduled && task.created_by === "parent" && (
-                <button onClick={() => onSchedule(task)} style={{ padding: "0.35rem 0.6rem", borderRadius: "999px", background: "#f0f0f5", color: "#7c6f97", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap", border: "none", cursor: "pointer" }}>安排时间</button>
+                <button onClick={() => onSchedule(task)} style={{ padding: "0.35rem 0.6rem", borderRadius: "999px", background: "#e3f0e8", color: "#3d9e6b", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap", border: "none", cursor: "pointer" }}>安排时间</button>
               )}
               {!isUnapproved && (
-                <button onClick={() => onComplete(task)} disabled={completingId === task.id} style={{ padding: "0.45rem 1rem", borderRadius: "999px", background: completingId === task.id ? "#b0aeb8" : "#7c6f97", color: "#fff", fontSize: "0.9rem", fontWeight: 600, whiteSpace: "nowrap", border: "none", cursor: "pointer" }}>{completingId === task.id ? "…" : "完成"}</button>
+                <button onClick={() => onComplete(task)} disabled={completingId === task.id} style={{ padding: "0.45rem 1rem", borderRadius: "999px", background: completingId === task.id ? "#8cb99a" : "#3d9e6b", color: "#fff", fontSize: "0.9rem", fontWeight: 600, whiteSpace: "nowrap", border: "none", cursor: "pointer" }}>{completingId === task.id ? "…" : "完成"}</button>
               )}
             </>
           )}
@@ -189,6 +189,6 @@ function TaskCard({ task, child, completingId, schedulingId, scheduleForm, setSc
 const st = {
   tc: { background: "#fff", borderRadius: "18px", padding: "1rem 1.1rem", marginBottom: "0.8rem", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" },
   fi: { padding: "0.5rem 0.6rem", fontSize: "0.9rem", border: "1px solid #d6d2cc", borderRadius: "12px", outline: "none", background: "#fff", display: "block", marginBottom: "0.5rem", width: "100%" },
-  fsb: { flex: 1, padding: "0.5rem", fontSize: "0.9rem", fontWeight: 600, color: "#fff", background: "#7c6f97", borderRadius: "12px", border: "none", cursor: "pointer" },
-  fcb: { flex: 1, padding: "0.5rem", fontSize: "0.9rem", fontWeight: 600, color: "#8c8985", background: "#efece8", borderRadius: "12px", border: "none", cursor: "pointer" },
+  fsb: { flex: 1, padding: "0.5rem", fontSize: "0.9rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "12px", border: "none", cursor: "pointer" },
+  fcb: { flex: 1, padding: "0.5rem", fontSize: "0.9rem", fontWeight: 600, color: "#73706b", background: "#efece8", borderRadius: "12px", border: "none", cursor: "pointer" },
 };

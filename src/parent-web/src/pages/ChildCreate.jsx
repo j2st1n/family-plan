@@ -21,7 +21,7 @@ export default function ChildCreate({ token, onDone, onCancel }) {
   return (
     <div>
       <div style={{ marginBottom: "1.2rem" }}>
-        <button onClick={onCancel} style={{ color: "#7c6f97", fontSize: "0.95rem" }}>← 返回</button>
+        <button onClick={onCancel} style={{ color: "#3d9e6b", fontSize: "0.95rem" }}>← 返回</button>
       </div>
       <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "1rem" }}>添加孩子</h2>
       <form onSubmit={handleSubmit}>
@@ -63,7 +63,7 @@ const styles = {
     fontSize: "1rem",
     fontWeight: 600,
     color: "#fff",
-    background: "#7c6f97",
+    background: "#3d9e6b",
     borderRadius: "12px",
     marginTop: "0.4rem",
   },
