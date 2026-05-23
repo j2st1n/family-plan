@@ -9,6 +9,7 @@ export default function Shop({ token }) {
   const [editForm, setEditForm] = useState({ title: "", stars: "", stock: "" });
   const [approveStars, setApproveStars] = useState({});
   const [redemptions, setRedemptions] = useState([]);
+  const [showFulfilledRedemptions, setShowFulfilledRedemptions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -75,6 +76,8 @@ export default function Shop({ token }) {
 
   const wishes = items.filter(i => i.status === "pending");
   const active = items.filter(i => i.status === "active");
+  const pendingRedemptions = redemptions.filter(r => r.redemption_status === "pending");
+  const fulfilledRedemptions = redemptions.filter(r => r.redemption_status === "fulfilled");
 
   if (loading) return <p style={{ color: "#73706b", textAlign: "center", paddingTop: "2rem" }}>加载中…</p>;
 
@@ -149,18 +152,31 @@ export default function Shop({ token }) {
 
       {redemptions.length > 0 && (
         <div style={s.section}>
-          <div style={s.sectionHd}><h3 style={s.sh}>已兑换</h3></div>
-          {redemptions.map(r => (
+          <div style={s.sectionHd}>
+            <h3 style={s.sh}>已兑换</h3>
+            <span style={{ fontSize: "0.8rem", color: "#73706b" }}>待兑现 {pendingRedemptions.length} · 已兑现 {fulfilledRedemptions.length}</span>
+          </div>
+          {pendingRedemptions.map(r => (
             <div key={r.id} style={{ ...s.row }}>
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{r.title}</p>
                 <p style={{ fontSize: "0.75rem", color: "#73706b" }}>⭐{r.star_cost}{r.child_id ? " · 孩子兑换" : ""}</p>
               </div>
-              {r.redemption_status === "pending" ? (
-                <button onClick={() => handleFulfill(r.redemption_id)} style={s.act}>兑现</button>
-              ) : (
-                <span style={{ fontSize: "0.78rem", color: "#4b9c64", fontWeight: 600 }}>已兑现</span>
-              )}
+              <button onClick={() => handleFulfill(r.redemption_id)} style={s.act}>兑现</button>
+            </div>
+          ))}
+          {fulfilledRedemptions.length > 0 && (
+            <button onClick={() => setShowFulfilledRedemptions(v => !v)} style={s.foldBtn}>
+              {showFulfilledRedemptions ? "收起已兑现记录" : `展开已兑现记录 (${fulfilledRedemptions.length})`}
+            </button>
+          )}
+          {showFulfilledRedemptions && fulfilledRedemptions.map(r => (
+            <div key={r.id} style={{ ...s.row, background: "#fafafa" }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{r.title}</p>
+                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>⭐{r.star_cost}{r.child_id ? " · 孩子兑换" : ""}</p>
+              </div>
+              <span style={{ fontSize: "0.78rem", color: "#4b9c64", fontWeight: 600 }}>已兑现</span>
             </div>
           ))}
         </div>
@@ -180,6 +196,7 @@ const s = {
   act: { padding: "0.25rem 0.5rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", border: "none", cursor: "pointer" },
   del: { padding: "0.25rem 0.5rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 600, color: "#c97070", background: "#fef0f0", border: "none", cursor: "pointer" },
   addBtn: { width: "100%", padding: "0.5rem", fontSize: "0.9rem", color: "#3d9e6b", border: "1px dashed #3d9e6b", borderRadius: "10px", background: "transparent", cursor: "pointer", marginTop: "0.4rem" },
+  foldBtn: { width: "100%", padding: "0.45rem", fontSize: "0.82rem", color: "#73706b", border: "1px dashed #d6d0c8", borderRadius: "10px", background: "transparent", cursor: "pointer", margin: "0.2rem 0 0.4rem" },
   formBox: { background: "#f8f8fb", borderRadius: "10px", padding: "0.5rem", marginTop: "0.4rem" },
   errorBanner: {
     background: "#fef0f0",

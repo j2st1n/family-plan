@@ -11,6 +11,7 @@ export default function Shop({ onExpired, active }) {
   const [error, setError] = useState("");
   const [stars, setStars] = useState(0);
   const [showWish, setShowWish] = useState(false);
+  const [showFulfilledRedemptions, setShowFulfilledRedemptions] = useState(false);
   const [wishForm, setWishForm] = useState({ title: "", desc: "" });
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", desc: "" });
@@ -81,6 +82,9 @@ async function saveEdit() {
 
   if (loading) return <p style={{ color: "#73706b", textAlign: "center", paddingTop: "3rem" }}>加载中…</p>;
 
+  const pendingRedemptions = redeemed.filter(r => r.redemption_status === "pending");
+  const fulfilledRedemptions = redeemed.filter(r => r.redemption_status === "fulfilled");
+
   return (
     <div>
       {error && (
@@ -108,18 +112,35 @@ async function saveEdit() {
 
       {redeemed.length > 0 && (
         <div style={{ marginTop: "1.5rem", borderTop: "1px solid #e8e4df", paddingTop: "1rem" }}>
-          <h3 style={{ fontWeight: 600, marginBottom: "0.4rem" }}>已兑换</h3>
-          {redeemed.map(r => (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+            <h3 style={{ fontWeight: 600 }}>我的兑换</h3>
+            <span style={{ fontSize: "0.75rem", color: "#73706b" }}>待兑现 {pendingRedemptions.length} · 已收到 {fulfilledRedemptions.length}</span>
+          </div>
+          {pendingRedemptions.map(r => (
             <div key={r.id} style={{ ...s.card, background: "#fafafa", opacity: 0.7 }}>
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>{r.title}</p>
                 <p style={{ fontSize: "0.75rem", color: "#73706b" }}>
-                  ⭐{r.star_cost} · {r.redemption_status === "fulfilled" ? `已兑现 ${fmtDate(r.fulfilled_at)}` : `待兑现 ${fmtDate(r.created_at)}`}
+                  ⭐{r.star_cost} · 等待兑现 {fmtDate(r.created_at)}
                 </p>
               </div>
-              <span style={{ fontSize: "0.75rem", color: r.redemption_status === "fulfilled" ? "#4b9c64" : "#c4912a" }}>
-                {r.redemption_status === "fulfilled" ? "已兑现" : "待兑现"}
-              </span>
+              <span style={{ fontSize: "0.75rem", color: "#c4912a" }}>待兑现</span>
+            </div>
+          ))}
+          {fulfilledRedemptions.length > 0 && (
+            <button onClick={() => setShowFulfilledRedemptions(v => !v)} style={s.foldBtn}>
+              {showFulfilledRedemptions ? "收起已收到记录" : `展开已收到记录 (${fulfilledRedemptions.length})`}
+            </button>
+          )}
+          {showFulfilledRedemptions && fulfilledRedemptions.map(r => (
+            <div key={r.id} style={{ ...s.card, background: "#fafafa", opacity: 0.7 }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>{r.title}</p>
+                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>
+                  ⭐{r.star_cost} · 已收到 {fmtDate(r.fulfilled_at)}
+                </p>
+              </div>
+              <span style={{ fontSize: "0.75rem", color: "#4b9c64" }}>已收到</span>
             </div>
           ))}
         </div>
@@ -174,6 +195,7 @@ const s = {
   card: { background: "#fff", borderRadius: "14px", padding: "0.8rem 1rem", marginBottom: "0.5rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", display: "flex", alignItems: "center", gap: "0.5rem" },
   redeemBtn: { padding: "0.4rem 0.8rem", borderRadius: "999px", background: "#3d9e6b", color: "#fff", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" },
   addBtn: { width: "100%", padding: "0.6rem", fontSize: "0.95rem", color: "#3d9e6b", border: "1px dashed #3d9e6b", borderRadius: "14px", background: "transparent" },
+  foldBtn: { width: "100%", padding: "0.5rem", fontSize: "0.82rem", color: "#73706b", border: "1px dashed #d6d0c8", borderRadius: "14px", background: "transparent", margin: "0.2rem 0 0.5rem" },
   smallBtn: { padding: "0.3rem 0.6rem", borderRadius: "8px", background: "#3d9e6b", color: "#fff", fontSize: "0.8rem", fontWeight: 600 },
   cancelBtn: { padding: "0.3rem 0.6rem", borderRadius: "8px", background: "#efece8", color: "#73706b", fontSize: "0.8rem" },
 };
