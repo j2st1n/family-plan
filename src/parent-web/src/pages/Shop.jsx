@@ -10,11 +10,13 @@ export default function Shop({ token }) {
   const [approveStars, setApproveStars] = useState({});
   const [redemptions, setRedemptions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { const list = await api.fetchShop(token); setItems(list); } catch {}
-    try { const reds = await api.fetchRedemptions(token); setRedemptions(reds); } catch {}
+    setError(null);
+    try { const list = await api.fetchShop(token); setItems(list); } catch (err) { setError("加载商品列表失败: " + (err.message || "未知错误")); }
+    try { const reds = await api.fetchRedemptions(token); setRedemptions(reds); } catch (err) { setError("加载兑换记录失败: " + (err.message || "未知错误")); }
     setLoading(false);
   }, [token]);
 
@@ -23,25 +25,52 @@ export default function Shop({ token }) {
   async function handleAdd() {
     if (!form.title.trim() || !form.stars || parseInt(form.stars) < 1) return;
     const stock = form.stock ? parseInt(form.stock) : null;
-    await api.createShopItem(token, { title: form.title.trim(), star_cost: parseInt(form.stars), stock });
-    setForm({ title: "", stars: "", stock: "" }); setShowAdd(false); load();
+    try {
+      await api.createShopItem(token, { title: form.title.trim(), star_cost: parseInt(form.stars), stock });
+      setForm({ title: "", stars: "", stock: "" }); setShowAdd(false); load();
+    } catch (err) {
+      setError("添加商品失败: " + (err.message || "未知错误"));
+    }
   }
 
   function startEdit(item) { setEditingId(item.id); setEditForm({ title: item.title, stars: item.star_cost.toString(), stock: item.stock?.toString() || "" }); }
   async function saveEdit() {
     if (!editForm.title.trim() || !editForm.stars || parseInt(editForm.stars) < 1) return;
     const stock = editForm.stock ? parseInt(editForm.stock) : null;
-    await api.updateShopItem(token, editingId, { title: editForm.title.trim(), star_cost: parseInt(editForm.stars), stock });
-    setEditingId(null); load();
+    try {
+      await api.updateShopItem(token, editingId, { title: editForm.title.trim(), star_cost: parseInt(editForm.stars), stock });
+      setEditingId(null); load();
+    } catch (err) {
+      setError("保存商品失败: " + (err.message || "未知错误"));
+    }
   }
 
-  async function handleDelete(id) { if (!window.confirm("下架此商品？")) return; await api.deleteShopItem(token, id); load(); }
-  async function handleFulfill(id) { await api.fulfillItem(token, id); load(); }
+  async function handleDelete(id) { 
+  if (!window.confirm("下架此商品？")) return; 
+  try {
+    await api.deleteShopItem(token, id);
+    load();
+  } catch (err) {
+    setError("删除商品失败: " + (err.message || "未知错误"));
+  }
+}
+  async function handleFulfill(id) { 
+  try {
+    await api.fulfillItem(token, id);
+    load();
+  } catch (err) {
+    setError("兑现商品失败: " + (err.message || "未知错误"));
+  }
+}
 
   async function handleApprove(id) {
     const stars = approveStars[id] || 10;
-    await api.approveWish(token, id, parseInt(stars));
-    setApproveStars(p => { const n = { ...p }; delete n[id]; return n; }); load();
+    try {
+      await api.approveWish(token, id, parseInt(stars));
+      setApproveStars(p => { const n = { ...p }; delete n[id]; return n; }); load();
+    } catch (err) {
+      setError("审核许愿失败: " + (err.message || "未知错误"));
+    }
   }
 
   const wishes = items.filter(i => i.status === "pending");
@@ -51,6 +80,13 @@ export default function Shop({ token }) {
 
   return (
     <div>
+      {error && (
+        <div style={s.errorBanner}>
+          <span style={s.errorIcon}>⚠</span>
+          <span>{error}</span>
+          <button onClick={() => setError(null)} style={s.errorClose}>✕</button>
+        </div>
+      )}
       <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1rem", fontFamily: "\"Noto Sans SC\", \"PingFang SC\", -apple-system, BlinkMacSystemFont, sans-serif", letterSpacing: "-0.01em" }}>星星商城</h2>
 
       <div style={s.section}>
@@ -145,4 +181,29 @@ const s = {
   del: { padding: "0.25rem 0.5rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 600, color: "#c97070", background: "#fef0f0", border: "none", cursor: "pointer" },
   addBtn: { width: "100%", padding: "0.5rem", fontSize: "0.9rem", color: "#3d9e6b", border: "1px dashed #3d9e6b", borderRadius: "10px", background: "transparent", cursor: "pointer", marginTop: "0.4rem" },
   formBox: { background: "#f8f8fb", borderRadius: "10px", padding: "0.5rem", marginTop: "0.4rem" },
+  errorBanner: {
+    background: "#fef0f0",
+    border: "1px solid #f8d0d0",
+    borderRadius: "10px",
+    padding: "0.8rem 1rem",
+    marginBottom: "0.8rem",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.6rem",
+    color: "#c97070",
+    fontSize: "0.85rem",
+  },
+  errorIcon: {
+    fontSize: "1.1rem",
+    fontWeight: 600,
+  },
+  errorClose: {
+    marginLeft: "auto",
+    fontSize: "0.9rem",
+    color: "#c97070",
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
 };

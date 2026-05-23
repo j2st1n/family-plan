@@ -35,17 +35,28 @@ export default function Home({ token, onLogout }) {
   const [view, setView] = useState("home");
   const [selectedChild, setSelectedChild] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [editingChild, setEditingChild] = useState(null);
   const [editForm, setEditForm] = useState({ name: "", stage: "", grade: "", threshold: "80" });
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const list = await api.fetchChildren(token);
       setChildren(list);
       const ds = {};
-      await Promise.all(list.map(async (c) => { try { ds[c.id] = await api.fetchDashboard(token, c.id); } catch { ds[c.id] = null; } }));
+      await Promise.all(list.map(async (c) => { 
+        try { 
+          ds[c.id] = await api.fetchDashboard(token, c.id); 
+        } catch (err) {
+          ds[c.id] = null;
+          setError("加载" + c.name + "的仪表盘失败: " + (err.message || "未知错误"));
+        }
+      }));
       setDashboards(ds);
+    } catch (err) {
+      setError("加载人员列表失败: " + (err.message || "未知错误"));
     } finally { setLoading(false); }
   }, [token]);
 
@@ -61,14 +72,22 @@ export default function Home({ token, onLogout }) {
   async function saveEdit() {
     if (!editingChild || !editForm.name.trim()) return;
     const gradeLabel = composeGradeLabel(editForm.stage, editForm.grade) || null;
-    await api.updateChild(token, editingChild, { name: editForm.name.trim(), grade_label: gradeLabel, streak_threshold: parseInt(editForm.threshold) || 0 });
-    setEditingChild(null); load();
+    try {
+      await api.updateChild(token, editingChild, { name: editForm.name.trim(), grade_label: gradeLabel, streak_threshold: parseInt(editForm.threshold) || 0 });
+      setEditingChild(null); load();
+    } catch (err) {
+      setError("保存人员信息失败: " + (err.message || "未知错误"));
+    }
   }
 
   async function handleDelete(childId) {
     if (!window.confirm("确定要删除吗？")) return;
-    await api.deleteChild(token, childId);
-    load();
+    try {
+      await api.deleteChild(token, childId);
+      load();
+    } catch (err) {
+      setError("删除人员失败: " + (err.message || "未知错误"));
+    }
   }
 
   if (view === "create-child") return <ChildCreate token={token} onDone={() => { setView("home"); load(); }} onCancel={() => setView("home")} />;
@@ -76,6 +95,13 @@ export default function Home({ token, onLogout }) {
 
   return (
     <div>
+      {error && (
+        <div style={styles.errorBanner}>
+          <span style={styles.errorIcon}>⚠</span>
+          <span>{error}</span>
+          <button onClick={() => setError(null)} style={styles.errorClose}>✕</button>
+        </div>
+      )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.2rem" }}>
         <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>Family Plan</h1>
         <button onClick={onLogout} style={{ color: "#73706b", fontSize: "0.85rem" }}>退出</button>
@@ -200,4 +226,29 @@ const styles = {
   sb: { flex: 1, padding: "0.35rem", fontSize: "0.85rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "8px" },
   cb: { flex: 1, padding: "0.35rem", fontSize: "0.85rem", fontWeight: 600, color: "#73706b", background: "#efece8", borderRadius: "8px" },
   ab: { width: "100%", padding: "0.7rem", fontSize: "0.95rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "12px", marginTop: "0.6rem" },
+  errorBanner: {
+    background: "#fef0f0",
+    border: "1px solid #f8d0d0",
+    borderRadius: "10px",
+    padding: "0.8rem 1rem",
+    marginBottom: "0.8rem",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.6rem",
+    color: "#c97070",
+    fontSize: "0.85rem",
+  },
+  errorIcon: {
+    fontSize: "1.1rem",
+    fontWeight: 600,
+  },
+  errorClose: {
+    marginLeft: "auto",
+    fontSize: "0.9rem",
+    color: "#c97070",
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
 };
