@@ -43,3 +43,13 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
+
+
+def hash_access_code(code: str) -> str:
+    """Slow bcrypt hash for 6-digit child access codes."""
+    return pwd_context.hash(code)
+
+
+def verify_access_code(plain_code: str, hashed_code: str) -> bool:
+    """Check candidate code against a stored bcrypt hash."""
+    return pwd_context.verify(plain_code, hashed_code)

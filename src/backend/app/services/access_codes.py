@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.security import hash_secret
+from app.core.security import hash_access_code
 from app.models.child_access_code import ChildAccessCode
 from app.services.children import get_child_for_parent
 
@@ -29,7 +29,7 @@ def generate_child_access_code(db: Session, child_id: UUID, parent_id: UUID) -> 
     plain_code = f"{_random.randrange(0, 1_000_000):06d}"
     access_code = ChildAccessCode(
         child_id=child_id,
-        code_hash=hash_secret(plain_code),
+        code_hash=hash_access_code(plain_code),
         expires_at=now + timedelta(minutes=settings.child_access_code_ttl_minutes),
     )
     db.add(access_code)
