@@ -3,8 +3,6 @@ __pycache__/
 *.py[cod]
 .venv/
 *.egg-info/
-uv.lock
-
 # Node
 node_modules/
 .next/
