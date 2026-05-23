@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.3.15] - 2026-05-23
+
+### Features
+
+- fold fulfilled redemption history
+
+
 ## [v0.3.14] - 2026-05-23
 
 ### Bug Fixes
@@ -14,6 +21,8 @@
 
 
 ### Maintenance
+
+- bump version to 0.3.14
 
 - track backend uv lockfile
 
