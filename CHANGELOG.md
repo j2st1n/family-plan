@@ -1,10 +1,38 @@
 # Changelog
 
+## [v0.3.14] - 2026-05-23
+
+### Bug Fixes
+
+- show parent web operation errors
+
+- handle child shop token expiry
+
+- harden redemptions and streak thresholds
+
+- use slow hash for child access codes
+
+
+### Maintenance
+
+- track backend uv lockfile
+
+
+### Other
+
+- cover audit regression fixes
+
+
 ## [v0.3.13] - 2026-05-22
 
 ### Bug Fixes
 
 - translate shop error messages to Chinese for child PWA
+
+
+### Maintenance
+
+- bump version to 0.3.13
 
 
 ## [v0.3.12] - 2026-05-22
