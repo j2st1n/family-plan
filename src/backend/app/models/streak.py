@@ -15,6 +15,7 @@ class Streak(Base):
     current_days: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     longest_days: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     last_completed_date: Mapped[date | None] = mapped_column(Date)
+    streak_updated_date: Mapped[date | None] = mapped_column(Date)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     child = relationship("Child", backref="streak", uselist=False)

@@ -9,7 +9,9 @@ from app.models.child_access_code import ChildAccessCode
 from app.models.child_device import ChildDevice
 from app.models.daily_task import DailyTask
 from app.models.plan import Plan
+from app.models.redemption import Redemption
 from app.models.reward_ledger import RewardLedger
+from app.models.shop_item import ShopItem
 from app.models.streak import Streak
 from app.models.task_template import TaskTemplate
 from app.schemas.child import ChildCreate, ChildUpdate
@@ -49,6 +51,8 @@ def update_child(db: Session, child_id: UUID, parent_id: UUID, data: ChildUpdate
 
 def delete_child(db: Session, child_id: UUID, parent_id: UUID) -> None:
     get_child_for_parent(db, child_id, parent_id)
+    db.execute(delete(Redemption).where(Redemption.child_id == child_id))
+    db.execute(delete(ShopItem).where(ShopItem.child_id == child_id))
     db.execute(delete(RewardLedger).where(RewardLedger.child_id == child_id))
     db.execute(delete(Streak).where(Streak.child_id == child_id))
     db.execute(delete(DailyTask).where(DailyTask.child_id == child_id))

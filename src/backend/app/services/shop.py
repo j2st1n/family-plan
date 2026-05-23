@@ -84,7 +84,7 @@ def approve_wish(db: Session, item_id: UUID, parent_id: UUID, data: WishApprove)
 
 
 def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
-    child = db.get(Child, child_id)
+    child = db.scalar(select(Child).where(Child.id == child_id).with_for_update())
     if child is None:
         raise api_error("not_found", "Child not found", 404)
     item = db.scalar(
@@ -93,7 +93,7 @@ def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
             ShopItem.status == "active",
             ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None))) |
             (ShopItem.child_id == child_id),
-        )
+        ).with_for_update()
     )
     if item is None:
         raise api_error("not_found", "Item not found", 404)
@@ -109,8 +109,9 @@ def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
     db.flush()
     db.add(RewardLedger(child_id=child_id, source_type="shop_redeem", source_id=red.id, stars_delta=-item.star_cost, reason=item.title))
     if item.stock is not None:
-        item.stock -= 1
-        if item.stock <= 0:
+        remaining = item.stock - 1
+        item.stock = remaining
+        if remaining <= 0:
             item.status = "redeemed"
     db.commit()
     db.refresh(item)
