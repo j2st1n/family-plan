@@ -3,7 +3,7 @@ import { fetchShop, fetchToday, redeemItem, makeWish, editWish } from "../api.js
 
 function fmtDate(s) { if (!s) return ""; return new Date(s).toLocaleDateString("zh-CN", { month: "short", day: "numeric" }); }
 
-export default function Shop({ active }) {
+export default function Shop({ onExpired, active }) {
   const [items, setItems] = useState([]);
   const [wishes, setWishes] = useState([]);
   const [redeemed, setRedeemed] = useState([]);
@@ -15,41 +15,69 @@ export default function Shop({ active }) {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", desc: "" });
 
-  const load = useCallback(async () => {
-    setLoading(true); setError("");
-    try {
-      const all = await fetchShop();
-      setItems(all.filter(i => i.status === "active" && !i.redeemed_by_child));
-      setWishes(all.filter(i => i.status === "pending"));
-      setRedeemed(all.filter(i => i.redeemed_by_child));
-      try { const today = await fetchToday(); setStars(today.rewards?.stars_total ?? 0); } catch {}
-    } catch { setError("加载失败"); }
-    finally { setLoading(false); }
-  }, []);
+const load = useCallback(async () => {
+  setLoading(true); setError("");
+  try {
+    const all = await fetchShop(onExpired);
+    setItems(all.filter(i => i.status === "active" && !i.redeemed_by_child));
+    setWishes(all.filter(i => i.status === "pending"));
+    setRedeemed(all.filter(i => i.redeemed_by_child));
+    try { const today = await fetchToday(onExpired); setStars(today.rewards?.stars_total ?? 0); } catch {}
+  } catch (err) {
+    if (err.message === "token_expired") {
+      setError("登录已过期，请重新绑定");
+      if (onExpired) onExpired();
+    } else {
+      setError("加载失败");
+    }
+  }
+  finally { setLoading(false); }
+}, [onExpired]);
 
   useEffect(() => { if (active) load(); }, [load, active]);
 
-  async function handleRedeem(item) {
-    if (!window.confirm(`用 ${item.star_cost}⭐ 兑换「${item.title}」？`)) return;
-    try { await redeemItem(item.id); load(); } catch (err) { setError(err.message); }
+async function handleRedeem(item) {
+  if (!window.confirm(`用 ${item.star_cost}⭐ 兑换「${item.title}」？`)) return;
+  try { await redeemItem(item.id, onExpired); load(); } catch (err) {
+    if (err.message === "token_expired") {
+      setError("登录已过期，请重新绑定");
+      if (onExpired) onExpired();
+    } else {
+      setError(err.message);
+    }
   }
+}
 
-  async function handleWish() {
-    if (!wishForm.title.trim()) return;
-    try {
-      await makeWish(wishForm.title.trim(), wishForm.desc.trim() || null);
-      setWishForm({ title: "", desc: "" }); setShowWish(false); load();
-    } catch (err) { setError(err.message); }
+async function handleWish() {
+  if (!wishForm.title.trim()) return;
+  try {
+    await makeWish(wishForm.title.trim(), wishForm.desc.trim() || null, onExpired);
+    setWishForm({ title: "", desc: "" }); setShowWish(false); load();
+  } catch (err) {
+    if (err.message === "token_expired") {
+      setError("登录已过期，请重新绑定");
+      if (onExpired) onExpired();
+    } else {
+      setError(err.message);
+    }
   }
+}
 
   function startEdit(w) { setEditingId(w.id); setEditForm({ title: w.title, desc: w.description || "" }); }
-  async function saveEdit() {
-    if (!editForm.title.trim()) return;
-    try {
-      await editWish(editingId, editForm.title.trim(), editForm.desc.trim() || null);
-      setEditingId(null); load();
-    } catch (err) { setError(err.message); }
+async function saveEdit() {
+  if (!editForm.title.trim()) return;
+  try {
+    await editWish(editingId, editForm.title.trim(), editForm.desc.trim() || null, onExpired);
+    setEditingId(null); load();
+  } catch (err) {
+    if (err.message === "token_expired") {
+      setError("登录已过期，请重新绑定");
+      if (onExpired) onExpired();
+    } else {
+      setError(err.message);
+    }
   }
+}
 
   if (loading) return <p style={{ color: "#73706b", textAlign: "center", paddingTop: "3rem" }}>加载中…</p>;
 

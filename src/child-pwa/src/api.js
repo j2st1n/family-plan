@@ -22,11 +22,15 @@ export async function bindDevice(code, displayName) {
   return res.json();
 }
 
-export async function fetchToday() {
+export async function fetchToday(onExpired) {
   const res = await fetch(`${API}/child/today`, { headers: headers() });
   if (!res.ok) {
-    localStorage.removeItem("device_token");
-    throw new Error("token_expired");
+    if (res.status === 401) {
+      localStorage.removeItem("device_token");
+      if (onExpired) onExpired();
+      throw new Error("token_expired");
+    }
+    throw new Error("获取今日任务失败");
   }
   return res.json();
 }
@@ -76,9 +80,16 @@ export async function deleteChildTask(taskId) {
   if (!res.ok) throw new Error("删除失败");
 }
 
-export async function fetchShop() {
+export async function fetchShop(onExpired) {
   const res = await fetch(`${API}/child/shop/items`, { headers: headers() });
-  if (!res.ok) throw new Error("加载失败");
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("device_token");
+      if (onExpired) onExpired();
+      throw new Error("token_expired");
+    }
+    throw new Error("加载失败");
+  }
   return res.json();
 }
 
@@ -101,20 +112,41 @@ async function extractError(res, fallback) {
   }
 }
 
-export async function redeemItem(itemId) {
+export async function redeemItem(itemId, onExpired) {
   const res = await fetch(`${API}/child/shop/items/${itemId}/redeem`, { method: "POST", headers: headers() });
-  if (!res.ok) throw new Error(await extractError(res, "兑换失败"));
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("device_token");
+      if (onExpired) onExpired();
+      throw new Error("token_expired");
+    }
+    throw new Error(await extractError(res, "兑换失败"));
+  }
   return res.json();
 }
 
-export async function makeWish(title, description) {
+export async function makeWish(title, description, onExpired) {
   const res = await fetch(`${API}/child/shop/wishes`, { method: "POST", headers: headers(), body: JSON.stringify({ title, description }) });
-  if (!res.ok) throw new Error(await extractError(res, "许愿失败"));
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("device_token");
+      if (onExpired) onExpired();
+      throw new Error("token_expired");
+    }
+    throw new Error(await extractError(res, "许愿失败"));
+  }
   return res.json();
 }
 
-export async function editWish(itemId, title, description) {
+export async function editWish(itemId, title, description, onExpired) {
   const res = await fetch(`${API}/child/shop/wishes/${itemId}`, { method: "PATCH", headers: headers(), body: JSON.stringify({ title, description }) });
-  if (!res.ok) throw new Error(await extractError(res, "修改失败"));
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("device_token");
+      if (onExpired) onExpired();
+      throw new Error("token_expired");
+    }
+    throw new Error(await extractError(res, "修改失败"));
+  }
   return res.json();
 }

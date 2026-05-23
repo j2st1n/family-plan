@@ -37,9 +37,9 @@ export default function App() {
       <div style={{ display: tab === "today" ? undefined : "none" }}>
         <Today child={child} onExpired={handleExpired} active={tab === "today"} />
       </div>
-      <div style={{ display: tab === "shop" ? undefined : "none" }}>
-        <Shop active={tab === "shop"} />
-      </div>
+<div style={{ display: tab === "shop" ? undefined : "none" }}>
+  <Shop onExpired={handleExpired} active={tab === "shop"} />
+</div>
       <nav className="nav-tabs" role="navigation">
         <button className={`nav-tab${tab === "today" ? " on" : ""}`} onClick={() => setTab("today")}>今日任务</button>
         <button className={`nav-tab${tab === "shop" ? " on" : ""}`} onClick={() => setTab("shop")}>星星商城</button>
