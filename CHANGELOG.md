@@ -1,10 +1,39 @@
 # Changelog
 
+## [v0.3.17] - 2026-05-24
+
+### Documentation
+
+- document realtime event streams
+
+
+### Features
+
+- refresh child pages from realtime events
+
+- add child realtime refresh hooks
+
+- refresh parent pages from realtime events
+
+- add parent realtime refresh hooks
+
+- publish realtime backend events
+
+- add authenticated event streams
+
+- add realtime event hub
+
+
 ## [v0.3.16] - 2026-05-24
 
 ### Bug Fixes
 
 - show sunday in routine weekdays
+
+
+### Maintenance
+
+- bump version to 0.3.16
 
 
 ## [v0.3.15] - 2026-05-23
