@@ -2,7 +2,7 @@
 
 Base path: `/api/v1`
 
-All responses are JSON. All timestamps are UTC ISO-8601 strings.
+REST responses are JSON. All timestamps are UTC ISO-8601 strings. Event streams use `text/event-stream`.
 
 ## 1. Error Shape
 
@@ -246,3 +246,51 @@ Response:
   }
 }
 ```
+
+## 8. Realtime Events
+
+Realtime endpoints are notification-only. They do not send task, shop, or child records directly; clients receive a topic-level change event and then re-fetch the relevant REST endpoint.
+
+Event payload:
+
+```json
+{
+  "topic": "tasks",
+  "parent_id": "uuid",
+  "child_id": "uuid-or-null",
+  "reason": "task_completed",
+  "version": 123
+}
+```
+
+Topics:
+
+| Topic | Meaning |
+|---|---|
+| `tasks` | Daily task, routine, plan, schedule, or completion data changed. |
+| `shop` | Shop item, wish, redemption, or fulfillment data changed. |
+| `children` | Child profile or device binding data changed. |
+
+### GET /events/parent
+
+Parent SSE stream. Auth: parent Bearer JWT.
+
+Response content type: `text/event-stream`.
+
+Example event:
+
+```text
+event: update
+data: {"topic":"tasks","parent_id":"uuid","child_id":"uuid","reason":"task_completed","version":12}
+
+```
+
+The parent stream receives all events scoped to the authenticated parent.
+
+### GET /child/events
+
+Child SSE stream. Auth: child device Bearer token.
+
+Response content type: `text/event-stream`.
+
+The child stream receives events for its child ID plus parent-wide events where `child_id` is `null`.

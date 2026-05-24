@@ -4,7 +4,7 @@
 
 ```text
 ┌──────────────────┐      ┌────────────────┐      ┌──────────────────┐
-│ Parent Web App   │─────▶│ FastAPI REST    │◀────│ Child iPad PWA   │
+│ Parent Web App   │─────▶│ FastAPI REST/SSE│◀────│ Child iPad PWA   │
 │ Login (user/pass)│      │ (API + static)  │      │ Device token     │
 │ Plan management  │      │ Auth, plans,    │      │ Today's tasks    │
 └──────────────────┘      └────────┬───────┘      └──────────────────┘
@@ -23,6 +23,7 @@ Production is served through Caddy:
 
 ### Backend
 - FastAPI for REST API and static file serving.
+- Server-Sent Events notify parent and child clients that task, shop, or child data changed; clients then re-fetch through existing REST endpoints.
 - SQLAlchemy for ORM, Alembic for migrations.
 - PostgreSQL for production data.
 - Docker Compose for deployment (`docker-compose.yml`); `docker-compose.dev.yml` for development.
@@ -55,7 +56,8 @@ Production is served through Caddy:
 ## 4. Key Decisions
 - Single backend serves both API and frontend static files.
 - Child auth passwordless to reduce friction.
-- No real-time updates; pull-to-refresh.
+- Real-time refresh is notification-only: SSE events mark `tasks`, `shop`, or `children` as changed, while REST remains the source of truth.
+- The current SSE hub is in-process and assumes a single API worker/container; horizontal scaling requires a shared pub/sub layer such as Redis or PostgreSQL LISTEN/NOTIFY.
 - Daily tasks with weekday-based recurrence for routines.
 
 ## 5. Later Expansion
