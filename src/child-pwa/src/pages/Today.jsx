@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { fetchToday, completeTask, createChildTask, scheduleChildTask, updateChildTask, deleteChildTask } from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
+import { formatStars } from "../utils/format.js";
 
 const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -29,7 +30,7 @@ export default function Today({ child, onExpired, active }) {
   }, [onExpired]);
 
   useEffect(() => { if (active) load(); }, [load, active]);
-  useSseRefresh({ enabled: active, topics: ["tasks"], onRefresh: load, onExpired });
+  useSseRefresh({ enabled: active, topics: ["tasks", "settings"], onRefresh: load, onExpired });
   useVisibilityRefresh({ enabled: active, onRefresh: load });
 
   async function handleComplete(task) {
@@ -80,7 +81,7 @@ export default function Today({ child, onExpired, active }) {
     <div>
       <div style={{ marginBottom: "1.4rem" }}><h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>你好，{child?.name ?? "小朋友"}</h1><p style={{ color: "#73706b", marginTop: "0.3rem", fontSize: "0.95rem" }}>{dateStr}</p></div>
       <div style={{ display: "flex", gap: "0.8rem", marginBottom: "1.4rem" }}>
-        <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#c4912a" }}>⭐ {data?.rewards?.stars_total ?? 0}</p><p style={{ fontSize: "0.75rem", color: "#73706b" }}>星星</p></div>
+        <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#c4912a" }}>⭐ {formatStars(data?.rewards?.stars_total ?? 0)}</p><p style={{ fontSize: "0.75rem", color: "#73706b" }}>星星</p></div>
         <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>🔥 {data?.rewards?.current_streak_days ?? 0}</p><p style={{ fontSize: "0.8rem", color: "#73706b" }}>连续天数</p></div>
       </div>
 
@@ -113,7 +114,7 @@ export default function Today({ child, onExpired, active }) {
         {!showAdd ? <button onClick={() => setShowAdd(true)} style={{ width: "100%", padding: "0.6rem", fontSize: "0.95rem", color: "#3d9e6b", border: "1px dashed #3d9e6b", borderRadius: "14px", background: "transparent" }}>+ 添加任务</button> : (
           <div style={{ background: "#fff", borderRadius: "16px", padding: "1rem", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
             <input placeholder="任务名 *" value={newForm.title} onChange={e => setNewForm({ ...newForm, title: e.target.value })} style={st.fi} autoFocus />
-            <div style={{ display: "flex", gap: "0.5rem" }}><input type="number" placeholder="分钟 *" value={newForm.minutes} onChange={e => setNewForm({ ...newForm, minutes: e.target.value })} style={{ ...st.fi, flex: 1 }} /><select value={newForm.stars} onChange={e => setNewForm({ ...newForm, stars: parseInt(e.target.value) })} style={{ ...st.fi, flex: 1 }}><option value={1}>⭐</option><option value={2}>⭐⭐</option><option value={3}>⭐⭐⭐</option></select></div>
+            <div style={{ display: "flex", gap: "0.5rem" }}><input type="number" placeholder="分钟 *" value={newForm.minutes} onChange={e => setNewForm({ ...newForm, minutes: e.target.value })} style={{ ...st.fi, flex: 1 }} /><RewardSelect value={newForm.stars} onChange={value => setNewForm({ ...newForm, stars: value })} /></div>
             <div style={{ display: "flex", gap: "0.5rem" }}><input type="time" value={newForm.start} onChange={e => setNewForm({ ...newForm, start: e.target.value })} style={{ ...st.fi, flex: 1 }} /><input type="time" value={newForm.end} onChange={e => setNewForm({ ...newForm, end: e.target.value })} style={{ ...st.fi, flex: 1 }} /></div>
             <div style={{ display: "flex", gap: "0.5rem" }}><button onClick={handleCreateTask} style={st.fsb}>添加</button><button onClick={() => setShowAdd(false)} style={st.fcb}>取消</button></div>
           </div>
@@ -136,7 +137,7 @@ function TaskCard({ task, child, completingId, schedulingId, scheduleForm, setSc
       {editingId === task.id ? (
         <div>
           <input placeholder="任务名 *" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} style={st.fi} autoFocus />
-          <div style={{ display: "flex", gap: "0.5rem" }}><input type="number" placeholder="分钟 *" value={editForm.minutes} onChange={e => setEditForm({ ...editForm, minutes: e.target.value })} style={{ ...st.fi, flex: 1 }} /><select value={editForm.stars} onChange={e => setEditForm({ ...editForm, stars: parseInt(e.target.value) })} style={{ ...st.fi, flex: 1 }}><option value={1}>⭐</option><option value={2}>⭐⭐</option><option value={3}>⭐⭐⭐</option></select></div>
+          <div style={{ display: "flex", gap: "0.5rem" }}><input type="number" placeholder="分钟 *" value={editForm.minutes} onChange={e => setEditForm({ ...editForm, minutes: e.target.value })} style={{ ...st.fi, flex: 1 }} /><RewardSelect value={editForm.stars} onChange={value => setEditForm({ ...editForm, stars: value })} /></div>
           <div style={{ display: "flex", gap: "0.5rem" }}><input type="time" value={editForm.start} onChange={e => setEditForm({ ...editForm, start: e.target.value })} style={{ ...st.fi, flex: 1 }} /><input type="time" value={editForm.end} onChange={e => setEditForm({ ...editForm, end: e.target.value })} style={{ ...st.fi, flex: 1 }} /></div>
           <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.3rem" }}><button onClick={() => onSaveEdit(task.id)} style={st.fsb}>保存</button><button onClick={onCancelEdit} style={st.fcb}>取消</button></div>
         </div>
@@ -177,6 +178,14 @@ function TaskCard({ task, child, completingId, schedulingId, scheduleForm, setSc
         </div>
       )}
     </div>
+  );
+}
+
+function RewardSelect({ value, onChange }) {
+  return (
+    <select value={value} onChange={e => onChange(parseInt(e.target.value))} style={{ ...st.fi, flex: 1 }}>
+      {[0, 1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n === 0 ? "0⭐" : "⭐".repeat(n)}</option>)}
+    </select>
   );
 }
 

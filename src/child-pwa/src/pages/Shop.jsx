@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { fetchShop, fetchToday, redeemItem, makeWish, editWish } from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
+import { formatStars } from "../utils/format.js";
 
 function fmtDate(s) { if (!s) return ""; return new Date(s).toLocaleDateString("zh-CN", { month: "short", day: "numeric" }); }
 
@@ -38,11 +39,12 @@ const load = useCallback(async () => {
 }, [onExpired]);
 
   useEffect(() => { if (active) load(); }, [load, active]);
-  useSseRefresh({ enabled: active, topics: ["shop"], onRefresh: load, onExpired });
+  useSseRefresh({ enabled: active, topics: ["shop", "tasks", "settings"], onRefresh: load, onExpired });
   useVisibilityRefresh({ enabled: active, onRefresh: load });
 
 async function handleRedeem(item) {
-  if (!window.confirm(`用 ${item.star_cost}⭐ 兑换「${item.title}」？`)) return;
+  const cost = item.discounted_star_cost ?? item.star_cost;
+  if (!window.confirm(`用 ${formatStars(cost)}⭐ 兑换「${item.title}」？`)) return;
   try { await redeemItem(item.id, onExpired); load(); } catch (err) {
     if (err.message === "token_expired") {
       setError("登录已过期，请重新绑定");
@@ -99,18 +101,23 @@ async function saveEdit() {
       )}
       <div style={{ marginBottom: "1rem" }}>
         <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#3d9e6b" }}>星星商城</h2>
-        <p style={{ fontSize: "0.9rem", color: "#c4912a", marginTop: "0.2rem" }}>余额 ⭐{stars}</p>
+        <p style={{ fontSize: "0.9rem", color: "#c4912a", marginTop: "0.2rem" }}>余额 ⭐{formatStars(stars)}</p>
       </div>
 
-      {items.map(item => (
-        <div key={item.id} style={s.card}>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 600, fontSize: "1rem" }}>{item.title}</p>
-            {item.stock != null && <p style={{ fontSize: "0.75rem", color: "#c97070" }}>仅剩 {item.stock} 件</p>}
+      {items.map(item => {
+        const discounted = item.discounted_star_cost != null && Number(item.discounted_star_cost) < Number(item.star_cost);
+        const cost = item.discounted_star_cost ?? item.star_cost;
+        return (
+          <div key={item.id} style={s.card}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontWeight: 600, fontSize: "1rem" }}>{item.title}</p>
+              {item.stock != null && <p style={{ fontSize: "0.75rem", color: "#c97070" }}>仅剩 {item.stock} 件</p>}
+              {discounted && <p style={{ fontSize: "0.75rem", color: "#3d9e6b", marginTop: "0.15rem" }}>{item.discount_label || `支付 ${item.discount_percent}%`} · 原价 {formatStars(item.star_cost)}⭐</p>}
+            </div>
+            <button onClick={() => handleRedeem(item)} style={s.redeemBtn}>⭐{formatStars(cost)} 兑换</button>
           </div>
-          <button onClick={() => handleRedeem(item)} style={s.redeemBtn}>⭐{item.star_cost} 兑换</button>
-        </div>
-      ))}
+        );
+      })}
 
       {items.length === 0 && <p style={{ color: "#73706b", textAlign: "center" }}>暂无商品</p>}
 
@@ -125,7 +132,7 @@ async function saveEdit() {
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>{r.title}</p>
                 <p style={{ fontSize: "0.75rem", color: "#73706b" }}>
-                  ⭐{r.star_cost} · 等待兑现 {fmtDate(r.created_at)}
+                  {redemptionPrice(r)} · 等待兑现 {fmtDate(r.created_at)}
                 </p>
               </div>
               <span style={{ fontSize: "0.75rem", color: "#c4912a" }}>待兑现</span>
@@ -141,7 +148,7 @@ async function saveEdit() {
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>{r.title}</p>
                 <p style={{ fontSize: "0.75rem", color: "#73706b" }}>
-                  ⭐{r.star_cost} · 已收到 {fmtDate(r.fulfilled_at)}
+                  {redemptionPrice(r)} · 已收到 {fmtDate(r.fulfilled_at)}
                 </p>
               </div>
               <span style={{ fontSize: "0.75rem", color: "#4b9c64" }}>已收到</span>
@@ -193,6 +200,13 @@ async function saveEdit() {
       </div>
     </div>
   );
+}
+
+function redemptionPrice(r) {
+  if (r.final_star_cost == null) return `⭐${formatStars(r.star_cost)}`;
+  const original = r.original_star_cost ?? r.star_cost;
+  const percent = r.redemption_discount_percent ?? 100;
+  return `实付 ${formatStars(r.final_star_cost)}⭐ · 原价 ${formatStars(original)}⭐ · ${percent}%`;
 }
 
 const s = {

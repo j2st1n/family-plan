@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import api from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
+import { formatStars } from "../utils/format.js";
 
 export default function Shop({ token, isActive, onExpired }) {
   const [items, setItems] = useState([]);
@@ -28,10 +29,10 @@ export default function Shop({ token, isActive, onExpired }) {
   useVisibilityRefresh({ enabled: isActive, onRefresh: load });
 
   async function handleAdd() {
-    if (!form.title.trim() || !form.stars || parseInt(form.stars) < 1) return;
+    if (!form.title.trim() || !form.stars || Number(form.stars) < 0.01) return;
     const stock = form.stock ? parseInt(form.stock) : null;
     try {
-      await api.createShopItem(token, { title: form.title.trim(), star_cost: parseInt(form.stars), stock });
+      await api.createShopItem(token, { title: form.title.trim(), star_cost: Number(form.stars), stock });
       setForm({ title: "", stars: "", stock: "" }); setShowAdd(false); load();
     } catch (err) {
       setError("添加商品失败: " + (err.message || "未知错误"));
@@ -40,10 +41,10 @@ export default function Shop({ token, isActive, onExpired }) {
 
   function startEdit(item) { setEditingId(item.id); setEditForm({ title: item.title, stars: item.star_cost.toString(), stock: item.stock?.toString() || "" }); }
   async function saveEdit() {
-    if (!editForm.title.trim() || !editForm.stars || parseInt(editForm.stars) < 1) return;
+    if (!editForm.title.trim() || !editForm.stars || Number(editForm.stars) < 0.01) return;
     const stock = editForm.stock ? parseInt(editForm.stock) : null;
     try {
-      await api.updateShopItem(token, editingId, { title: editForm.title.trim(), star_cost: parseInt(editForm.stars), stock });
+      await api.updateShopItem(token, editingId, { title: editForm.title.trim(), star_cost: Number(editForm.stars), stock });
       setEditingId(null); load();
     } catch (err) {
       setError("保存商品失败: " + (err.message || "未知错误"));
@@ -71,7 +72,7 @@ export default function Shop({ token, isActive, onExpired }) {
   async function handleApprove(id) {
     const stars = approveStars[id] || 10;
     try {
-      await api.approveWish(token, id, parseInt(stars));
+      await api.approveWish(token, id, Number(stars));
       setApproveStars(p => { const n = { ...p }; delete n[id]; return n; }); load();
     } catch (err) {
       setError("审核许愿失败: " + (err.message || "未知错误"));
@@ -116,7 +117,7 @@ export default function Shop({ token, isActive, onExpired }) {
                   <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{item.title}</p>
                   {item.stock != null && <p style={{ fontSize: "0.72rem", color: "#c97070", marginTop: 2 }}>库存 {item.stock}</p>}
                 </div>
-                <span style={{ fontSize: "0.8rem", color: "#c4912a", whiteSpace: "nowrap" }}>⭐{item.star_cost}</span>
+                <span style={{ fontSize: "0.8rem", color: "#c4912a", whiteSpace: "nowrap" }}>⭐{formatStars(item.star_cost)}</span>
                 <button onClick={() => startEdit(item)} style={s.ib}>✎</button>
                 <button onClick={() => handleDelete(item.id)} style={s.ib}>✕</button>
               </>
@@ -164,7 +165,7 @@ export default function Shop({ token, isActive, onExpired }) {
             <div key={r.id} style={{ ...s.row }}>
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{r.title}</p>
-                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>⭐{r.star_cost}{r.child_id ? " · 孩子兑换" : ""}</p>
+                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>{redemptionPrice(r)}{r.child_id ? " · 孩子兑换" : ""}</p>
               </div>
               <button onClick={() => handleFulfill(r.redemption_id)} style={s.act}>兑现</button>
             </div>
@@ -178,7 +179,7 @@ export default function Shop({ token, isActive, onExpired }) {
             <div key={r.id} style={{ ...s.row, background: "#fafafa" }}>
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{r.title}</p>
-                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>⭐{r.star_cost}{r.child_id ? " · 孩子兑换" : ""}</p>
+                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>{redemptionPrice(r)}{r.child_id ? " · 孩子兑换" : ""}</p>
               </div>
               <span style={{ fontSize: "0.78rem", color: "#4b9c64", fontWeight: 600 }}>已兑现</span>
             </div>
@@ -187,6 +188,11 @@ export default function Shop({ token, isActive, onExpired }) {
       )}
     </div>
   );
+}
+
+function redemptionPrice(r) {
+  if (r.final_star_cost == null) return `⭐${formatStars(r.star_cost)}`;
+  return `原价 ${formatStars(r.original_star_cost ?? r.star_cost)}⭐ · 支付 ${r.redemption_discount_percent ?? 100}% · 实付 ${formatStars(r.final_star_cost)}⭐`;
 }
 
 const s = {
