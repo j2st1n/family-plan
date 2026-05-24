@@ -35,7 +35,6 @@ function composeGradeLabel(stage, grade) {
 export default function Home({ token, isActive, onLogout, onExpired }) {
   const [children, setChildren] = useState([]);
   const [dashboards, setDashboards] = useState({});
-  const [toggles, setToggles] = useState({});
   const [view, setView] = useState("home");
   const [selectedChild, setSelectedChild] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +67,6 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
   useSseRefresh({ token, enabled: isActive && view === "home", topics: ["tasks", "children", "settings"], onRefresh: load, onExpired });
   useVisibilityRefresh({ enabled: isActive, onRefresh: load });
 
-  function toggleView(childId) { setToggles(p => ({ ...p, [childId]: !p[childId] })); }
   function startEdit(c) {
     const { stage, grade } = parseGradeLabel(c.grade_label || "");
     setEditingChild(c.id);
@@ -125,7 +123,6 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
 
       {children.map((c) => {
         const d = dashboards[c.id];
-        const isCumulative = toggles[c.id];
         const completed = d?.today?.completed_tasks ?? 0;
         const total = d?.today?.total_tasks ?? 0;
         const stars = d?.rewards?.stars_total ?? 0;
@@ -175,15 +172,12 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: "0.2rem", alignItems: "center", flexShrink: 0 }}>
-                    <button onClick={() => toggleView(c.id)} style={{ ...styles.tg, background: isCumulative ? "#3d9e6b" : "#efece8", color: isCumulative ? "#fff" : "#73706b" }}>
-                      {isCumulative ? "累计" : "今日"}
-                    </button>
                     <button onClick={() => startEdit(c)} style={styles.ib}>✎</button>
                     <button onClick={() => { setSelectedChild(c); setView("reward-settings"); }} style={styles.settingsBtn}>奖励设置</button>
                     <button onClick={() => handleDelete(c.id)} style={styles.ib}>✕</button>
                   </div>
                 </div>
-                {rate !== null && !isCumulative && (
+                {rate !== null && (
                   <div style={{ marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px solid #f0ece6", display: "flex", alignItems: "center", gap: "0.6rem" }}>
                     <ProgressRing percent={rate} />
                     <div style={{ flex: 1 }}>
@@ -227,7 +221,6 @@ function ProgressRing({ percent, size = 52 }) {
 
 const styles = {
   card: { background: "#fff", borderRadius: "14px", padding: "0.9rem 1rem", marginBottom: "0.7rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
-  tg: { padding: "0.2rem 0.55rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 600, border: "none", cursor: "pointer" },
   ib: { width: "1.6rem", height: "1.6rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 600, color: "#73706b", background: "transparent", border: "none", cursor: "pointer" },
   settingsBtn: { padding: "0.24rem 0.55rem", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 700, color: "#fff", background: "#3d9e6b", border: "none", cursor: "pointer", whiteSpace: "nowrap" },
   ei: { width: "100%", padding: "0.4rem 0.6rem", fontSize: "0.95rem", border: "1px solid #e8e4df", borderRadius: "8px", outline: "none", marginBottom: "0.3rem", display: "block" },
