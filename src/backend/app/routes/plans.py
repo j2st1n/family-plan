@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_parent
 from app.db.session import get_db
 from app.models.parent import Parent
-from app.schemas.plan import PlanBrief, PlanCreate, PlanResponse, TaskTemplateCreate, TaskTemplateResponse
-from app.services.plans import add_task_template, create_plan, delete_task_template, get_child_dashboard, get_plan_for_parent, list_plans_for_parent, update_task_template
+from app.schemas.plan import PlanCreate, PlanResponse, TaskTemplateCreate, TaskTemplateResponse
+from app.services.event_hub import event_hub
+from app.services.plans import add_task_template, create_plan, delete_task_template, get_plan_for_parent, list_plans_for_parent, update_task_template
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
@@ -19,6 +20,7 @@ def create_parent_plan(
     db: Session = Depends(get_db),
 ) -> PlanResponse:
     plan = create_plan(db, parent.id, payload)
+    event_hub.publish(parent.id, "tasks", "plan_created", plan.child_id)
     return PlanResponse.model_validate(plan, from_attributes=True)
 
 
@@ -52,6 +54,7 @@ def add_plan_task_template(
 ) -> TaskTemplateResponse:
     plan = get_plan_for_parent(db, plan_id, parent.id)
     template = add_task_template(db, plan, payload)
+    event_hub.publish(parent.id, "tasks", "routine_created", plan.child_id)
     return TaskTemplateResponse.model_validate(template, from_attributes=True)
 
 
@@ -65,6 +68,7 @@ def edit_task_template(
 ) -> TaskTemplateResponse:
     plan = get_plan_for_parent(db, plan_id, parent.id)
     template = update_task_template(db, plan, template_id, payload)
+    event_hub.publish(parent.id, "tasks", "routine_updated", plan.child_id)
     return TaskTemplateResponse.model_validate(template, from_attributes=True)
 
 
@@ -77,3 +81,4 @@ def remove_task_template(
 ):
     plan = get_plan_for_parent(db, plan_id, parent.id)
     delete_task_template(db, plan, template_id)
+    event_hub.publish(parent.id, "tasks", "routine_deleted", plan.child_id)

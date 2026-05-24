@@ -24,6 +24,7 @@ from app.schemas.daily_task import (
     TaskCompleteRequest,
     TaskCompleteResponse,
 )
+from app.services.event_hub import event_hub
 from app.services.daily_tasks import (
     complete_task,
     create_child_task,
@@ -35,8 +36,6 @@ from app.services.daily_tasks import (
     schedule_child_task,
     update_child_task,
     delete_child_task,
-    schedule_child_task,
-    update_child_task,
     update_daily_task,
 )
 from app.services.plans import get_plan_for_parent
@@ -78,6 +77,7 @@ def complete_child_task(
     child, _ = child_device
     task = complete_task(db, task_id, child.id, payload.feedback)
     summary = get_reward_summary(db, child.id)
+    event_hub.publish(child.parent_id, "tasks", "task_completed", child.id)
     return TaskCompleteResponse(
         task_id=task.id,
         status=task.status,
@@ -95,6 +95,7 @@ def add_manual_daily_tasks(
 ):
     plan = get_plan_for_parent(db, plan_id, parent.id)
     dailies = create_manual_daily_tasks(db, plan, payload.task_date, payload.tasks)
+    event_hub.publish(parent.id, "tasks", "task_created", plan.child_id)
     return [_daily_to_item(t) for t in dailies]
 
 
@@ -128,6 +129,7 @@ def edit_daily_task(
 ):
     plan = get_plan_for_parent(db, plan_id, parent.id)
     task = update_daily_task(db, task_id, plan, payload)
+    event_hub.publish(parent.id, "tasks", "task_updated", plan.child_id)
     return _daily_to_item(task)
 
 
@@ -140,6 +142,7 @@ def remove_daily_task(
 ):
     plan = get_plan_for_parent(db, plan_id, parent.id)
     delete_daily_task(db, task_id, plan)
+    event_hub.publish(parent.id, "tasks", "task_deleted", plan.child_id)
 
 
 @router.post("/tasks", status_code=201)
@@ -151,6 +154,7 @@ def create_child_own_task(
     child, _ = child_device
     plan = _get_child_plan(db, child.id)
     task = create_child_task(db, child.id, plan.id, payload)
+    event_hub.publish(child.parent_id, "tasks", "child_task_created", child.id)
     return _daily_to_item(task)
 
 
@@ -163,6 +167,7 @@ def set_child_task_schedule(
 ):
     child, _ = child_device
     task = schedule_child_task(db, task_id, child.id, payload)
+    event_hub.publish(child.parent_id, "tasks", "task_scheduled", child.id)
     return _daily_to_item(task)
 
 
@@ -175,6 +180,7 @@ def edit_child_task(
 ):
     child, _ = child_device
     task = update_child_task(db, task_id, child.id, payload)
+    event_hub.publish(child.parent_id, "tasks", "child_task_updated", child.id)
     return _daily_to_item(task)
 
 
@@ -186,6 +192,7 @@ def remove_child_task(
 ):
     child, _ = child_device
     delete_child_task(db, task_id, child.id)
+    event_hub.publish(child.parent_id, "tasks", "child_task_deleted", child.id)
 
 
 def _get_child_plan(db: Session, child_id: UUID):

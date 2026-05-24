@@ -7,6 +7,7 @@ from app.db.session import get_db
 from app.schemas.child import ChildBrief
 from app.schemas.device import DeviceBindRequest, DeviceBindResponse
 from app.services.devices import bind_child_device
+from app.services.event_hub import event_hub
 
 router = APIRouter(prefix="/child-devices", tags=["child devices"])
 
@@ -27,4 +28,5 @@ async def _check_bind_rate(request: Request):
 async def bind_device(payload: DeviceBindRequest, request: Request, db: Session = Depends(get_db)) -> DeviceBindResponse:
     await _check_bind_rate(request)
     token, child = bind_child_device(db, payload.code, payload.display_name)
+    event_hub.publish(child.parent_id, "children", "child_bound", child.id)
     return DeviceBindResponse(device_token=token, child=ChildBrief.model_validate(child))

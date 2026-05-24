@@ -10,6 +10,7 @@ from app.schemas.access_code import AccessCodeResponse
 from app.schemas.child import ChildCreate, ChildResponse, ChildUpdate
 from app.services.access_codes import generate_child_access_code
 from app.services.children import create_child, delete_child, get_child_for_parent, list_children, update_child
+from app.services.event_hub import event_hub
 from app.services.plans import get_child_dashboard
 
 router = APIRouter(prefix="/children", tags=["children"])
@@ -38,7 +39,9 @@ def create_parent_child(
     parent: Parent = Depends(get_current_parent),
     db: Session = Depends(get_db),
 ) -> ChildResponse:
-    return ChildResponse.model_validate(create_child(db, parent.id, payload))
+    child = create_child(db, parent.id, payload)
+    event_hub.publish(parent.id, "children", "child_created", child.id)
+    return ChildResponse.model_validate(child)
 
 
 @router.get("/{child_id}", response_model=ChildResponse)
@@ -67,7 +70,9 @@ def edit_child(
     parent: Parent = Depends(get_current_parent),
     db: Session = Depends(get_db),
 ) -> ChildResponse:
-    return ChildResponse.model_validate(update_child(db, child_id, parent.id, payload))
+    child = update_child(db, child_id, parent.id, payload)
+    event_hub.publish(parent.id, "children", "child_updated", child.id)
+    return ChildResponse.model_validate(child)
 
 
 @router.delete("/{child_id}", status_code=204)
@@ -77,3 +82,4 @@ def remove_child(
     db: Session = Depends(get_db),
 ):
     delete_child(db, child_id, parent.id)
+    event_hub.publish(parent.id, "children", "child_deleted", child_id)
