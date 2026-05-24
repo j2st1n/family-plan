@@ -1,7 +1,8 @@
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -15,7 +16,7 @@ class ShopItem(Base):
     child_id: Mapped[UUID | None] = mapped_column(ForeignKey("children.id"), nullable=True, index=True)
     title: Mapped[str] = mapped_column(String(160), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    star_cost: Mapped[int] = mapped_column(Integer, nullable=False)
+    star_cost: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     stock: Mapped[int | None] = mapped_column(Integer, nullable=True)
     fulfilled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

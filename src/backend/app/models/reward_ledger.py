@@ -1,7 +1,8 @@
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, Numeric, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -14,7 +15,7 @@ class RewardLedger(Base):
     child_id: Mapped[UUID] = mapped_column(ForeignKey("children.id"), nullable=False, index=True)
     source_type: Mapped[str] = mapped_column(String(40), nullable=False)
     source_id: Mapped[UUID | None] = mapped_column()
-    stars_delta: Mapped[int] = mapped_column(Integer, nullable=False)
+    stars_delta: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     reason: Mapped[str] = mapped_column(String(160), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
