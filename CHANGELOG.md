@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.20] - 2026-05-24
+
+### Bug Fixes
+
+- remove unused cumulative toggle
+
+
 ## [v0.3.19] - 2026-05-24
 
 ### Bug Fixes
 
 - make reward settings entry visible
+
+
+### Maintenance
+
+- bump version to 0.3.19
 
 
 ## [v0.3.18] - 2026-05-24
