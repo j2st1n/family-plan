@@ -54,6 +54,18 @@ const api = {
     return request(`/children/${childId}/dashboard`, { headers: h(token) });
   },
 
+  fetchRewardSettings(token, childId) {
+    return request(`/children/${childId}/reward-settings`, { headers: h(token) });
+  },
+
+  updateRewardSettings(token, childId, data) {
+    return request(`/children/${childId}/reward-settings`, {
+      method: "PATCH",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
+  },
+
   fetchPlans(token, childId) {
     const q = childId ? `?child_id=${childId}` : "";
     return request(`/plans${q}`, { headers: h(token) });

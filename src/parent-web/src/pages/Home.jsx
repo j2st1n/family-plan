@@ -3,7 +3,9 @@ import api from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import ChildCreate from "./ChildCreate.jsx";
+import RewardSettings from "./RewardSettings.jsx";
 import TaskManage from "./TaskManage.jsx";
+import { formatStars } from "../utils/format.js";
 
 const AVATARS = ["#3d9e6b", "#c4912a", "#5b8fb9", "#c97070", "#8b6f9e", "#4b9c64"];
 
@@ -63,7 +65,7 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
   }, [token]);
 
   useEffect(() => { load(); }, [load]);
-  useSseRefresh({ token, enabled: isActive && view === "home", topics: ["tasks", "children"], onRefresh: load, onExpired });
+  useSseRefresh({ token, enabled: isActive && view === "home", topics: ["tasks", "children", "settings"], onRefresh: load, onExpired });
   useVisibilityRefresh({ enabled: isActive, onRefresh: load });
 
   function toggleView(childId) { setToggles(p => ({ ...p, [childId]: !p[childId] })); }
@@ -96,6 +98,7 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
 
   if (view === "create-child") return <ChildCreate token={token} onDone={() => { setView("home"); load(); }} onCancel={() => setView("home")} />;
   if (view === "task-manage" && selectedChild) return <TaskManage token={token} child={selectedChild} isActive={isActive} onExpired={onExpired} onBack={() => { setView("home"); load(); }} />;
+  if (view === "reward-settings" && selectedChild) return <RewardSettings token={token} child={selectedChild} onBack={() => { setView("home"); load(); }} />;
 
   return (
     <div>
@@ -166,7 +169,7 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
                       {c.grade_label && <span style={{ fontSize: "0.78rem", color: "#73706b" }}>{c.grade_label}</span>}
                     </div>
                     <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
-                      <span className="stat-chip">⭐ {stars}</span>
+                      <span className="stat-chip">⭐ {formatStars(stars)}</span>
                       <span className="stat-chip green">🔥 {streak}</span>
                       <span style={{ fontSize: "0.72rem", color: "#9e948a" }}>达标线 {c.streak_threshold ?? 80}%</span>
                     </div>
@@ -176,6 +179,7 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
                       {isCumulative ? "累计" : "今日"}
                     </button>
                     <button onClick={() => startEdit(c)} style={styles.ib}>✎</button>
+                    <button onClick={() => { setSelectedChild(c); setView("reward-settings"); }} style={styles.settingsBtn}>奖励</button>
                     <button onClick={() => handleDelete(c.id)} style={styles.ib}>✕</button>
                   </div>
                 </div>
@@ -225,6 +229,7 @@ const styles = {
   card: { background: "#fff", borderRadius: "14px", padding: "0.9rem 1rem", marginBottom: "0.7rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
   tg: { padding: "0.2rem 0.55rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 600, border: "none", cursor: "pointer" },
   ib: { width: "1.6rem", height: "1.6rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 600, color: "#73706b", background: "transparent", border: "none", cursor: "pointer" },
+  settingsBtn: { padding: "0.2rem 0.45rem", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 650, color: "#3d9e6b", background: "#e8f3ec", border: "none", cursor: "pointer" },
   ei: { width: "100%", padding: "0.4rem 0.6rem", fontSize: "0.95rem", border: "1px solid #e8e4df", borderRadius: "8px", outline: "none", marginBottom: "0.3rem", display: "block" },
   el: { display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#4a4540", marginBottom: "0.15rem", marginTop: "0.3rem" },
   sb: { flex: 1, padding: "0.35rem", fontSize: "0.85rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "8px" },
