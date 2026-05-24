@@ -1,5 +1,6 @@
 from copy import copy as shallow_copy
 from datetime import UTC, datetime
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -10,7 +11,9 @@ from app.models.child import Child
 from app.models.redemption import Redemption
 from app.models.reward_ledger import RewardLedger
 from app.models.shop_item import ShopItem
+from app.models.streak import Streak
 from app.schemas.shop import ShopItemCreate, WishApprove, WishCreate
+from app.services.reward_settings import calculate_discounted_star_cost, discount_label, get_discount_percent, get_or_create_reward_settings
 
 
 def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
@@ -33,6 +36,11 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
             select(Redemption).where(Redemption.child_id == child_id).order_by(Redemption.created_at.desc())
         )
     )
+    settings = get_or_create_reward_settings(db, child_id)
+    streak = db.scalar(select(Streak).where(Streak.child_id == child_id))
+    streak_days = streak.current_days if streak else 0
+    discount_percent = get_discount_percent(settings, streak_days)
+    label = discount_label(settings, streak_days)
     result = []
     for red in redemptions:
         item = db.get(ShopItem, red.shop_item_id)
@@ -42,7 +50,16 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
         entry.redeemed_by_child = True  # type: ignore[attr-defined]
         entry.redemption_id = red.id  # type: ignore[attr-defined]
         entry.redemption_status = red.status  # type: ignore[attr-defined]
+        entry.original_star_cost = red.original_star_cost  # type: ignore[attr-defined]
+        entry.final_star_cost = red.final_star_cost  # type: ignore[attr-defined]
+        entry.redemption_discount_percent = red.discount_percent  # type: ignore[attr-defined]
+        entry.streak_days_at_redeem = red.streak_days_at_redeem  # type: ignore[attr-defined]
         result.append(entry)
+    for item in active:
+        item.discounted_star_cost = calculate_discounted_star_cost(item.star_cost, discount_percent)  # type: ignore[attr-defined]
+        item.discount_percent = discount_percent  # type: ignore[attr-defined]
+        item.streak_days = streak_days  # type: ignore[attr-defined]
+        item.discount_label = label  # type: ignore[attr-defined]
     return active + result
 
 
@@ -100,14 +117,26 @@ def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
     if item.stock is not None and item.stock <= 0:
         raise api_error("conflict", "Out of stock", 409)
 
-    total = db.scalar(select(func.coalesce(func.sum(RewardLedger.stars_delta), 0)).where(RewardLedger.child_id == child_id))
-    if (int(total or 0)) < item.star_cost:
+    settings = get_or_create_reward_settings(db, child_id)
+    streak = db.scalar(select(Streak).where(Streak.child_id == child_id))
+    streak_days = streak.current_days if streak else 0
+    discount_percent = get_discount_percent(settings, streak_days)
+    paid_amount = calculate_discounted_star_cost(item.star_cost, discount_percent)
+    total = db.scalar(select(func.coalesce(func.sum(RewardLedger.stars_delta), Decimal("0.00"))).where(RewardLedger.child_id == child_id))
+    if Decimal(total or "0.00") < paid_amount:
         raise api_error("conflict", "Not enough stars", 409)
 
-    red = Redemption(child_id=child_id, shop_item_id=item.id)
+    red = Redemption(
+        child_id=child_id,
+        shop_item_id=item.id,
+        original_star_cost=item.star_cost,
+        final_star_cost=paid_amount,
+        discount_percent=discount_percent,
+        streak_days_at_redeem=streak_days,
+    )
     db.add(red)
     db.flush()
-    db.add(RewardLedger(child_id=child_id, source_type="shop_redeem", source_id=red.id, stars_delta=-item.star_cost, reason=item.title))
+    db.add(RewardLedger(child_id=child_id, source_type="shop_redeem", source_id=red.id, stars_delta=-paid_amount, reason=item.title))
     if item.stock is not None:
         remaining = item.stock - 1
         item.stock = remaining
@@ -166,6 +195,10 @@ def list_redemptions(db: Session, parent_id: UUID) -> list[ShopItem]:
         if item:
             item.redemption_id = red.id  # type: ignore[attr-defined]
             item.redemption_status = red.status  # type: ignore[attr-defined]
+            item.original_star_cost = red.original_star_cost  # type: ignore[attr-defined]
+            item.final_star_cost = red.final_star_cost  # type: ignore[attr-defined]
+            item.redemption_discount_percent = red.discount_percent  # type: ignore[attr-defined]
+            item.streak_days_at_redeem = red.streak_days_at_redeem  # type: ignore[attr-defined]
             result.append(item)
     return result
 
