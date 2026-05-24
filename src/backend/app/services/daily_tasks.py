@@ -1,4 +1,5 @@
 from datetime import UTC, date, datetime, time, timedelta
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import CursorResult, func, select, update
@@ -12,6 +13,7 @@ from app.models.reward_ledger import RewardLedger
 from app.models.streak import Streak
 from app.models.task_template import TaskTemplate
 from app.schemas.daily_task import ChildScheduleRequest, ChildTaskCreate, ManualTaskItem
+from app.services.reward_settings import get_or_create_reward_settings
 
 
 def _get_or_create_streak(db: Session, child_id: UUID) -> Streak:
@@ -24,13 +26,13 @@ def _get_or_create_streak(db: Session, child_id: UUID) -> Streak:
     return streak
 
 
-def _get_stars_total(db: Session, child_id: UUID) -> int:
+def _get_stars_total(db: Session, child_id: UUID) -> Decimal:
     result = db.scalar(
-        select(func.coalesce(func.sum(RewardLedger.stars_delta), 0)).where(
+        select(func.coalesce(func.sum(RewardLedger.stars_delta), Decimal("0.00"))).where(
             RewardLedger.child_id == child_id
         )
     )
-    return int(result or 0)
+    return Decimal(result or "0.00")
 
 
 def generate_todays_tasks(db: Session, child_id: UUID) -> list[DailyTask]:
@@ -96,8 +98,7 @@ def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | No
     # Always track that a task was completed today (for get_reward_summary)
     streak.last_completed_date = today
 
-    child = db.get(Child, child_id)
-    threshold = child.streak_threshold if child and child.streak_threshold else 0
+    threshold = get_or_create_reward_settings(db, child_id).streak_threshold
 
     if threshold <= 0:
         # threshold=0: every completion counts, maintain existing intent

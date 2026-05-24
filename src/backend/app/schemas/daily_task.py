@@ -1,4 +1,5 @@
 from datetime import date, datetime, time
+from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -33,7 +34,7 @@ class DailyTaskItem(BaseModel):
 
 
 class RewardSummary(BaseModel):
-    stars_total: int
+    stars_total: Decimal
     current_streak_days: int
 
 
@@ -79,7 +80,7 @@ class ParentDailyTasksResponse(BaseModel):
 class ChildTaskCreate(BaseModel):
     title: str = Field(min_length=1, max_length=160)
     expected_minutes: int = Field(ge=1)
-    reward_stars: int = Field(default=1, ge=1, le=5)
+    reward_stars: int = Field(default=1, ge=0, le=5)
     scheduled_start: str | None = None
     scheduled_end: str | None = None
 
