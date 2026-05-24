@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.3.19] - 2026-05-24
+
+### Bug Fixes
+
+- make reward settings entry visible
+
+
 ## [v0.3.18] - 2026-05-24
 
 ### Documentation
@@ -24,6 +31,11 @@
 - store shop stars as decimals
 
 - add child reward settings model
+
+
+### Maintenance
+
+- bump version to 0.3.18
 
 
 ### Other
