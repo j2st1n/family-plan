@@ -8,10 +8,12 @@ from app.db.session import get_db
 from app.models.parent import Parent
 from app.schemas.access_code import AccessCodeResponse
 from app.schemas.child import ChildCreate, ChildResponse, ChildUpdate
+from app.schemas.reward_settings import RewardSettingsResponse, RewardSettingsUpdate
 from app.services.access_codes import generate_child_access_code
 from app.services.children import create_child, delete_child, get_child_for_parent, list_children, update_child
 from app.services.event_hub import event_hub
 from app.services.plans import get_child_dashboard
+from app.services.reward_settings import get_or_create_reward_settings, update_reward_settings
 
 router = APIRouter(prefix="/children", tags=["children"])
 
@@ -61,6 +63,30 @@ def create_child_access_code(
 ) -> AccessCodeResponse:
     code, access_code = generate_child_access_code(db, child_id, parent.id)
     return AccessCodeResponse(code=code, expires_at=access_code.expires_at)
+
+
+@router.get("/{child_id}/reward-settings", response_model=RewardSettingsResponse)
+def get_child_reward_settings(
+    child_id: UUID,
+    parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+) -> RewardSettingsResponse:
+    get_child_for_parent(db, child_id, parent.id)
+    settings = get_or_create_reward_settings(db, child_id)
+    return RewardSettingsResponse.model_validate(settings, from_attributes=True)
+
+
+@router.patch("/{child_id}/reward-settings", response_model=RewardSettingsResponse)
+def patch_child_reward_settings(
+    child_id: UUID,
+    payload: RewardSettingsUpdate,
+    parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+) -> RewardSettingsResponse:
+    get_child_for_parent(db, child_id, parent.id)
+    settings = update_reward_settings(db, child_id, payload)
+    event_hub.publish(parent.id, "settings", "reward_settings_updated", child_id)
+    return RewardSettingsResponse.model_validate(settings, from_attributes=True)
 
 
 @router.patch("/{child_id}", response_model=ChildResponse)
