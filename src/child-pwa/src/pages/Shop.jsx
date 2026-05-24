@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchShop, fetchToday, redeemItem, makeWish, editWish } from "../api.js";
+import useSseRefresh from "../hooks/useSseRefresh.js";
+import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 
 function fmtDate(s) { if (!s) return ""; return new Date(s).toLocaleDateString("zh-CN", { month: "short", day: "numeric" }); }
 
@@ -23,7 +25,7 @@ const load = useCallback(async () => {
     setItems(all.filter(i => i.status === "active" && !i.redeemed_by_child));
     setWishes(all.filter(i => i.status === "pending"));
     setRedeemed(all.filter(i => i.redeemed_by_child));
-    try { const today = await fetchToday(onExpired); setStars(today.rewards?.stars_total ?? 0); } catch {}
+    try { const today = await fetchToday(onExpired); setStars(today.rewards?.stars_total ?? 0); } catch (error) { console.warn("Failed to load rewards", error); }
   } catch (err) {
     if (err.message === "token_expired") {
       setError("登录已过期，请重新绑定");
@@ -36,6 +38,8 @@ const load = useCallback(async () => {
 }, [onExpired]);
 
   useEffect(() => { if (active) load(); }, [load, active]);
+  useSseRefresh({ enabled: active, topics: ["shop"], onRefresh: load, onExpired });
+  useVisibilityRefresh({ enabled: active, onRefresh: load });
 
 async function handleRedeem(item) {
   if (!window.confirm(`用 ${item.star_cost}⭐ 兑换「${item.title}」？`)) return;

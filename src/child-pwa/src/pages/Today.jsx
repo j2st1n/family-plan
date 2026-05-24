@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchToday, completeTask, createChildTask, scheduleChildTask, updateChildTask, deleteChildTask } from "../api.js";
+import useSseRefresh from "../hooks/useSseRefresh.js";
+import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 
 const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -27,6 +29,8 @@ export default function Today({ child, onExpired, active }) {
   }, [onExpired]);
 
   useEffect(() => { if (active) load(); }, [load, active]);
+  useSseRefresh({ enabled: active, topics: ["tasks"], onRefresh: load, onExpired });
+  useVisibilityRefresh({ enabled: active, onRefresh: load });
 
   async function handleComplete(task) {
     setCompletingId(task.id);
