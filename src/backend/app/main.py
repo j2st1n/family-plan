@@ -11,6 +11,7 @@ from app.routes.auth import router as auth_router
 from app.routes.children import router as children_router
 from app.routes.daily_tasks import parent_router as parent_daily_router, router as daily_tasks_router
 from app.routes.devices import router as devices_router
+from app.routes.events import router as events_router
 from app.routes.health import router as health_router
 from app.routes.plans import router as plans_router
 from app.routes.shop import child_router as child_shop_router, router as shop_router
@@ -43,6 +44,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(children_router, prefix="/api/v1")
     app.include_router(devices_router, prefix="/api/v1")
+    app.include_router(events_router, prefix="/api/v1")
     app.include_router(plans_router, prefix="/api/v1")
     app.include_router(daily_tasks_router, prefix="/api/v1")
     app.include_router(parent_daily_router, prefix="/api/v1")
