@@ -23,3 +23,4 @@ class Child(Base):
     parent = relationship("Parent", back_populates="children")
     devices = relationship("ChildDevice", back_populates="child")
     access_codes = relationship("ChildAccessCode", back_populates="child")
+    reward_settings = relationship("ChildRewardSettings", back_populates="child", uselist=False, cascade="all, delete-orphan")

@@ -1,6 +1,7 @@
 from app.models.child import Child
 from app.models.child_access_code import ChildAccessCode
 from app.models.child_device import ChildDevice
+from app.models.child_reward_settings import ChildRewardSettings
 from app.models.daily_task import DailyTask
 from app.models.parent import Parent
 from app.models.plan import Plan
@@ -16,6 +17,7 @@ __all__ = [
     "Child",
     "ChildAccessCode",
     "ChildDevice",
+    "ChildRewardSettings",
     "DailyTask",
     "Parent",
     "Plan",
