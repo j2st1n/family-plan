@@ -294,3 +294,35 @@ Child SSE stream. Auth: child device Bearer token.
 Response content type: `text/event-stream`.
 
 The child stream receives events for its child ID plus parent-wide events where `child_id` is `null`.
+
+## 9. Shop Pricing
+
+Shop prices, reward balances, ledger deltas, and redemption snapshots support up to two decimal places. Task rewards remain integer stars from `0` to `5`.
+
+Child shop item responses may include discount fields when the child has an active streak discount:
+
+```json
+{
+  "id": "uuid",
+  "title": "玩具",
+  "star_cost": "10.00",
+  "discounted_star_cost": "8.50",
+  "discount_percent": 85,
+  "streak_days": 14,
+  "discount_label": "连续 14 天 · 支付 85%"
+}
+```
+
+Redemption responses may include immutable pricing snapshots:
+
+```json
+{
+  "redemption_id": "uuid",
+  "title": "玩具",
+  "star_cost": "10.00",
+  "original_star_cost": "10.00",
+  "final_star_cost": "8.50",
+  "redemption_discount_percent": 85,
+  "streak_days_at_redeem": 14
+}
+```
