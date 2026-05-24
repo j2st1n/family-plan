@@ -179,7 +179,7 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
                       {isCumulative ? "累计" : "今日"}
                     </button>
                     <button onClick={() => startEdit(c)} style={styles.ib}>✎</button>
-                    <button onClick={() => { setSelectedChild(c); setView("reward-settings"); }} style={styles.settingsBtn}>奖励</button>
+                    <button onClick={() => { setSelectedChild(c); setView("reward-settings"); }} style={styles.settingsBtn}>奖励设置</button>
                     <button onClick={() => handleDelete(c.id)} style={styles.ib}>✕</button>
                   </div>
                 </div>
@@ -229,7 +229,7 @@ const styles = {
   card: { background: "#fff", borderRadius: "14px", padding: "0.9rem 1rem", marginBottom: "0.7rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
   tg: { padding: "0.2rem 0.55rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 600, border: "none", cursor: "pointer" },
   ib: { width: "1.6rem", height: "1.6rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 600, color: "#73706b", background: "transparent", border: "none", cursor: "pointer" },
-  settingsBtn: { padding: "0.2rem 0.45rem", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 650, color: "#3d9e6b", background: "#e8f3ec", border: "none", cursor: "pointer" },
+  settingsBtn: { padding: "0.24rem 0.55rem", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 700, color: "#fff", background: "#3d9e6b", border: "none", cursor: "pointer", whiteSpace: "nowrap" },
   ei: { width: "100%", padding: "0.4rem 0.6rem", fontSize: "0.95rem", border: "1px solid #e8e4df", borderRadius: "8px", outline: "none", marginBottom: "0.3rem", display: "block" },
   el: { display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#4a4540", marginBottom: "0.15rem", marginTop: "0.3rem" },
   sb: { flex: 1, padding: "0.35rem", fontSize: "0.85rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "8px" },
