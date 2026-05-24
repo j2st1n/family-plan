@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../api.js";
+import useSseRefresh from "../hooks/useSseRefresh.js";
+import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import ChildCreate from "./ChildCreate.jsx";
 import TaskManage from "./TaskManage.jsx";
 
@@ -28,7 +30,7 @@ function composeGradeLabel(stage, grade) {
   return stage && grade ? stage + grade : "";
 }
 
-export default function Home({ token, onLogout }) {
+export default function Home({ token, isActive, onLogout, onExpired }) {
   const [children, setChildren] = useState([]);
   const [dashboards, setDashboards] = useState({});
   const [toggles, setToggles] = useState({});
@@ -61,6 +63,8 @@ export default function Home({ token, onLogout }) {
   }, [token]);
 
   useEffect(() => { load(); }, [load]);
+  useSseRefresh({ token, enabled: isActive && view === "home", topics: ["tasks", "children"], onRefresh: load, onExpired });
+  useVisibilityRefresh({ enabled: isActive, onRefresh: load });
 
   function toggleView(childId) { setToggles(p => ({ ...p, [childId]: !p[childId] })); }
   function startEdit(c) {
@@ -91,7 +95,7 @@ export default function Home({ token, onLogout }) {
   }
 
   if (view === "create-child") return <ChildCreate token={token} onDone={() => { setView("home"); load(); }} onCancel={() => setView("home")} />;
-  if (view === "task-manage" && selectedChild) return <TaskManage token={token} child={selectedChild} onBack={() => { setView("home"); load(); }} />;
+  if (view === "task-manage" && selectedChild) return <TaskManage token={token} child={selectedChild} isActive={isActive} onExpired={onExpired} onBack={() => { setView("home"); load(); }} />;
 
   return (
     <div>

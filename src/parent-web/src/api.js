@@ -12,7 +12,9 @@ async function request(url, opts = {}) {
     try {
       const body = await res.json();
       msg = body.error?.message || body.detail?.message || msg;
-    } catch {}
+    } catch (error) {
+      console.warn("Failed to parse error response", error);
+    }
     throw new Error(msg);
   }
   if (res.status === 204) return null;

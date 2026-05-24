@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../api.js";
+import useSseRefresh from "../hooks/useSseRefresh.js";
+import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 
-export default function Shop({ token }) {
+export default function Shop({ token, isActive, onExpired }) {
   const [items, setItems] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ title: "", stars: "", stock: "" });
@@ -22,6 +24,8 @@ export default function Shop({ token }) {
   }, [token]);
 
   useEffect(() => { load(); }, [load]);
+  useSseRefresh({ token, enabled: isActive, topics: ["shop"], onRefresh: load, onExpired });
+  useVisibilityRefresh({ enabled: isActive, onRefresh: load });
 
   async function handleAdd() {
     if (!form.title.trim() || !form.stars || parseInt(form.stars) < 1) return;

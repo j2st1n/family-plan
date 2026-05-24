@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../api.js";
+import useSseRefresh from "../hooks/useSseRefresh.js";
+import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 
 function parseLocal(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
 function fmtDate(d) { const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, "0"); const dd = String(d.getDate()).padStart(2, "0"); return `${y}-${m}-${dd}`; }
@@ -13,7 +15,7 @@ function timeToMinutes(t) { if (!t) return 0; const [h, m] = t.split(":").map(Nu
 function minutesToTime(m) { return `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`; }
 function autoFillTime(minutes, start, end) { const dur = parseInt(minutes) || 0; if (!dur) return { start, end }; if (start && !end) return { start, end: minutesToTime(timeToMinutes(start) + dur) }; if (end && !start) return { start: minutesToTime(timeToMinutes(end) - dur), end }; return { start, end }; }
 
-export default function TaskManage({ token, child, onBack }) {
+export default function TaskManage({ token, child, isActive, onExpired, onBack }) {
   const [date, setDate] = useState(() => fmtDate(new Date()));
   const [plan, setPlan] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -41,11 +43,15 @@ export default function TaskManage({ token, child, onBack }) {
 
   const loadRoutines = useCallback(async () => {
     if (!plan?.id) return;
-    try { const p = await api.getPlan(token, plan.id); setRoutineTasks((p.tasks || []).filter(t => t.status === "active")); } catch {}
+    try { const p = await api.getPlan(token, plan.id); setRoutineTasks((p.tasks || []).filter(t => t.status === "active")); } catch (error) { console.warn("Failed to load routines", error); }
   }, [token, plan?.id]);
+
+  const refreshAll = useCallback(() => { loadTasks(); loadRoutines(); }, [loadTasks, loadRoutines]);
 
   useEffect(() => { api.fetchPlans(token, child.id).then(list => { if (list.length > 0) { const p = list[0]; setPlan(p); setRoutineTasks((p.tasks || []).filter(t => t.status === "active")); } }); }, [token, child.id]);
   useEffect(() => { loadTasks(); }, [loadTasks]);
+  useSseRefresh({ token, enabled: isActive, topics: ["tasks"], childId: child.id, onRefresh: refreshAll, onExpired });
+  useVisibilityRefresh({ enabled: isActive, onRefresh: refreshAll });
 
   async function createDefaultPlan() { const t = fmtDate(new Date()); const p = await api.createPlan(token, { child_id: child.id, title: `${child.name}的计划`, start_date: t }); setPlan(p); setRoutineTasks([]); }
 
