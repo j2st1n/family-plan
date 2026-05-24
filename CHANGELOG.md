@@ -1,5 +1,36 @@
 # Changelog
 
+## [v0.3.18] - 2026-05-24
+
+### Documentation
+
+- document reward settings
+
+
+### Features
+
+- show decimal shop pricing
+
+- add parent reward settings UI
+
+- apply streak discounts to shop redemptions
+
+- apply reward settings to tasks
+
+- expose reward settings API
+
+- add reward settings service
+
+- store shop stars as decimals
+
+- add child reward settings model
+
+
+### Other
+
+- cover reward settings discounts
+
+
 ## [v0.3.17] - 2026-05-24
 
 ### Documentation
@@ -22,6 +53,11 @@
 - add authenticated event streams
 
 - add realtime event hub
+
+
+### Maintenance
+
+- bump version to 0.3.17
 
 
 ## [v0.3.16] - 2026-05-24
