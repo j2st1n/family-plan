@@ -5,6 +5,8 @@ function parseLocal(s) { const [y, m, d] = s.split("-").map(Number); return new 
 function fmtDate(d) { const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, "0"); const dd = String(d.getDate()).padStart(2, "0"); return `${y}-${m}-${dd}`; }
 function addDays(s, n) { const r = parseLocal(s); r.setDate(r.getDate() + n); return fmtDate(r); }
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+function weekdayLabel(d) { return WEEKDAYS[d === 7 ? 0 : d] || ""; }
+function formatWeekdays(days = []) { return days.map(weekdayLabel).filter(Boolean).join("、"); }
 
 function pad(n) { return String(n).padStart(2, "0"); }
 function timeToMinutes(t) { if (!t) return 0; const [h, m] = t.split(":").map(Number); return h * 60 + m; }
@@ -199,7 +201,7 @@ export default function TaskManage({ token, child, onBack }) {
                   <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleSaveRoutine} style={s.fsb}>保存</button><button onClick={() => setEditingRoutine(null)} style={s.fcb}>取消</button></div>
                 </div>
               ) : (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}><div style={{ flex: 1 }}><p style={{ fontWeight: 600 }}>{r.title}</p><p style={{ fontSize: "0.8rem", color: "#73706b" }}>每周 {r.weekdays?.map(d => WEEKDAYS[d]).join("、")}{r.expected_minutes ? ` · ${r.expected_minutes}分钟` : ""}</p></div><div style={{ display: "flex", gap: "0.2rem", marginLeft: "0.3rem" }}><span style={{ fontSize: "0.8rem", color: "#c4912a", whiteSpace: "nowrap" }}>⭐{r.reward_stars}</span><button onClick={() => startEditRoutine(r)} style={s.ib}>✎</button><button onClick={() => handleDeleteRoutine(r.id)} style={s.ib}>✕</button></div></div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}><div style={{ flex: 1 }}><p style={{ fontWeight: 600 }}>{r.title}</p><p style={{ fontSize: "0.8rem", color: "#73706b" }}>每周 {formatWeekdays(r.weekdays)}{r.expected_minutes ? ` · ${r.expected_minutes}分钟` : ""}</p></div><div style={{ display: "flex", gap: "0.2rem", marginLeft: "0.3rem" }}><span style={{ fontSize: "0.8rem", color: "#c4912a", whiteSpace: "nowrap" }}>⭐{r.reward_stars}</span><button onClick={() => startEditRoutine(r)} style={s.ib}>✎</button><button onClick={() => handleDeleteRoutine(r.id)} style={s.ib}>✕</button></div></div>
               )}
             </div>
           ))}
