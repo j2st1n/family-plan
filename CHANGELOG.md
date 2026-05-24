@@ -1,10 +1,22 @@
 # Changelog
 
+## [v0.3.16] - 2026-05-24
+
+### Bug Fixes
+
+- show sunday in routine weekdays
+
+
 ## [v0.3.15] - 2026-05-23
 
 ### Features
 
 - fold fulfilled redemption history
+
+
+### Maintenance
+
+- bump version to 0.3.15
 
 
 ## [v0.3.14] - 2026-05-23
