@@ -32,7 +32,7 @@ Production is served through Caddy:
 - React + Vite SPA.
 - Username/password registration and login (bcrypt + JWT).
 - Plan creation, child management, task scheduling, access code generation.
-- Child-level reward settings for streak threshold and fixed 7/14/21-day shop discounts.
+- Child-level reward settings for streak threshold and streak-based shop discounts. Defaults are 7/14/21 days, and parents can add more tiers in 7-day increments.
 
 ### Child PWA
 - React + Vite PWA, iPad-first responsive layout.

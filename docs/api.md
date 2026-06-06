@@ -299,6 +299,8 @@ The child stream receives events for its child ID plus parent-wide events where 
 
 Shop prices, reward balances, ledger deltas, and redemption snapshots support up to two decimal places. Task rewards remain integer stars from `0` to `5`.
 
+Reward settings store streak discount tiers as `{ "days": number, "discount_percent": number }`. Default tiers are 7/14/21 days. Parents may add additional tiers in 7-day increments; tier days must be sorted, unique, at least 7, and divisible by 7. `discount_percent` is the payment percentage, so `80` means the child pays 80% of the listed star price.
+
 Child shop item responses may include discount fields when the child has an active streak discount:
 
 ```json
