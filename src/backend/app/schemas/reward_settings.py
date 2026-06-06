@@ -18,9 +18,15 @@ class RewardSettingsUpdate(BaseModel):
     @field_validator("streak_discount_tiers")
     @classmethod
     def validate_tiers(cls, tiers: list[StreakDiscountTier]) -> list[StreakDiscountTier]:
+        if not tiers:
+            raise ValueError("discount tiers must include at least one tier")
         days = [tier.days for tier in tiers]
-        if days != [7, 14, 21]:
-            raise ValueError("discount tiers must be exactly 7, 14, and 21 days")
+        if days != sorted(days):
+            raise ValueError("discount tiers must be sorted by days")
+        if len(days) != len(set(days)):
+            raise ValueError("discount tiers must not repeat days")
+        if any(day < 7 or day % 7 != 0 for day in days):
+            raise ValueError("discount tier days must be multiples of 7")
         percents = [tier.discount_percent for tier in tiers]
         if percents != sorted(percents, reverse=True):
             raise ValueError("longer streak discounts must not be higher than earlier tiers")

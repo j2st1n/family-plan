@@ -94,6 +94,37 @@ class TestRewardSettings:
         assert valid.json()["streak_threshold"] == 70
         assert valid.json()["streak_discount_tiers"][2]["discount_percent"] == 75
 
+        custom = client.patch(
+            f"/api/v1/children/{child_id}/reward-settings",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "streak_threshold": 70,
+                "streak_discount_enabled": True,
+                "streak_discount_tiers": [
+                    {"days": 7, "discount_percent": 95},
+                    {"days": 14, "discount_percent": 90},
+                    {"days": 21, "discount_percent": 85},
+                    {"days": 28, "discount_percent": 80},
+                ],
+            },
+        )
+        assert custom.status_code == 200
+        assert custom.json()["streak_discount_tiers"][-1] == {"days": 28, "discount_percent": 80}
+
+        invalid_days = client.patch(
+            f"/api/v1/children/{child_id}/reward-settings",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "streak_threshold": 70,
+                "streak_discount_enabled": True,
+                "streak_discount_tiers": [
+                    {"days": 7, "discount_percent": 95},
+                    {"days": 10, "discount_percent": 90},
+                ],
+            },
+        )
+        assert invalid_days.status_code == 422
+
     def test_discount_calculation_decimal_precision(self):
         assert calculate_discounted_star_cost(Decimal("10.00"), 85) == Decimal("8.50")
         assert calculate_discounted_star_cost(Decimal("3.00"), 85) == Decimal("2.55")
