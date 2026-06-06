@@ -1,10 +1,34 @@
 # Changelog
 
+## [v0.3.21] - 2026-06-06
+
+### Bug Fixes
+
+- bind child dev server to localhost
+
+
+### Documentation
+
+- document custom reward discount tiers
+
+
+### Features
+
+- add reward discount tier controls
+
+- allow custom reward discount tiers
+
+
 ## [v0.3.20] - 2026-05-24
 
 ### Bug Fixes
 
 - remove unused cumulative toggle
+
+
+### Maintenance
+
+- bump version to 0.3.20
 
 
 ## [v0.3.19] - 2026-05-24
