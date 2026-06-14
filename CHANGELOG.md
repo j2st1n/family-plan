@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.3.22] - 2026-06-14
+
+### Bug Fixes
+
+- harden shop isolation and ci smoke
+
+
 ## [v0.3.21] - 2026-06-06
 
 ### Bug Fixes
@@ -17,6 +24,11 @@
 - add reward discount tier controls
 
 - allow custom reward discount tiers
+
+
+### Maintenance
+
+- bump version to 0.3.21
 
 
 ## [v0.3.20] - 2026-05-24
