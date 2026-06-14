@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [master]
 
+env:
+  IMAGE_NAME: ghcr.io/j2st1n/family-plan
+  CI_IMAGE: family-plan-ci:${{ github.sha }}
+
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -20,34 +24,46 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: ${{ env.CI_IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start services and verify
+        env:
+          FAMILY_PLAN_IMAGE: ${{ env.CI_IMAGE }}
+          JWT_SECRET: ci-jwt-secret-0123456789abcdef0123456789
+        run: |
+          trap 'docker compose down -v' EXIT
+          docker compose up -d
+          healthy=0
+          for i in $(seq 1 20); do
+            if curl -fsS --max-time 3 http://127.0.0.1:8000/health; then
+              healthy=1
+              break
+            fi
+            sleep 2
+          done
+          docker compose ps
+          docker compose logs api | tail -50
+          test "$healthy" -eq 1
+
       - name: Log in to GHCR
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract version tag
-        id: version
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
-          tags: |
-            ghcr.io/j2st1n/family-plan:latest
-            ghcr.io/j2st1n/family-plan:${{ steps.version.outputs.tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Start services and verify
+      - name: Push Docker image
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          docker compose up -d
-          for i in $(seq 1 20); do
-            curl -sS --max-time 3 http://127.0.0.1:8000/health && break
-            sleep 2
-          done
-          docker compose ps
-          docker compose logs api | tail -20
+          docker tag "${CI_IMAGE}" "${IMAGE_NAME}:latest"
+          docker tag "${CI_IMAGE}" "${IMAGE_NAME}:${GITHUB_REF_NAME}"
+          docker push "${IMAGE_NAME}:latest"
+          docker push "${IMAGE_NAME}:${GITHUB_REF_NAME}"

@@ -1,6 +1,23 @@
-from uuid import uuid4
+from decimal import Decimal
+from uuid import UUID, uuid4
 
 from app.core.security import hash_access_code, hash_secret, verify_access_code
+from app.models.shop_item import ShopItem
+
+
+def _register_parent_with_child(client, prefix: str):
+    pw, un = "pass12345", prefix + uuid4().hex[:6]
+    auth = client.post("/api/v1/auth/register", json={"username": un, "password": pw})
+    assert auth.status_code == 201, auth.text
+    token = auth.json()["token"]
+    parent_id = auth.json()["parent"]["id"]
+    child = client.post(
+        "/api/v1/children",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"name": f"{prefix}-child"},
+    )
+    assert child.status_code == 200, child.text
+    return token, parent_id, child.json()["id"]
 
 
 class TestAccessCodeSlowHash:
@@ -157,6 +174,50 @@ class TestDeleteChildWithRedemptions:
             headers={"Authorization": f"Bearer {token}"},
         )
         assert get_child.status_code == 404
+
+
+class TestShopFamilyIsolation:
+    """Shop items scoped to a child must never cross family boundaries."""
+
+    def test_parent_cannot_create_child_specific_item_for_another_parents_child(self, client):
+        token_a, _parent_a, _child_a = _register_parent_with_child(client, "sa")
+        _token_b, _parent_b, child_b = _register_parent_with_child(client, "sb")
+
+        response = client.post(
+            "/api/v1/shop/items",
+            headers={"Authorization": f"Bearer {token_a}"},
+            json={"title": "cross-family item", "star_cost": 1, "child_id": child_b},
+        )
+
+        assert response.status_code == 404
+        assert response.json()["detail"]["code"] == "not_found"
+
+    def test_child_shop_ignores_existing_cross_parent_child_specific_items(self, client, db_session):
+        _token_a, parent_a, _child_a = _register_parent_with_child(client, "sc")
+        token_b, _parent_b, child_b = _register_parent_with_child(client, "sd")
+        code = client.post(
+            f"/api/v1/children/{child_b}/access-code",
+            headers={"Authorization": f"Bearer {token_b}"},
+        ).json()["code"]
+        bind = client.post("/api/v1/child-devices/bind", json={"code": code, "display_name": "isolated"})
+        assert bind.status_code == 200, bind.text
+        device_token = bind.json()["device_token"]
+
+        bad_item = ShopItem(
+            parent_id=UUID(parent_a),
+            child_id=UUID(child_b),
+            title="legacy cross-family item",
+            star_cost=Decimal("1.00"),
+            created_by="parent",
+        )
+        db_session.add(bad_item)
+        db_session.commit()
+        db_session.refresh(bad_item)
+
+        response = client.get("/api/v1/child/shop/items", headers={"Authorization": f"Bearer {device_token}"})
+
+        assert response.status_code == 200, response.text
+        assert str(bad_item.id) not in {item["id"] for item in response.json()}
 
 
 class TestStreakThreshold:

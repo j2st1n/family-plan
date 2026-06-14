@@ -1,6 +1,6 @@
 services:
   api:
-    image: ghcr.io/j2st1n/family-plan:latest
+    image: ${FAMILY_PLAN_IMAGE:-ghcr.io/j2st1n/family-plan:latest}
     container_name: family-plan-api
     restart: unless-stopped
     ports:

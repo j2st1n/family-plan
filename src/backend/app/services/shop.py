@@ -24,8 +24,9 @@ def list_shop_items(db: Session, child_id: UUID) -> list[ShopItem]:
         db.scalars(
             select(ShopItem)
             .where(
-                ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None)) & (ShopItem.status == "active")) |
-                ((ShopItem.child_id == child_id) & (ShopItem.status == "active")),
+                ShopItem.parent_id == child.parent_id,
+                ShopItem.status == "active",
+                (ShopItem.child_id.is_(None)) | (ShopItem.child_id == child_id),
             )
             .order_by(ShopItem.created_at.desc())
         )
@@ -74,7 +75,16 @@ def list_parent_shop(db: Session, parent_id: UUID) -> list[ShopItem]:
 
 
 def create_shop_item(db: Session, parent_id: UUID, data: ShopItemCreate) -> ShopItem:
-    item = ShopItem(parent_id=parent_id, title=data.title, description=data.description, star_cost=data.star_cost, child_id=data.child_id, stock=data.stock, created_by="parent")
+    _verify_child_for_parent(db, data.child_id, parent_id)
+    item = ShopItem(
+        parent_id=parent_id,
+        title=data.title,
+        description=data.description,
+        star_cost=data.star_cost,
+        child_id=data.child_id,
+        stock=data.stock,
+        created_by="parent",
+    )
     db.add(item)
     db.commit()
     db.refresh(item)
@@ -107,9 +117,9 @@ def redeem_item(db: Session, item_id: UUID, child_id: UUID) -> ShopItem:
     item = db.scalar(
         select(ShopItem).where(
             ShopItem.id == item_id,
+            ShopItem.parent_id == child.parent_id,
             ShopItem.status == "active",
-            ((ShopItem.parent_id == child.parent_id) & (ShopItem.child_id.is_(None))) |
-            (ShopItem.child_id == child_id),
+            (ShopItem.child_id.is_(None)) | (ShopItem.child_id == child_id),
         ).with_for_update()
     )
     if item is None:
@@ -217,3 +227,11 @@ def fulfill_item(db: Session, redemption_id: UUID, parent_id: UUID) -> ShopItem:
     db.commit()
     db.refresh(item)
     return item
+
+
+def _verify_child_for_parent(db: Session, child_id: UUID | None, parent_id: UUID) -> None:
+    if child_id is None:
+        return
+    child = db.get(Child, child_id)
+    if child is None or child.parent_id != parent_id:
+        raise api_error("not_found", "Child not found", 404)
