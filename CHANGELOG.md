@@ -1,10 +1,27 @@
 # Changelog
 
+## [v0.3.23] - 2026-07-13
+
+### Bug Fixes
+
+- preserve streaks on rest days
+
+
+### Other
+
+- Merge pull request #1 from j2st1n/fix/streak-rest-days
+
+
 ## [v0.3.22] - 2026-06-14
 
 ### Bug Fixes
 
 - harden shop isolation and ci smoke
+
+
+### Maintenance
+
+- bump version to 0.3.22
 
 
 ## [v0.3.21] - 2026-06-06
