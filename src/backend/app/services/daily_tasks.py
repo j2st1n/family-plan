@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from uuid import UUID
 
@@ -33,6 +33,36 @@ def _get_stars_total(db: Session, child_id: UUID) -> Decimal:
         )
     )
     return Decimal(result or "0.00")
+
+
+def _has_missed_task_day(
+    db: Session,
+    child_id: UUID,
+    after_date: date,
+    before_date: date,
+    threshold: int,
+) -> bool:
+    tasks = db.execute(
+        select(DailyTask.task_date, DailyTask.status).where(
+            DailyTask.child_id == child_id,
+            DailyTask.task_date > after_date,
+            DailyTask.task_date < before_date,
+            DailyTask.approved.is_(True),
+        )
+    ).all()
+
+    tasks_by_date: dict[date, list[str]] = {}
+    for task_date, status in tasks:
+        tasks_by_date.setdefault(task_date, []).append(status)
+
+    for statuses in tasks_by_date.values():
+        completed = sum(1 for status in statuses if status == "completed")
+        if threshold <= 0:
+            if completed == 0:
+                return True
+        elif int((completed / len(statuses)) * 100) < threshold:
+            return True
+    return False
 
 
 def generate_todays_tasks(db: Session, child_id: UUID) -> list[DailyTask]:
@@ -96,39 +126,32 @@ def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | No
     today = date.today()
 
     # Always track that a task was completed today (for get_reward_summary)
+    previous_date = streak.streak_updated_date or streak.last_completed_date
     streak.last_completed_date = today
 
     threshold = get_or_create_reward_settings(db, child_id).streak_threshold
 
-    if threshold <= 0:
-        # threshold=0: every completion counts, maintain existing intent
-        yesterday = today - timedelta(days=1)
-        if streak.streak_updated_date == today:
-            pass
-        elif streak.streak_updated_date == yesterday:
-            streak.current_days += 1
-        else:
-            streak.current_days = 1
-        streak.streak_updated_date = today
-    else:
-        # threshold > 0: only increment when rate meets threshold, at most once/day
-        if streak.streak_updated_date != today:
-            tasks = list(db.scalars(
-                select(DailyTask).where(
-                    DailyTask.child_id == child_id,
-                    DailyTask.task_date == today,
-                )
-            ))
-            if tasks:
-                completed = sum(1 for t in tasks if t.status == "completed")
-                rate = int((completed / len(tasks)) * 100)
-                if rate >= threshold:
-                    yesterday = today - timedelta(days=1)
-                    if streak.streak_updated_date == yesterday:
-                        streak.current_days += 1
-                    else:
-                        streak.current_days = 1
-                    streak.streak_updated_date = today
+    # Only parent-approved tasks count toward the daily completion rate.
+    if streak.streak_updated_date != today:
+        tasks = list(db.scalars(
+            select(DailyTask).where(
+                DailyTask.child_id == child_id,
+                DailyTask.task_date == today,
+                DailyTask.approved.is_(True),
+            )
+        ))
+        if tasks:
+            completed = sum(1 for t in tasks if t.status == "completed")
+            rate = int((completed / len(tasks)) * 100)
+            qualifies = completed > 0 if threshold <= 0 else rate >= threshold
+            if qualifies:
+                if previous_date and not _has_missed_task_day(
+                    db, child_id, previous_date, today, threshold
+                ):
+                    streak.current_days += 1
+                else:
+                    streak.current_days = 1
+                streak.streak_updated_date = today
 
     if streak.current_days > streak.longest_days:
         streak.longest_days = streak.current_days
@@ -143,13 +166,12 @@ def get_reward_summary(db: Session, child_id: UUID) -> dict:
     streak = _get_or_create_streak(db, child_id)
 
     # Use streak_updated_date as the authoritative date that counted toward the
-    # streak.  Fall back to last_completed_date for legacy rows where
-    # streak_updated_date is null.  A streak stays alive across a one-day gap
-    # (yesterday → today); it only resets when the effective date is older than
-    # yesterday, i.e. at least two calendar days without a qualifying day.
+    # streak. Fall back to last_completed_date for legacy rows. Dates without
+    # approved tasks are rest days and do not break the streak.
     effective_date = streak.streak_updated_date or streak.last_completed_date
-    yesterday = date.today() - timedelta(days=1)
-    if effective_date and effective_date < yesterday:
+    today = date.today()
+    threshold = get_or_create_reward_settings(db, child_id).streak_threshold
+    if effective_date and _has_missed_task_day(db, child_id, effective_date, today, threshold):
         streak.current_days = 0
         db.commit()
     return {"stars_total": stars_total, "current_streak_days": streak.current_days}

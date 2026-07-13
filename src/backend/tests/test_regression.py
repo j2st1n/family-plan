@@ -1,8 +1,13 @@
+from datetime import date, timedelta
 from decimal import Decimal
 from uuid import UUID, uuid4
 
+from sqlalchemy import select
+
 from app.core.security import hash_access_code, hash_secret, verify_access_code
+from app.models.daily_task import DailyTask
 from app.models.shop_item import ShopItem
+from app.models.streak import Streak
 
 
 def _register_parent_with_child(client, prefix: str):
@@ -315,4 +320,77 @@ class TestStreakThreshold:
             json={"feedback": "ok"},
         )
         assert r.status_code == 200
+        assert self._streak_days(client, dtoken) == 1
+
+    def test_days_without_approved_tasks_do_not_break_streak(self, client, db_session):
+        _token, dtoken, cid, task_ids = self._setup_child_with_tasks(client, 80, 5)
+        assert self._streak_days(client, dtoken) == 0
+        current_task = db_session.scalar(select(DailyTask).where(DailyTask.id == UUID(task_ids[0])))
+        assert current_task is not None
+
+        streak = db_session.scalar(select(Streak).where(Streak.child_id == UUID(cid)))
+        assert streak is not None
+        streak.current_days = 5
+        streak.longest_days = 5
+        streak.streak_updated_date = date.today() - timedelta(days=3)
+
+        db_session.add(
+            DailyTask(
+                child_id=UUID(cid),
+                plan_id=current_task.plan_id,
+                task_date=date.today() - timedelta(days=1),
+                title="Unapproved child task",
+                reward_stars=1,
+                sort_order=0,
+                created_by="child",
+                approved=False,
+            )
+        )
+        db_session.commit()
+
+        assert self._streak_days(client, dtoken) == 5
+
+        for task_id in task_ids[:4]:
+            response = client.patch(
+                f"/api/v1/child/tasks/{task_id}/complete",
+                headers={"Authorization": f"Bearer {dtoken}"},
+                json={"feedback": "ok"},
+            )
+            assert response.status_code == 200, response.text
+
+        assert self._streak_days(client, dtoken) == 6
+
+    def test_approved_missed_task_day_breaks_streak(self, client, db_session):
+        _token, dtoken, cid, task_ids = self._setup_child_with_tasks(client, 80, 1)
+        assert self._streak_days(client, dtoken) == 0
+        current_task = db_session.scalar(select(DailyTask).where(DailyTask.id == UUID(task_ids[0])))
+        assert current_task is not None
+
+        streak = db_session.scalar(select(Streak).where(Streak.child_id == UUID(cid)))
+        assert streak is not None
+        streak.current_days = 5
+        streak.longest_days = 5
+        streak.streak_updated_date = date.today() - timedelta(days=3)
+
+        db_session.add(
+            DailyTask(
+                child_id=UUID(cid),
+                plan_id=current_task.plan_id,
+                task_date=date.today() - timedelta(days=1),
+                title="Missed parent task",
+                reward_stars=1,
+                sort_order=0,
+                approved=True,
+            )
+        )
+        db_session.commit()
+
+        assert self._streak_days(client, dtoken) == 0
+
+        response = client.patch(
+            f"/api/v1/child/tasks/{task_ids[0]}/complete",
+            headers={"Authorization": f"Bearer {dtoken}"},
+            json={"feedback": "ok"},
+        )
+        assert response.status_code == 200, response.text
         assert self._streak_days(client, dtoken) == 1
