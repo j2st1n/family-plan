@@ -11,6 +11,7 @@ class DailyTaskItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    plan_id: UUID
     title: str
     description: str | None = None
     expected_minutes: int | None = None
@@ -64,6 +65,13 @@ class ManualTaskItem(BaseModel):
     scheduled_start: str | None = None
     scheduled_end: str | None = None
     approved: bool | None = None
+
+    @field_validator("scheduled_start", "scheduled_end")
+    @classmethod
+    def validate_time(cls, value: str | None) -> str | None:
+        if value:
+            time.fromisoformat(value)
+        return value
 
 
 class ManualDailyTasksCreate(BaseModel):

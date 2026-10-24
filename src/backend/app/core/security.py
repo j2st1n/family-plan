@@ -3,7 +3,7 @@ from hashlib import sha256
 from uuid import uuid4
 
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 
 from app.core.config import settings
 
@@ -34,22 +34,22 @@ def decode_parent_token(token: str) -> str | None:
     return subject
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8")[:72], bcrypt.gensalt()).decode("ascii")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(plain_password.encode("utf-8")[:72], hashed_password.encode("ascii"))
+    except (ValueError, UnicodeError):
+        return False
 
 
 def hash_access_code(code: str) -> str:
     """Slow bcrypt hash for 6-digit child access codes."""
-    return pwd_context.hash(code)
+    return hash_password(code)
 
 
 def verify_access_code(plain_code: str, hashed_code: str) -> bool:
     """Check candidate code against a stored bcrypt hash."""
-    return pwd_context.verify(plain_code, hashed_code)
+    return verify_password(plain_code, hashed_code)

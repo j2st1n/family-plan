@@ -115,6 +115,18 @@ npm install && npx vite
 
 ## 文档
 
+当日任务按孩子汇总多个计划，编辑、删除和认可会使用每条任务自身的计划 ID。删除仅影响该日实例，重复任务次日仍正常生成；已完成任务保持只读，避免改动既有奖励记录。操作失败时管理页面会显示具体错误。
+
+## 回归验证
+
+在独立开发数据库完成迁移后运行 `cd src/backend && uv run pytest`，不要将测试数据库连接指向生产。测试覆盖多计划任务管理、删除后刷新、家长权限、重复任务、事件流心跳以及既有 bcrypt 密码兼容性。
+
+浏览器回归可运行 `FAMILY_PLAN_TEST_URL=http://mom.localhost:18001 node scripts/test-task-management.mjs`。该命令会在指定环境创建测试账户和任务，仅用于隔离测试环境。
+
+真实心跳验收可运行 `FAMILY_PLAN_TEST_URL=http://mom.localhost:18001 node scripts/test-event-stream.mjs`，在两次 25 秒空闲心跳后创建测试任务并确认仍收到事件。
+
+## 文档链接
+
 - [PRD](docs/prd.md)
 - [架构](docs/architecture.md)
 - [数据模型](docs/data-model.md)

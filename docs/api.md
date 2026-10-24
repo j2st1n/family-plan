@@ -169,6 +169,10 @@ Archive plan.
 
 ## 6. Daily Tasks
 
+All daily task responses include `plan_id`. The parent daily list is aggregated by child and date, so tasks can belong to different plans. For PATCH, DELETE and approval, clients must use each task's own `plan_id`; the API continues to validate both parent ownership and task membership in that plan.
+
+Deleting a pending daily task retains an internal `deleted` instance to prevent the routine generator recreating it on refresh. Deleted tasks are excluded from both clients, dashboards and streak calculations and cannot be edited, scheduled or completed. Other dates still generate their routine instances. Editing or deleting a completed task returns 409 and preserves its reward history. Omitted optional fields on parent task edits remain unchanged.
+
 ### GET /child/today
 
 Child PWA gets today's tasks. Auth: child device token.

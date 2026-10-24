@@ -34,22 +34,33 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
   const [editingRoutine, setEditingRoutine] = useState(null);
   const [routineEditForm, setRoutineEditForm] = useState({ title: "", minutes: "", stars: 1, weekdays: [] });
   const [showCompleted, setShowCompleted] = useState(false);
+  const [taskError, setTaskError] = useState("");
+  const [savingTask, setSavingTask] = useState(false);
 
   const loadTasks = useCallback(async () => {
     if (!plan) return; setLoading(true);
     try { const data = await api.fetchDailyTasks(token, plan.id, date); setTasks(data.tasks || []); setRewards(data.rewards || { stars_total: 0, current_streak_days: 0 }); }
-    catch { setTasks([]); setRewards({ stars_total: 0, current_streak_days: 0 }); }
+    catch (error) { setTaskError(`加载任务失败：${error.message}`); }
     finally { setLoading(false); }
   }, [token, plan, date]);
 
   const loadRoutines = useCallback(async () => {
-    if (!plan?.id) return;
-    try { const p = await api.getPlan(token, plan.id); setRoutineTasks((p.tasks || []).filter(t => t.status === "active")); } catch (error) { console.warn("Failed to load routines", error); }
-  }, [token, plan?.id]);
+    try {
+      const plans = await api.fetchPlans(token, child.id);
+      setRoutineTasks(plans.filter(item => item.status === "active").flatMap(item => (item.tasks || []).filter(task => task.status === "active")));
+    } catch (error) { setTaskError(`加载重复任务失败：${error.message}`); }
+  }, [token, child.id]);
 
   const refreshAll = useCallback(() => { loadTasks(); loadRoutines(); }, [loadTasks, loadRoutines]);
 
-  useEffect(() => { api.fetchPlans(token, child.id).then(list => { if (list.length > 0) { const p = list[0]; setPlan(p); setRoutineTasks((p.tasks || []).filter(t => t.status === "active")); } }); }, [token, child.id]);
+  useEffect(() => {
+    api.fetchPlans(token, child.id).then(list => {
+      if (list.length > 0) {
+        setPlan(list.find(item => item.status === "active") || list[0]);
+        setRoutineTasks(list.filter(item => item.status === "active").flatMap(item => (item.tasks || []).filter(task => task.status === "active")));
+      }
+    }).catch(error => setTaskError(`加载计划失败：${error.message}`));
+  }, [token, child.id]);
   useEffect(() => { loadTasks(); }, [loadTasks]);
   useSseRefresh({ token, enabled: isActive, topics: ["tasks", "settings"], childId: child.id, onRefresh: refreshAll, onExpired });
   useVisibilityRefresh({ enabled: isActive, onRefresh: refreshAll });
@@ -59,33 +70,80 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
   async function handleAddTask() {
     if (!newTask.title.trim()) return; if (!newTask.minutes || parseInt(newTask.minutes) < 1) return;
     const filled = autoFillTime(newTask.minutes, newTask.start, newTask.end);
-    await api.createManualTasks(token, plan.id, date, [{ title: newTask.title.trim(), expected_minutes: parseInt(newTask.minutes), reward_stars: newTask.stars, scheduled_start: filled.start || null, scheduled_end: filled.end || null }]);
-    setNewTask({ title: "", minutes: "", stars: 1, start: "", end: "" }); setShowAddTask(false); loadTasks();
+    await runTaskAction(async () => {
+      await api.createManualTasks(token, plan.id, date, [{ title: newTask.title.trim(), expected_minutes: parseInt(newTask.minutes), reward_stars: newTask.stars, scheduled_start: filled.start || null, scheduled_end: filled.end || null }]);
+      setNewTask({ title: "", minutes: "", stars: 1, start: "", end: "" }); setShowAddTask(false); await loadTasks();
+    });
   }
 
   async function handleSaveEdit() {
-    if (!editingTask || !editForm.title.trim() || !plan) return; if (!editForm.minutes || parseInt(editForm.minutes) < 1) return;
+    if (!editingTask || !plan) return;
+    if (!editForm.title.trim()) { setTaskError("请填写任务名称"); return; }
+    if (!editForm.minutes || parseInt(editForm.minutes) < 1) { setTaskError("请填写至少 1 分钟的任务时长"); return; }
+    const task = tasks.find(item => item.id === editingTask);
+    if (!task?.plan_id) { setTaskError("任务信息已变化，请刷新后重试"); return; }
     const filled = autoFillTime(editForm.minutes, editForm.start, editForm.end);
-    await api.updateDailyTask(token, plan.id, editingTask, { title: editForm.title.trim(), expected_minutes: parseInt(editForm.minutes), reward_stars: editForm.stars, scheduled_start: filled.start || null, scheduled_end: filled.end || null, approved: editForm.approved === false ? true : editForm.approved });
-    setEditingTask(null); loadTasks();
+    await runTaskAction(async () => {
+      await api.updateDailyTask(token, task.plan_id, editingTask, { title: editForm.title.trim(), expected_minutes: parseInt(editForm.minutes), reward_stars: editForm.stars, scheduled_start: filled.start || null, scheduled_end: filled.end || null, approved: editForm.approved === false ? true : editForm.approved });
+      setEditingTask(null); await loadTasks();
+    });
   }
 
-  async function handleDeleteTask(taskId) { if (!plan || !window.confirm("删除这个任务？")) return; await api.deleteDailyTask(token, plan.id, taskId); loadTasks(); }
+  async function runTaskAction(action) {
+    if (savingTask) return;
+    setTaskError(""); setSavingTask(true);
+    try { await action(); }
+    catch (error) { setTaskError(`操作失败：${error.message}`); }
+    finally { setSavingTask(false); }
+  }
 
-  function startEditTask(t) { if (t.status === "completed") return; setEditingTask(t.id); setEditForm({ title: t.title, minutes: t.expected_minutes?.toString() || "", stars: t.reward_stars, start: t.scheduled_start || "", end: t.scheduled_end || "", approved: t.approved }); }
+  async function handleDeleteTask(taskId) {
+    if (savingTask) return;
+    const task = tasks.find(item => item.id === taskId);
+    if (!task?.plan_id) { setTaskError("任务信息已变化，请刷新后重试"); return; }
+    if (!window.confirm("删除这个任务？")) return;
+    await runTaskAction(async () => { await api.deleteDailyTask(token, task.plan_id, taskId); await loadTasks(); });
+  }
 
-  async function handleApprove(taskId) { await api.updateDailyTask(token, plan.id, taskId, { title: tasks.find(t => t.id === taskId).title, expected_minutes: tasks.find(t => t.id === taskId).expected_minutes, reward_stars: tasks.find(t => t.id === taskId).reward_stars, approved: true }); loadTasks(); }
+  function startEditTask(t) { if (t.status === "completed" || savingTask) return; setTaskError(""); setEditingTask(t.id); setEditForm({ title: t.title, minutes: t.expected_minutes?.toString() || "", stars: t.reward_stars, start: t.scheduled_start || "", end: t.scheduled_end || "", approved: t.approved }); }
+
+  async function handleApprove(taskId) {
+    const task = tasks.find(item => item.id === taskId);
+    if (!task?.plan_id) { setTaskError("任务信息已变化，请刷新后重试"); return; }
+    await runTaskAction(async () => {
+      await api.updateDailyTask(token, task.plan_id, taskId, { title: task.title, expected_minutes: task.expected_minutes, reward_stars: task.reward_stars, approved: true });
+      await loadTasks();
+    });
+  }
 
   async function handleAddRoutine() {
     if (!routineForm.title.trim() || !plan) return; if (!routineForm.minutes || parseInt(routineForm.minutes) < 1) return;
     setSavingRoutine(true);
-    await api.addRoutineTask(token, plan.id, { title: routineForm.title.trim(), expected_minutes: parseInt(routineForm.minutes), weekdays: routineForm.weekdays, reward_stars: routineForm.stars });
-    setRoutineForm({ title: "", minutes: "", stars: 1, weekdays: [1, 2, 3, 4, 5] }); setShowAddRoutine(false); setSavingRoutine(false); loadRoutines(); loadTasks();
+    try {
+      await runTaskAction(async () => {
+        await api.addRoutineTask(token, plan.id, { title: routineForm.title.trim(), expected_minutes: parseInt(routineForm.minutes), weekdays: routineForm.weekdays, reward_stars: routineForm.stars });
+        setRoutineForm({ title: "", minutes: "", stars: 1, weekdays: [1, 2, 3, 4, 5] }); setShowAddRoutine(false); await loadRoutines(); await loadTasks();
+      });
+    } finally { setSavingRoutine(false); }
   }
 
   function startEditRoutine(r) { setEditingRoutine(r.id); setRoutineEditForm({ title: r.title, minutes: r.expected_minutes?.toString() || "", stars: r.reward_stars, weekdays: [...(r.weekdays || [])] }); }
-  async function handleSaveRoutine() { if (!editingRoutine || !routineEditForm.title.trim() || !plan) return; await api.updateRoutineTask(token, plan.id, editingRoutine, { title: routineEditForm.title.trim(), expected_minutes: routineEditForm.minutes ? parseInt(routineEditForm.minutes) : null, weekdays: routineEditForm.weekdays, reward_stars: routineEditForm.stars }); setEditingRoutine(null); loadRoutines(); loadTasks(); }
-  async function handleDeleteRoutine(tid) { if (!plan || !window.confirm("删除这条重复任务？")) return; await api.deleteRoutineTask(token, plan.id, tid); loadRoutines(); loadTasks(); }
+  async function handleSaveRoutine() {
+    if (!editingRoutine || !routineEditForm.title.trim()) return;
+    const routine = routineTasks.find(item => item.id === editingRoutine);
+    if (!routine?.plan_id) { setTaskError("重复任务信息已变化，请刷新后重试"); return; }
+    await runTaskAction(async () => {
+      await api.updateRoutineTask(token, routine.plan_id, editingRoutine, { title: routineEditForm.title.trim(), expected_minutes: routineEditForm.minutes ? parseInt(routineEditForm.minutes) : null, weekdays: routineEditForm.weekdays, reward_stars: routineEditForm.stars });
+      setEditingRoutine(null); await loadRoutines(); await loadTasks();
+    });
+  }
+  async function handleDeleteRoutine(tid) {
+    if (savingTask) return;
+    const routine = routineTasks.find(item => item.id === tid);
+    if (!routine?.plan_id) { setTaskError("重复任务信息已变化，请刷新后重试"); return; }
+    if (!window.confirm("删除这条重复任务？")) return;
+    await runTaskAction(async () => { await api.deleteRoutineTask(token, routine.plan_id, tid); await loadRoutines(); await loadTasks(); });
+  }
 
   async function generateCode() { const r = await api.getAccessCode(token, child.id); setAccessCode(r.code); }
 
@@ -100,7 +158,8 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
   const totalStars = tasks.reduce((s, t) => s + (t.reward_stars || 0), 0);
 
   return (
-    <div>
+    <fieldset disabled={savingTask} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+      {taskError && <p role="alert" style={{ color: "#b33a3a", marginBottom: "0.6rem" }}>{taskError}</p>}
       <div style={{ marginBottom: "1rem" }}><button onClick={onBack} style={s.link}>← 首页</button></div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}><h2 style={{ fontSize: "1.3rem", fontWeight: 700 }}>{child.name}</h2><div style={{ fontSize: "0.9rem", color: "#73706b" }}>⭐{formatStars(rewards.stars_total)} 🔥{rewards.current_streak_days}</div></div>
       {!plan && <div style={{ textAlign: "center", paddingTop: "2rem" }}><p style={{ color: "#73706b", marginBottom: "1rem" }}>请先创建计划</p><button onClick={createDefaultPlan} style={s.btn}>创建计划</button></div>}
@@ -117,7 +176,7 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
               {editingTask === t.id ? (
                 <div>
                   <input placeholder="任务名 *" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} style={s.fi} autoFocus />
-                  <div style={{ display: "flex", gap: "0.4rem" }}><input type="number" placeholder="分钟 *" value={editForm.minutes} onChange={e => setEditForm({ ...editForm, minutes: e.target.value })} style={{ ...s.fi, flex: 1 }} /><RewardSelect value={editForm.stars} onChange={value => setEditForm({ ...editForm, stars: value })} /></div>
+                  <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={editForm.minutes} onChange={value => setEditForm({ ...editForm, minutes: value })} /><RewardSelect value={editForm.stars} onChange={value => setEditForm({ ...editForm, stars: value })} /></div>
                   <div style={{ display: "flex", gap: "0.4rem" }}><input type="time" value={editForm.start} onChange={e => { const st = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, st, f.end), start: st })); }} style={{ ...s.fi, flex: 1 }} /><input type="time" value={editForm.end} onChange={e => { const en = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, f.start, en), end: en })); }} style={{ ...s.fi, flex: 1 }} /></div>
                   <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleSaveEdit} style={s.fsb}>保存</button><button onClick={() => setEditingTask(null)} style={s.fcb}>取消</button></div>
                 </div>
@@ -156,7 +215,7 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
               {editingTask === t.id ? (
                 <div>
                   <input placeholder="任务名 *" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} style={s.fi} autoFocus />
-                  <div style={{ display: "flex", gap: "0.4rem" }}><input type="number" placeholder="分钟 *" value={editForm.minutes} onChange={e => setEditForm({ ...editForm, minutes: e.target.value })} style={{ ...s.fi, flex: 1 }} /><RewardSelect value={editForm.stars} onChange={value => setEditForm({ ...editForm, stars: value })} /></div>
+                  <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={editForm.minutes} onChange={value => setEditForm({ ...editForm, minutes: value })} /><RewardSelect value={editForm.stars} onChange={value => setEditForm({ ...editForm, stars: value })} /></div>
                   <div style={{ display: "flex", gap: "0.4rem" }}><input type="time" value={editForm.start} onChange={e => { const st = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, st, f.end), start: st })); }} style={{ ...s.fi, flex: 1 }} /><input type="time" value={editForm.end} onChange={e => { const en = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, f.start, en), end: en })); }} style={{ ...s.fi, flex: 1 }} /></div>
                   <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleSaveEdit} style={s.fsb}>保存</button><button onClick={() => setEditingTask(null)} style={s.fcb}>取消</button></div>
                 </div>
@@ -189,7 +248,7 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
           {showAdd && <div style={{ marginTop: "0.8rem" }}>{!showAddTask ? <button onClick={() => setShowAddTask(true)} style={s.addBtn}>+ 添加当日任务</button> : (
             <div style={s.fb}>
               <input placeholder="任务名 *" value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} style={s.fi} autoFocus />
-              <div style={{ display: "flex", gap: "0.4rem" }}><input type="number" placeholder="分钟 *" value={newTask.minutes} onChange={e => setNewTask({ ...newTask, minutes: e.target.value })} style={{ ...s.fi, flex: 1 }} /><RewardSelect value={newTask.stars} onChange={value => setNewTask({ ...newTask, stars: value })} /></div>
+              <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={newTask.minutes} onChange={value => setNewTask({ ...newTask, minutes: value })} /><RewardSelect value={newTask.stars} onChange={value => setNewTask({ ...newTask, stars: value })} /></div>
               <div style={{ display: "flex", gap: "0.4rem" }}><input type="time" value={newTask.start} onChange={e => { const s = e.target.value; setNewTask(f => ({ ...f, ...autoFillTime(f.minutes, s, f.end), start: s })); }} style={{ ...s.fi, flex: 1 }} /><input type="time" value={newTask.end} onChange={e => { const en = e.target.value; setNewTask(f => ({ ...f, ...autoFillTime(f.minutes, f.start, en), end: en })); }} style={{ ...s.fi, flex: 1 }} /></div>
               <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleAddTask} style={s.fsb}>添加</button><button onClick={() => setShowAddTask(false)} style={s.fcb}>取消</button></div>
             </div>
@@ -203,7 +262,7 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
               {editingRoutine === r.id ? (
                 <div>
                   <input placeholder="任务名 *" value={routineEditForm.title} onChange={e => setRoutineEditForm({ ...routineEditForm, title: e.target.value })} style={s.fi} autoFocus />
-                  <div style={{ display: "flex", gap: "0.4rem" }}><input type="number" placeholder="分钟 *" value={routineEditForm.minutes} onChange={e => setRoutineEditForm({ ...routineEditForm, minutes: e.target.value })} style={{ ...s.fi, flex: 1 }} /><RewardSelect value={routineEditForm.stars} onChange={value => setRoutineEditForm({ ...routineEditForm, stars: value })} /></div>
+                  <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={routineEditForm.minutes} onChange={value => setRoutineEditForm({ ...routineEditForm, minutes: value })} /><RewardSelect value={routineEditForm.stars} onChange={value => setRoutineEditForm({ ...routineEditForm, stars: value })} /></div>
                   <div style={{ display: "flex", gap: "0.25rem", marginBottom: "0.4rem" }}>{WEEKDAYS.map((lbl, idx) => { const d = idx === 0 ? 7 : idx; const a = routineEditForm.weekdays.includes(d); return <button type="button" key={lbl} onClick={() => { const wd = a ? routineEditForm.weekdays.filter(w => w !== d) : [...routineEditForm.weekdays, d].sort(); setRoutineEditForm({ ...routineEditForm, weekdays: wd }); }} style={{ width: "2rem", height: "2rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 600, background: a ? "#3d9e6b" : "#efece8", color: a ? "#fff" : "#73706b", border: "none", cursor: "pointer" }}>{lbl}</button>; })}</div>
                   <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleSaveRoutine} style={s.fsb}>保存</button><button onClick={() => setEditingRoutine(null)} style={s.fcb}>取消</button></div>
                 </div>
@@ -215,7 +274,7 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
           {!showAddRoutine ? <button onClick={() => setShowAddRoutine(true)} style={s.addBtn}>+ 添加重复任务</button> : (
             <div style={s.fb}>
               <input placeholder="任务名 *" value={routineForm.title} onChange={e => setRoutineForm({ ...routineForm, title: e.target.value })} style={s.fi} autoFocus />
-              <div style={{ display: "flex", gap: "0.4rem" }}><input type="number" placeholder="分钟 *" value={routineForm.minutes} onChange={e => setRoutineForm({ ...routineForm, minutes: e.target.value })} style={{ ...s.fi, flex: 1 }} /><RewardSelect value={routineForm.stars} onChange={value => setRoutineForm({ ...routineForm, stars: value })} /></div>
+              <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={routineForm.minutes} onChange={value => setRoutineForm({ ...routineForm, minutes: value })} /><RewardSelect value={routineForm.stars} onChange={value => setRoutineForm({ ...routineForm, stars: value })} /></div>
               <div style={{ display: "flex", gap: "0.25rem", marginBottom: "0.4rem" }}>{WEEKDAYS.map((lbl, idx) => { const d = idx === 0 ? 7 : idx; const a = routineForm.weekdays.includes(d); return <button type="button" key={lbl} onClick={() => { const wd = a ? routineForm.weekdays.filter(w => w !== d) : [...routineForm.weekdays, d].sort(); setRoutineForm({ ...routineForm, weekdays: wd }); }} style={{ width: "2rem", height: "2rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 600, background: a ? "#3d9e6b" : "#efece8", color: a ? "#fff" : "#73706b", border: "none", cursor: "pointer" }}>{lbl}</button>; })}</div>
               <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleAddRoutine} disabled={savingRoutine} style={s.fsb}>{savingRoutine ? "保存…" : "保存"}</button><button onClick={() => setShowAddRoutine(false)} style={s.fcb}>取消</button></div>
             </div>
@@ -224,19 +283,35 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
 
         <div style={{ ...s.panel, marginTop: "0.8rem" }}><h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.6rem" }}>访问码</h3>{accessCode ? <p style={{ fontSize: "1.8rem", fontWeight: 700, letterSpacing: "0.3em", color: "#3d9e6b", textAlign: "center" }}>{accessCode}</p> : <button onClick={generateCode} style={s.btn}>生成访问码</button>}{accessCode && <button onClick={generateCode} style={{ ...s.addBtn, marginTop: "0.4rem" }}>重新生成</button>}<p style={{ fontSize: "0.75rem", color: "#73706b", marginTop: "0.4rem", textAlign: "center" }}>在 iPad 上打开孩子端，输入此码绑定</p></div>
       </>)}
-    </div>
+    </fieldset>
+  );
+}
+
+function DurationInput({ value, onChange }) {
+  return (
+    <label style={s.field}>
+      <span style={s.fieldLabel}>预计时长</span>
+      <span style={{ ...s.fi, display: "flex", alignItems: "center", gap: "0.3rem" }}>
+        <input type="number" placeholder="分钟 *" value={value} onChange={e => onChange(e.target.value)} style={{ width: "100%", minWidth: 0, border: "none", outline: "none", background: "transparent" }} />
+        <span style={{ color: "#73706b", whiteSpace: "nowrap" }}>分钟</span>
+      </span>
+    </label>
   );
 }
 
 function RewardSelect({ value, onChange }) {
   return (
-    <select value={value} onChange={e => onChange(parseInt(e.target.value))} style={{ ...s.fi, flex: 1 }}>
-      {[0, 1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n === 0 ? "0⭐" : "⭐".repeat(n)}</option>)}
-    </select>
+    <label style={s.field}>
+      <span style={s.fieldLabel}>奖励星星</span>
+      <select value={value} onChange={e => onChange(parseInt(e.target.value))} style={s.fi}>
+        {[0, 1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n === 0 ? "0⭐" : "⭐".repeat(n)}</option>)}
+      </select>
+    </label>
   );
 }
 
 const s = {
+  field: { flex: 1, minWidth: 0 }, fieldLabel: { display: "block", fontSize: "0.75rem", color: "#73706b", marginBottom: "0.2rem" },
   link: { color: "#3d9e6b", fontSize: "0.95rem", background: "none", border: "none", cursor: "pointer" }, arr: { width: "2rem", height: "2rem", borderRadius: "50%", background: "#fff", border: "1px solid #e8e4df", fontSize: "1rem", fontWeight: 600, color: "#73706b", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" },
   dtLabel: { flex: 1, background: "#fff", borderRadius: "10px", border: "1px solid #e8e4df", cursor: "pointer" },
   panel: { background: "#fff", borderRadius: "14px", padding: "1rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }, tc: { background: "#f8f8fb", borderRadius: "10px", padding: "0.6rem 0.8rem", marginBottom: "0.4rem" }, rc: { background: "#f8f8fb", borderRadius: "10px", padding: "0.6rem 0.8rem", marginBottom: "0.4rem" },

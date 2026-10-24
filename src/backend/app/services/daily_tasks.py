@@ -48,6 +48,7 @@ def _has_missed_task_day(
             DailyTask.task_date > after_date,
             DailyTask.task_date < before_date,
             DailyTask.approved.is_(True),
+            DailyTask.status != "deleted",
         )
     ).all()
 
@@ -70,22 +71,14 @@ def generate_todays_tasks(db: Session, child_id: UUID) -> list[DailyTask]:
 
 
 def get_todays_tasks(db: Session, child_id: UUID) -> list[DailyTask]:
-    today = date.today()
-    dailies = list(
-        db.scalars(
-            select(DailyTask)
-            .where(DailyTask.child_id == child_id, DailyTask.task_date == today)
-            .order_by(DailyTask.sort_order, DailyTask.created_at)
-        )
-    )
-    if not dailies:
-        dailies = generate_todays_tasks(db, child_id)
-    return dailies
+    return generate_todays_tasks(db, child_id)
 
 
 def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | None) -> DailyTask:
     task = db.scalar(
-        select(DailyTask).where(DailyTask.id == task_id, DailyTask.child_id == child_id)
+        select(DailyTask).where(
+            DailyTask.id == task_id, DailyTask.child_id == child_id, DailyTask.status != "deleted"
+        )
     )
     if task is None:
         raise api_error("not_found", "Task not found", 404)
@@ -138,6 +131,7 @@ def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | No
                 DailyTask.child_id == child_id,
                 DailyTask.task_date == today,
                 DailyTask.approved.is_(True),
+                DailyTask.status != "deleted",
             )
         ))
         if tasks:
@@ -201,20 +195,14 @@ def create_manual_daily_tasks(
 
 
 def list_tasks_for_date(db: Session, child_id: UUID, task_date: date) -> list[DailyTask]:
-    dailies = list(
-        db.scalars(
-            select(DailyTask)
-            .where(DailyTask.child_id == child_id, DailyTask.task_date == task_date)
-            .order_by(DailyTask.sort_order, DailyTask.created_at)
-        )
-    )
-    dailies = _generate_tasks_for_date(db, child_id, task_date)
-    return dailies
+    return _generate_tasks_for_date(db, child_id, task_date)
 
 
 def update_daily_task(db: Session, task_id: UUID, plan: Plan, data: ManualTaskItem) -> DailyTask:
     task = db.scalar(
-        select(DailyTask).where(DailyTask.id == task_id, DailyTask.plan_id == plan.id)
+        select(DailyTask).where(
+            DailyTask.id == task_id, DailyTask.plan_id == plan.id, DailyTask.status != "deleted"
+        ).with_for_update()
     )
     if task is None:
         raise api_error("not_found", "Task not found", 404)
@@ -225,11 +213,16 @@ def update_daily_task(db: Session, task_id: UUID, plan: Plan, data: ManualTaskIt
     if task.created_by == "child" and not task.approved:
         task.approved = True
     task.title = data.title
-    task.description = data.description
-    task.expected_minutes = data.expected_minutes
-    task.reward_stars = data.reward_stars
-    task.scheduled_start = _parse_time(data.scheduled_start)
-    task.scheduled_end = _parse_time(data.scheduled_end)
+    if "description" in data.model_fields_set:
+        task.description = data.description
+    if "expected_minutes" in data.model_fields_set:
+        task.expected_minutes = data.expected_minutes
+    if "reward_stars" in data.model_fields_set:
+        task.reward_stars = data.reward_stars
+    if "scheduled_start" in data.model_fields_set:
+        task.scheduled_start = _parse_time(data.scheduled_start)
+    if "scheduled_end" in data.model_fields_set:
+        task.scheduled_end = _parse_time(data.scheduled_end)
     db.commit()
     db.refresh(task)
     return task
@@ -237,11 +230,15 @@ def update_daily_task(db: Session, task_id: UUID, plan: Plan, data: ManualTaskIt
 
 def delete_daily_task(db: Session, task_id: UUID, plan: Plan) -> None:
     task = db.scalar(
-        select(DailyTask).where(DailyTask.id == task_id, DailyTask.plan_id == plan.id)
+        select(DailyTask).where(
+            DailyTask.id == task_id, DailyTask.plan_id == plan.id, DailyTask.status != "deleted"
+        ).with_for_update()
     )
     if task is None:
         raise api_error("not_found", "Task not found", 404)
-    db.delete(task)
+    if task.status == "completed":
+        raise api_error("conflict", "Cannot delete completed task", 409)
+    task.status = "deleted"
     db.commit()
 
 
@@ -294,7 +291,11 @@ def _generate_tasks_for_date(db: Session, child_id: UUID, task_date: date) -> li
     return list(
         db.scalars(
             select(DailyTask)
-            .where(DailyTask.child_id == child_id, DailyTask.task_date == task_date)
+            .where(
+                DailyTask.child_id == child_id,
+                DailyTask.task_date == task_date,
+                DailyTask.status != "deleted",
+            )
             .order_by(DailyTask.status.asc(), DailyTask.scheduled_start.isnot(None).desc(), DailyTask.scheduled_start.asc(), DailyTask.sort_order, DailyTask.created_at)
         )
     )
@@ -323,7 +324,9 @@ def create_child_task(db: Session, child_id: UUID, plan_id: UUID, data) -> Daily
 
 def schedule_child_task(db: Session, task_id: UUID, child_id: UUID, data) -> DailyTask:
     task = db.scalar(
-        select(DailyTask).where(DailyTask.id == task_id, DailyTask.child_id == child_id)
+        select(DailyTask).where(
+            DailyTask.id == task_id, DailyTask.child_id == child_id, DailyTask.status != "deleted"
+        ).with_for_update()
     )
     if task is None:
         raise api_error("not_found", "Task not found", 404)
@@ -339,7 +342,9 @@ def schedule_child_task(db: Session, task_id: UUID, child_id: UUID, data) -> Dai
 
 def update_child_task(db: Session, task_id: UUID, child_id: UUID, data) -> DailyTask:
     task = db.scalar(
-        select(DailyTask).where(DailyTask.id == task_id, DailyTask.child_id == child_id)
+        select(DailyTask).where(
+            DailyTask.id == task_id, DailyTask.child_id == child_id, DailyTask.status != "deleted"
+        ).with_for_update()
     )
     if task is None:
         raise api_error("not_found", "Task not found", 404)
@@ -360,13 +365,15 @@ def update_child_task(db: Session, task_id: UUID, child_id: UUID, data) -> Daily
 
 def delete_child_task(db: Session, task_id: UUID, child_id: UUID) -> None:
     task = db.scalar(
-        select(DailyTask).where(DailyTask.id == task_id, DailyTask.child_id == child_id)
+        select(DailyTask).where(
+            DailyTask.id == task_id, DailyTask.child_id == child_id, DailyTask.status != "deleted"
+        ).with_for_update()
     )
     if task is None:
         raise api_error("not_found", "Task not found", 404)
     if task.created_by != "child" or task.approved:
         raise api_error("conflict", "Cannot delete this task", 409)
-    db.delete(task)
+    task.status = "deleted"
     db.commit()
 
 

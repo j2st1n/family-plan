@@ -101,7 +101,11 @@ def get_child_dashboard(db: Session, child_id: UUID, parent_id: UUID) -> dict:
     today = date.today()
     tasks_today = list(
         db.scalars(
-            select(DailyTask).where(DailyTask.child_id == child_id, DailyTask.task_date == today)
+            select(DailyTask).where(
+                DailyTask.child_id == child_id,
+                DailyTask.task_date == today,
+                DailyTask.status != "deleted",
+            )
         )
     )
     completed = sum(1 for t in tasks_today if t.status == "completed")
@@ -117,7 +121,8 @@ def update_task_template(db: Session, plan: Plan, template_id: UUID, data: TaskT
     if template is None:
         raise api_error("not_found", "Task template not found", 404)
     template.title = data.title
-    template.description = data.description
+    if "description" in data.model_fields_set:
+        template.description = data.description
     template.expected_minutes = data.expected_minutes
     template.weekdays = data.weekdays
     template.reward_stars = data.reward_stars
