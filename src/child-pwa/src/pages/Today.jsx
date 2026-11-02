@@ -11,7 +11,7 @@ import {
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
-import { playTaskComplete, initAudioUnlock } from "../utils/soundFx.js";
+import { playTaskComplete, playTaskSubmitted, initAudioUnlock } from "../utils/soundFx.js";
 import FocusTimer from "../components/FocusTimer.jsx";
 
 const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
@@ -110,7 +110,7 @@ export default function Today({ child, onExpired, active }) {
    * 具备 1s 防抖、Web Audio 纯前端和弦音、Canvas Confetti 飞星礼花
    */
   async function handleComplete(task, event) {
-    if (!task || task.status === "completed") return;
+    if (!task || task.status === "completed" || task.status === "submitted") return;
 
     const now = Date.now();
     const lastTime = lastCompleteTimeRef.current.get(task.id) || 0;
@@ -127,8 +127,12 @@ export default function Today({ child, onExpired, active }) {
     setPoppingId(task.id);
     setTimeout(() => setPoppingId(null), 500);
 
-    // 触发 Web Audio 和弦琶音 (C5-E5-G5-C6)
-    playTaskComplete();
+    // 触发音效：需要家长确认的任务播放温暖提醒音，直发任务播放上升和弦音
+    if (task.require_approval) {
+      playTaskSubmitted();
+    } else {
+      playTaskComplete();
+    }
 
     // 计算礼花起点位置
     let originX = 0.5;
@@ -145,7 +149,11 @@ export default function Today({ child, onExpired, active }) {
 
     try {
       const result = await completeTask(task.id, "easy");
-      setJustCompleted({ id: task.id, title: task.title, stars: result.stars_awarded });
+      if (result.status === "submitted") {
+        setJustCompleted({ id: task.id, title: task.title, stars: 0, isSubmitted: true });
+      } else {
+        setJustCompleted({ id: task.id, title: task.title, stars: result.stars_awarded, isSubmitted: false });
+      }
       setTimeout(() => setJustCompleted(null), 2500);
       await load();
     } catch {
@@ -485,7 +493,7 @@ export default function Today({ child, onExpired, active }) {
         )}
       </div>
 
-      {/* 完成吐司提示 */}
+      {/* 完成/提交吐司提示 */}
       {justCompleted && (
         <div
           style={{
@@ -493,7 +501,7 @@ export default function Today({ child, onExpired, active }) {
             bottom: "30px",
             left: "50%",
             transform: "translateX(-50%)",
-            background: "#3d9e6b",
+            background: justCompleted.isSubmitted ? "#d97706" : "#3d9e6b",
             color: "#fff",
             padding: "0.8rem 1.5rem",
             borderRadius: "20px",
@@ -503,7 +511,9 @@ export default function Today({ child, onExpired, active }) {
             zIndex: 1200,
           }}
         >
-          ✅ {justCompleted.title} 完成！+{justCompleted.stars}⭐
+          {justCompleted.isSubmitted
+            ? `⏳ ${justCompleted.title} 已提交，等待家长点赞！`
+            : `✅ ${justCompleted.title} 完成！+${justCompleted.stars}⭐`}
         </div>
       )}
 
@@ -555,6 +565,7 @@ function TaskCard({
   const isChildTask = task.created_by === "child";
   const isUnapproved = isChildTask && !task.approved;
   const isCompleted = task.status === "completed";
+  const isSubmitted = task.status === "submitted";
   const isCompleting = completing !== undefined ? completing : completingId === task.id;
   const isPopping = poppingId === task.id;
   const src = task.schedule_by === "child" ? `${child?.name || "孩子"}安排` : "";
@@ -634,7 +645,26 @@ function TaskCard({
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           {/* 72x72px 超大彩色复选圆钮 (Min Target >= 64px 符合儿童人体工学) */}
-          {!isUnapproved ? (
+          {isSubmitted ? (
+            <button
+              type="button"
+              disabled={true}
+              className="task-check-btn submitted"
+              aria-label="等待家长点赞"
+              style={{
+                flexShrink: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <span style={{ fontSize: "1.6rem", lineHeight: 1 }}>⏳</span>
+              <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#b45309", marginTop: 2 }}>
+                待点赞
+              </span>
+            </button>
+          ) : !isUnapproved ? (
             <button
               type="button"
               onClick={(e) => onComplete(task, e)}
@@ -691,13 +721,33 @@ function TaskCard({
                 style={{
                   fontSize: "1.15rem",
                   fontWeight: 600,
-                  color: isCompleted ? "#73706b" : "#2d2b28",
+                  color: isCompleted ? "#73706b" : isSubmitted ? "#92400e" : "#2d2b28",
                   textDecoration: isCompleted ? "line-through" : "none",
                   wordBreak: "break-word",
                 }}
               >
                 {task.title}
               </p>
+              {isSubmitted && (
+                <span className="task-submitted-badge">
+                  ⏳ 等待家长点赞
+                </span>
+              )}
+              {task.require_approval && !isSubmitted && !isCompleted && (
+                <span
+                  style={{
+                    padding: "0.15rem 0.5rem",
+                    borderRadius: "999px",
+                    background: "#fef3c7",
+                    color: "#b45309",
+                    fontSize: "0.72rem",
+                    fontWeight: 600,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  需家长确认
+                </span>
+              )}
               {isScheduled && !isCompleted && (
                 <span
                   style={{
@@ -731,7 +781,7 @@ function TaskCard({
               }}
             >
               {/* 时长型任务 (expected_minutes > 0) 提供 ⏱️ 开启专注 入口 */}
-              {task.expected_minutes > 0 && !isCompleted && (
+              {task.expected_minutes > 0 && !isCompleted && !isSubmitted && (
                 <button
                   type="button"
                   onClick={() => onStartFocus(task)}
@@ -755,7 +805,7 @@ function TaskCard({
                   删除
                 </button>
               )}
-              {!isUnapproved && !isScheduled && task.created_by === "parent" && !isCompleted && (
+              {!isUnapproved && !isScheduled && task.created_by === "parent" && !isCompleted && !isSubmitted && (
                 <button onClick={() => onSchedule(task)} style={st.pillBtn}>
                   安排时间
                 </button>

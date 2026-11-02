@@ -27,12 +27,12 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddRoutine, setShowAddRoutine] = useState(false);
   const [savingRoutine, setSavingRoutine] = useState(false);
-  const [newTask, setNewTask] = useState({ title: "", minutes: "", stars: 1, start: "", end: "" });
-  const [routineForm, setRoutineForm] = useState({ title: "", minutes: "", stars: 1, weekdays: [1, 2, 3, 4, 5] });
+  const [newTask, setNewTask] = useState({ title: "", minutes: "", stars: 1, start: "", end: "", require_approval: false });
+  const [routineForm, setRoutineForm] = useState({ title: "", minutes: "", stars: 1, weekdays: [1, 2, 3, 4, 5], require_approval: false });
   const [editingTask, setEditingTask] = useState(null);
-  const [editForm, setEditForm] = useState({ title: "", minutes: "", stars: 1, start: "", end: "" });
+  const [editForm, setEditForm] = useState({ title: "", minutes: "", stars: 1, start: "", end: "", require_approval: false });
   const [editingRoutine, setEditingRoutine] = useState(null);
-  const [routineEditForm, setRoutineEditForm] = useState({ title: "", minutes: "", stars: 1, weekdays: [] });
+  const [routineEditForm, setRoutineEditForm] = useState({ title: "", minutes: "", stars: 1, weekdays: [], require_approval: false });
   const [showCompleted, setShowCompleted] = useState(false);
   const [taskError, setTaskError] = useState("");
   const [savingTask, setSavingTask] = useState(false);
@@ -71,8 +71,15 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
     if (!newTask.title.trim()) return; if (!newTask.minutes || parseInt(newTask.minutes) < 1) return;
     const filled = autoFillTime(newTask.minutes, newTask.start, newTask.end);
     await runTaskAction(async () => {
-      await api.createManualTasks(token, plan.id, date, [{ title: newTask.title.trim(), expected_minutes: parseInt(newTask.minutes), reward_stars: newTask.stars, scheduled_start: filled.start || null, scheduled_end: filled.end || null }]);
-      setNewTask({ title: "", minutes: "", stars: 1, start: "", end: "" }); setShowAddTask(false); await loadTasks();
+      await api.createManualTasks(token, plan.id, date, [{
+        title: newTask.title.trim(),
+        expected_minutes: parseInt(newTask.minutes),
+        reward_stars: newTask.stars,
+        require_approval: !!newTask.require_approval,
+        scheduled_start: filled.start || null,
+        scheduled_end: filled.end || null,
+      }]);
+      setNewTask({ title: "", minutes: "", stars: 1, start: "", end: "", require_approval: false }); setShowAddTask(false); await loadTasks();
     });
   }
 
@@ -84,7 +91,15 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
     if (!task?.plan_id) { setTaskError("任务信息已变化，请刷新后重试"); return; }
     const filled = autoFillTime(editForm.minutes, editForm.start, editForm.end);
     await runTaskAction(async () => {
-      await api.updateDailyTask(token, task.plan_id, editingTask, { title: editForm.title.trim(), expected_minutes: parseInt(editForm.minutes), reward_stars: editForm.stars, scheduled_start: filled.start || null, scheduled_end: filled.end || null, approved: editForm.approved === false ? true : editForm.approved });
+      await api.updateDailyTask(token, task.plan_id, editingTask, {
+        title: editForm.title.trim(),
+        expected_minutes: parseInt(editForm.minutes),
+        reward_stars: editForm.stars,
+        require_approval: !!editForm.require_approval,
+        scheduled_start: filled.start || null,
+        scheduled_end: filled.end || null,
+        approved: editForm.approved === false ? true : editForm.approved,
+      });
       setEditingTask(null); await loadTasks();
     });
   }
@@ -105,7 +120,20 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
     await runTaskAction(async () => { await api.deleteDailyTask(token, task.plan_id, taskId); await loadTasks(); });
   }
 
-  function startEditTask(t) { if (t.status === "completed" || savingTask) return; setTaskError(""); setEditingTask(t.id); setEditForm({ title: t.title, minutes: t.expected_minutes?.toString() || "", stars: t.reward_stars, start: t.scheduled_start || "", end: t.scheduled_end || "", approved: t.approved }); }
+  function startEditTask(t) {
+    if (t.status === "completed" || savingTask) return;
+    setTaskError("");
+    setEditingTask(t.id);
+    setEditForm({
+      title: t.title,
+      minutes: t.expected_minutes?.toString() || "",
+      stars: t.reward_stars,
+      start: t.scheduled_start || "",
+      end: t.scheduled_end || "",
+      approved: t.approved,
+      require_approval: !!t.require_approval,
+    });
+  }
 
   async function handleApprove(taskId) {
     const task = tasks.find(item => item.id === taskId);
@@ -116,24 +144,67 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
     });
   }
 
+  async function handleApproveSubmitted(taskId) {
+    await runTaskAction(async () => {
+      await api.approveTask(token, taskId);
+      await loadTasks();
+    });
+  }
+
+  async function handleRejectSubmitted(taskId) {
+    await runTaskAction(async () => {
+      await api.rejectTask(token, taskId);
+      await loadTasks();
+    });
+  }
+
+  async function handleRevokeTask(taskId) {
+    if (!window.confirm("确定撤回该任务吗？撤回后任务将重置为待完成，并扣回奖励的星星。")) return;
+    await runTaskAction(async () => {
+      await api.revokeTask(token, taskId);
+      await loadTasks();
+    });
+  }
+
   async function handleAddRoutine() {
     if (!routineForm.title.trim() || !plan) return; if (!routineForm.minutes || parseInt(routineForm.minutes) < 1) return;
     setSavingRoutine(true);
     try {
       await runTaskAction(async () => {
-        await api.addRoutineTask(token, plan.id, { title: routineForm.title.trim(), expected_minutes: parseInt(routineForm.minutes), weekdays: routineForm.weekdays, reward_stars: routineForm.stars });
-        setRoutineForm({ title: "", minutes: "", stars: 1, weekdays: [1, 2, 3, 4, 5] }); setShowAddRoutine(false); await loadRoutines(); await loadTasks();
+        await api.addRoutineTask(token, plan.id, {
+          title: routineForm.title.trim(),
+          expected_minutes: parseInt(routineForm.minutes),
+          weekdays: routineForm.weekdays,
+          reward_stars: routineForm.stars,
+          require_approval: !!routineForm.require_approval,
+        });
+        setRoutineForm({ title: "", minutes: "", stars: 1, weekdays: [1, 2, 3, 4, 5], require_approval: false }); setShowAddRoutine(false); await loadRoutines(); await loadTasks();
       });
     } finally { setSavingRoutine(false); }
   }
 
-  function startEditRoutine(r) { setEditingRoutine(r.id); setRoutineEditForm({ title: r.title, minutes: r.expected_minutes?.toString() || "", stars: r.reward_stars, weekdays: [...(r.weekdays || [])] }); }
+  function startEditRoutine(r) {
+    setEditingRoutine(r.id);
+    setRoutineEditForm({
+      title: r.title,
+      minutes: r.expected_minutes?.toString() || "",
+      stars: r.reward_stars,
+      weekdays: [...(r.weekdays || [])],
+      require_approval: !!r.require_approval,
+    });
+  }
   async function handleSaveRoutine() {
     if (!editingRoutine || !routineEditForm.title.trim()) return;
     const routine = routineTasks.find(item => item.id === editingRoutine);
     if (!routine?.plan_id) { setTaskError("重复任务信息已变化，请刷新后重试"); return; }
     await runTaskAction(async () => {
-      await api.updateRoutineTask(token, routine.plan_id, editingRoutine, { title: routineEditForm.title.trim(), expected_minutes: routineEditForm.minutes ? parseInt(routineEditForm.minutes) : null, weekdays: routineEditForm.weekdays, reward_stars: routineEditForm.stars });
+      await api.updateRoutineTask(token, routine.plan_id, editingRoutine, {
+        title: routineEditForm.title.trim(),
+        expected_minutes: routineEditForm.minutes ? parseInt(routineEditForm.minutes) : null,
+        weekdays: routineEditForm.weekdays,
+        reward_stars: routineEditForm.stars,
+        require_approval: !!routineEditForm.require_approval,
+      });
       setEditingRoutine(null); await loadRoutines(); await loadTasks();
     });
   }
@@ -152,7 +223,8 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
   const selectedDate = parseLocal(date); const today = new Date(); const todayStr = fmtDate(today);
   const showAdd = date >= todayStr; const isToday = date === todayStr;
   const dateLabel = `${selectedDate.getMonth() + 1}月${selectedDate.getDate()}日 周${WEEKDAYS[selectedDate.getDay()]}`;
-  const pendingTasks = tasks.filter(t => t.status !== "completed");
+  const submittedTasks = tasks.filter(t => t.status === "submitted");
+  const pendingTasks = tasks.filter(t => t.status === "pending");
   const completedTasks = tasks.filter(t => t.status === "completed");
   const completedCount = completedTasks.length;
   const totalStars = tasks.reduce((s, t) => s + (t.reward_stars || 0), 0);
@@ -168,9 +240,90 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
         {!isToday && <div style={{ textAlign: "center", marginTop: "-0.6rem", marginBottom: "0.4rem" }}><button onClick={() => setDate(todayStr)} style={{ color: "#3d9e6b", fontSize: "0.75rem", background: "none", border: "none", cursor: "pointer" }}>回到今天</button></div>}
 
         <div style={s.panel}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}><h3 style={{ fontSize: "1rem", fontWeight: 700 }}>当日任务</h3><span style={{ fontSize: "0.8rem", color: "#73706b" }}>{tasks.length}项 · {completedCount}完成 · {totalStars}⭐</span></div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}><h3 style={{ fontSize: "1rem", fontWeight: 700 }}>当日任务</h3><span style={{ fontSize: "0.8rem", color: "#73706b" }}>{tasks.length}项 · {completedCount}完成{submittedTasks.length > 0 ? ` · ${submittedTasks.length}待审核` : ""} · {totalStars}⭐</span></div>
           {loading && <p style={{ color: "#73706b", textAlign: "center" }}>加载中…</p>}
           {!loading && tasks.length === 0 && <p style={{ color: "#73706b", textAlign: "center", padding: "0.8rem 0" }}>当天暂无任务</p>}
+
+          {submittedTasks.length > 0 && (
+            <div style={{
+              background: "#fffbeb",
+              border: "1.5px solid #fde68a",
+              borderRadius: "12px",
+              padding: "0.8rem",
+              marginBottom: "0.8rem"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <h4 style={{ fontSize: "0.9rem", fontWeight: 700, color: "#b45309", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>⏳ 待点赞 / 审核任务</span>
+                  <span style={{
+                    background: "#f59e0b",
+                    color: "#fff",
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    padding: "1px 6px",
+                    borderRadius: "999px"
+                  }}>{submittedTasks.length}</span>
+                </h4>
+                <span style={{ fontSize: "0.75rem", color: "#b45309" }}>孩子已完成，等待家长点赞</span>
+              </div>
+              {submittedTasks.map(t => (
+                <div key={t.id} style={{
+                  background: "#fff",
+                  borderRadius: "8px",
+                  border: "1px solid #fef3c7",
+                  padding: "0.6rem 0.8rem",
+                  marginBottom: "0.4rem",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 600, fontSize: "0.95rem", color: "#2d2b28" }}>{t.title}</p>
+                    <div style={{ display: "flex", gap: "0.6rem", fontSize: "0.75rem", color: "#73706b", marginTop: "0.15rem", flexWrap: "wrap" }}>
+                      {t.expected_minutes && <span>{t.expected_minutes}分钟</span>}
+                      <span style={{ color: "#d97706", fontWeight: 600 }}>⭐+{t.reward_stars}</span>
+                      {t.submitted_at && <span>提交于 {new Date(t.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.4rem", marginLeft: "0.5rem" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleApproveSubmitted(t.id)}
+                      style={{
+                        padding: "0.35rem 0.7rem",
+                        borderRadius: "8px",
+                        background: "#3d9e6b",
+                        color: "#fff",
+                        fontSize: "0.8rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        border: "none"
+                      }}
+                    >
+                      👍 通过
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRejectSubmitted(t.id)}
+                      style={{
+                        padding: "0.35rem 0.7rem",
+                        borderRadius: "8px",
+                        background: "#efece8",
+                        color: "#c97070",
+                        fontSize: "0.8rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        border: "none"
+                      }}
+                    >
+                      ❌ 驳回
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {pendingTasks.map(t => (
             <div key={t.id} style={{ ...s.tc, opacity: t.status === "completed" ? 0.6 : 1 }}>
               {editingTask === t.id ? (
@@ -178,6 +331,10 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
                   <input placeholder="任务名 *" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} style={s.fi} autoFocus />
                   <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={editForm.minutes} onChange={value => setEditForm({ ...editForm, minutes: value })} /><RewardSelect value={editForm.stars} onChange={value => setEditForm({ ...editForm, stars: value })} /></div>
                   <div style={{ display: "flex", gap: "0.4rem" }}><input type="time" value={editForm.start} onChange={e => { const st = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, st, f.end), start: st })); }} style={{ ...s.fi, flex: 1 }} /><input type="time" value={editForm.end} onChange={e => { const en = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, f.start, en), end: en })); }} style={{ ...s.fi, flex: 1 }} /></div>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.82rem", color: "#4a4540", marginBottom: "0.4rem", cursor: "pointer" }}>
+                    <input type="checkbox" checked={editForm.require_approval} onChange={e => setEditForm(f => ({ ...f, require_approval: e.target.checked }))} style={{ width: "16px", height: "16px", accentColor: "#3d9e6b", cursor: "pointer" }} />
+                    <span>需要家长确认（完成需点赞才发星星）</span>
+                  </label>
                   <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleSaveEdit} style={s.fsb}>保存</button><button onClick={() => setEditingTask(null)} style={s.fcb}>取消</button></div>
                 </div>
               ) : (
@@ -186,6 +343,11 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
                     <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>
                       {t.created_by === "child" && !t.approved && <span style={{ fontSize: "0.7rem", color: "#c97070", marginRight: "0.3rem" }}>待认可</span>}
                       {t.title}
+                      {t.require_approval && (
+                        <span style={{ marginLeft: "0.4rem", padding: "0.1rem 0.45rem", borderRadius: "999px", background: "#fef3c7", color: "#b45309", fontSize: "0.7rem", fontWeight: 600 }}>
+                          需确认
+                        </span>
+                      )}
                     </p>
                     <div style={{ display: "flex", gap: "0.8rem", fontSize: "0.75rem", color: "#73706b", marginTop: "0.1rem" }}>
                       {t.expected_minutes && <span>{t.expected_minutes}分钟</span>}
@@ -235,9 +397,24 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
                   </div>
                   <div style={{ display: "flex", gap: "0.2rem", marginLeft: "0.3rem", alignItems: "center" }}>
                     <span style={{ fontSize: "0.8rem", color: "#c4912a", whiteSpace: "nowrap" }}>⭐{t.reward_stars}</span>
-                    {t.created_by === "child" && !t.approved && <><button onClick={() => startEditTask(t)} style={s.ib}>✎</button><button onClick={() => handleApprove(t.id)} style={{ ...s.ib, color: "#4b9c64", fontWeight: 700, fontSize: "0.8rem", width: "1.6rem" }}>✓</button></>}
-                    {t.status !== "completed" && (t.created_by === "parent" || t.approved) && <><button onClick={() => startEditTask(t)} style={s.ib}>✎</button><button onClick={() => handleDeleteTask(t.id)} style={s.ib}>✕</button></>}
-                    {t.created_by === "child" && !t.approved && <button onClick={() => handleDeleteTask(t.id)} style={s.ib}>✕</button>}
+                    <button
+                      type="button"
+                      onClick={() => handleRevokeTask(t.id)}
+                      title="撤回任务"
+                      style={{
+                        padding: "0.2rem 0.55rem",
+                        borderRadius: "6px",
+                        background: "#efece8",
+                        color: "#73706b",
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        border: "none",
+                        cursor: "pointer",
+                        marginLeft: "0.3rem",
+                      }}
+                    >
+                      撤回
+                    </button>
                   </div>
                 </div>
               )}
@@ -250,6 +427,10 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
               <input placeholder="任务名 *" value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} style={s.fi} autoFocus />
               <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={newTask.minutes} onChange={value => setNewTask({ ...newTask, minutes: value })} /><RewardSelect value={newTask.stars} onChange={value => setNewTask({ ...newTask, stars: value })} /></div>
               <div style={{ display: "flex", gap: "0.4rem" }}><input type="time" value={newTask.start} onChange={e => { const s = e.target.value; setNewTask(f => ({ ...f, ...autoFillTime(f.minutes, s, f.end), start: s })); }} style={{ ...s.fi, flex: 1 }} /><input type="time" value={newTask.end} onChange={e => { const en = e.target.value; setNewTask(f => ({ ...f, ...autoFillTime(f.minutes, f.start, en), end: en })); }} style={{ ...s.fi, flex: 1 }} /></div>
+              <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.82rem", color: "#4a4540", marginBottom: "0.4rem", cursor: "pointer" }}>
+                <input type="checkbox" checked={newTask.require_approval} onChange={e => setNewTask(f => ({ ...f, require_approval: e.target.checked }))} style={{ width: "16px", height: "16px", accentColor: "#3d9e6b", cursor: "pointer" }} />
+                <span>需要家长确认（完成需点赞才发星星）</span>
+              </label>
               <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleAddTask} style={s.fsb}>添加</button><button onClick={() => setShowAddTask(false)} style={s.fcb}>取消</button></div>
             </div>
           )}</div>}
@@ -264,10 +445,14 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
                   <input placeholder="任务名 *" value={routineEditForm.title} onChange={e => setRoutineEditForm({ ...routineEditForm, title: e.target.value })} style={s.fi} autoFocus />
                   <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={routineEditForm.minutes} onChange={value => setRoutineEditForm({ ...routineEditForm, minutes: value })} /><RewardSelect value={routineEditForm.stars} onChange={value => setRoutineEditForm({ ...routineEditForm, stars: value })} /></div>
                   <div style={{ display: "flex", gap: "0.25rem", marginBottom: "0.4rem" }}>{WEEKDAYS.map((lbl, idx) => { const d = idx === 0 ? 7 : idx; const a = routineEditForm.weekdays.includes(d); return <button type="button" key={lbl} onClick={() => { const wd = a ? routineEditForm.weekdays.filter(w => w !== d) : [...routineEditForm.weekdays, d].sort(); setRoutineEditForm({ ...routineEditForm, weekdays: wd }); }} style={{ width: "2rem", height: "2rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 600, background: a ? "#3d9e6b" : "#efece8", color: a ? "#fff" : "#73706b", border: "none", cursor: "pointer" }}>{lbl}</button>; })}</div>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.82rem", color: "#4a4540", marginBottom: "0.4rem", cursor: "pointer" }}>
+                    <input type="checkbox" checked={routineEditForm.require_approval} onChange={e => setRoutineEditForm(f => ({ ...f, require_approval: e.target.checked }))} style={{ width: "16px", height: "16px", accentColor: "#3d9e6b", cursor: "pointer" }} />
+                    <span>需要家长确认（完成需点赞才发星星）</span>
+                  </label>
                   <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleSaveRoutine} style={s.fsb}>保存</button><button onClick={() => setEditingRoutine(null)} style={s.fcb}>取消</button></div>
                 </div>
               ) : (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}><div style={{ flex: 1 }}><p style={{ fontWeight: 600 }}>{r.title}</p><p style={{ fontSize: "0.8rem", color: "#73706b" }}>每周 {formatWeekdays(r.weekdays)}{r.expected_minutes ? ` · ${r.expected_minutes}分钟` : ""}</p></div><div style={{ display: "flex", gap: "0.2rem", marginLeft: "0.3rem" }}><span style={{ fontSize: "0.8rem", color: "#c4912a", whiteSpace: "nowrap" }}>⭐{r.reward_stars}</span><button onClick={() => startEditRoutine(r)} style={s.ib}>✎</button><button onClick={() => handleDeleteRoutine(r.id)} style={s.ib}>✕</button></div></div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}><div style={{ flex: 1 }}><p style={{ fontWeight: 600 }}>{r.title}</p><p style={{ fontSize: "0.8rem", color: "#73706b" }}>每周 {formatWeekdays(r.weekdays)}{r.expected_minutes ? ` · ${r.expected_minutes}分钟` : ""}{r.require_approval ? " · 需家长确认" : ""}</p></div><div style={{ display: "flex", gap: "0.2rem", marginLeft: "0.3rem" }}><span style={{ fontSize: "0.8rem", color: "#c4912a", whiteSpace: "nowrap" }}>⭐{r.reward_stars}</span><button onClick={() => startEditRoutine(r)} style={s.ib}>✎</button><button onClick={() => handleDeleteRoutine(r.id)} style={s.ib}>✕</button></div></div>
               )}
             </div>
           ))}
@@ -276,6 +461,10 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
               <input placeholder="任务名 *" value={routineForm.title} onChange={e => setRoutineForm({ ...routineForm, title: e.target.value })} style={s.fi} autoFocus />
               <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={routineForm.minutes} onChange={value => setRoutineForm({ ...routineForm, minutes: value })} /><RewardSelect value={routineForm.stars} onChange={value => setRoutineForm({ ...routineForm, stars: value })} /></div>
               <div style={{ display: "flex", gap: "0.25rem", marginBottom: "0.4rem" }}>{WEEKDAYS.map((lbl, idx) => { const d = idx === 0 ? 7 : idx; const a = routineForm.weekdays.includes(d); return <button type="button" key={lbl} onClick={() => { const wd = a ? routineForm.weekdays.filter(w => w !== d) : [...routineForm.weekdays, d].sort(); setRoutineForm({ ...routineForm, weekdays: wd }); }} style={{ width: "2rem", height: "2rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 600, background: a ? "#3d9e6b" : "#efece8", color: a ? "#fff" : "#73706b", border: "none", cursor: "pointer" }}>{lbl}</button>; })}</div>
+              <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.82rem", color: "#4a4540", marginBottom: "0.4rem", cursor: "pointer" }}>
+                <input type="checkbox" checked={routineForm.require_approval} onChange={e => setRoutineForm(f => ({ ...f, require_approval: e.target.checked }))} style={{ width: "16px", height: "16px", accentColor: "#3d9e6b", cursor: "pointer" }} />
+                <span>需要家长确认（完成需点赞才发星星）</span>
+              </label>
               <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleAddRoutine} disabled={savingRoutine} style={s.fsb}>{savingRoutine ? "保存…" : "保存"}</button><button onClick={() => setShowAddRoutine(false)} style={s.fcb}>取消</button></div>
             </div>
           )}

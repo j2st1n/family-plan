@@ -26,6 +26,7 @@ from app.schemas.daily_task import (
 )
 from app.services.event_hub import event_hub
 from app.services.daily_tasks import (
+    approve_daily_task,
     complete_task,
     create_child_task,
     create_manual_daily_tasks,
@@ -33,6 +34,8 @@ from app.services.daily_tasks import (
     get_reward_summary,
     get_todays_tasks,
     list_tasks_for_date,
+    reject_daily_task,
+    revoke_daily_task,
     schedule_child_task,
     update_child_task,
     delete_child_task,
@@ -77,13 +80,55 @@ def complete_child_task(
     child, _ = child_device
     task = complete_task(db, task_id, child.id, payload.feedback)
     summary = get_reward_summary(db, child.id)
-    event_hub.publish(child.parent_id, "tasks", "task_completed", child.id)
-    return TaskCompleteResponse(
-        task_id=task.id,
-        status=task.status,
-        stars_awarded=task.reward_stars,
-        current_streak_days=summary["current_streak_days"],
-    )
+    if task.status == "submitted":
+        event_hub.publish(child.parent_id, "tasks", "task_submitted", child.id)
+        return TaskCompleteResponse(
+            task_id=task.id,
+            status=task.status,
+            stars_awarded=0,
+            current_streak_days=summary["current_streak_days"],
+        )
+    else:
+        event_hub.publish(child.parent_id, "tasks", "task_completed", child.id)
+        return TaskCompleteResponse(
+            task_id=task.id,
+            status=task.status,
+            stars_awarded=task.reward_stars,
+            current_streak_days=summary["current_streak_days"],
+        )
+
+
+@parent_router.post("/tasks/{task_id}/approve", response_model=DailyTaskItem)
+def approve_task(
+    task_id: UUID,
+    parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+) -> DailyTaskItem:
+    task = approve_daily_task(db, task_id, parent.id)
+    event_hub.publish(parent.id, "tasks", "task_approved", task.child_id)
+    return _daily_to_item(task)
+
+
+@parent_router.post("/tasks/{task_id}/reject", response_model=DailyTaskItem)
+def reject_task(
+    task_id: UUID,
+    parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+) -> DailyTaskItem:
+    task = reject_daily_task(db, task_id, parent.id)
+    event_hub.publish(parent.id, "tasks", "task_rejected", task.child_id)
+    return _daily_to_item(task)
+
+
+@parent_router.post("/tasks/{task_id}/revoke", response_model=DailyTaskItem)
+def revoke_task(
+    task_id: UUID,
+    parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+) -> DailyTaskItem:
+    task = revoke_daily_task(db, task_id, parent.id)
+    event_hub.publish(parent.id, "tasks", "task_revoked", task.child_id)
+    return _daily_to_item(task)
 
 
 @parent_router.post("/{plan_id}/daily-tasks", status_code=201)

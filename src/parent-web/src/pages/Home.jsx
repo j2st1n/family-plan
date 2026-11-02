@@ -128,6 +128,7 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
         const stars = d?.rewards?.stars_total ?? 0;
         const streak = d?.rewards?.current_streak_days ?? 0;
         const rate = total > 0 ? Math.round((completed / total) * 100) : null;
+        const submitted = d?.submitted_tasks ?? d?.today?.submitted_tasks ?? 0;
 
         return (
           <div key={c.id} style={styles.card}>
@@ -159,11 +160,56 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
             ) : (
               <>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                  <div className="child-avatar" style={{ background: AVATARS[c.id.charCodeAt?.(0) % AVATARS.length || 0] }}>{c.name[0]}</div>
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <div className="child-avatar" style={{ background: AVATARS[c.id.charCodeAt?.(0) % AVATARS.length || 0] }}>{c.name[0]}</div>
+                    {submitted > 0 && (
+                      <span
+                        title={`${submitted} 项待审核任务`}
+                        style={{
+                          position: "absolute",
+                          top: "-4px",
+                          right: "-4px",
+                          minWidth: "18px",
+                          height: "18px",
+                          padding: "0 4px",
+                          borderRadius: "999px",
+                          background: "#e11d48",
+                          color: "#fff",
+                          fontSize: "0.68rem",
+                          fontWeight: 750,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "2px solid #fff",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                        }}
+                      >
+                        {submitted}
+                      </span>
+                    )}
+                  </div>
                   <div onClick={() => { setSelectedChild(c); setView("task-manage"); }} style={{ cursor: "pointer", flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", flexWrap: "wrap", marginBottom: 2 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", marginBottom: 2 }}>
                       <span style={{ fontSize: "1rem", fontWeight: 700, fontFamily: "\"Noto Sans SC\", \"PingFang SC\", -apple-system, BlinkMacSystemFont, sans-serif" }}>{c.name}</span>
                       {c.grade_label && <span style={{ fontSize: "0.78rem", color: "#73706b" }}>{c.grade_label}</span>}
+                      {submitted > 0 && (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "2px",
+                            padding: "1px 7px",
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            borderRadius: "999px",
+                            background: "#fef3c7",
+                            color: "#b45309",
+                            border: "1px solid #fde68a",
+                          }}
+                        >
+                          ⏳ 待点赞 {submitted}
+                        </span>
+                      )}
                     </div>
                     <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
                       <span className="stat-chip">⭐ {formatStars(stars)}</span>

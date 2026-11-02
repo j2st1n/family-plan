@@ -321,3 +321,51 @@ function createZenTone(ctx, dest, freq, startTime, duration, volume) {
   osc.start(startTime);
   osc.stop(startTime + duration + 0.05);
 }
+
+/**
+ * 4. playTaskSubmitted: 柔和愉悦的提交待审核音 (Warm Two-Tone Chime)
+ * 用于需要家长审核的任务在孩子点击提交时的听觉反馈
+ */
+export async function playTaskSubmitted() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    await ensureContextRunning(ctx);
+
+    const now = ctx.currentTime;
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.28, now);
+    masterGain.connect(ctx.destination);
+
+    // 双音清脆升调 (F5 -> A5)
+    const notes = [
+      { freq: 698.46, time: 0.00, dur: 0.25 }, // F5
+      { freq: 880.00, time: 0.12, dur: 0.40 }, // A5
+    ];
+
+    notes.forEach(({ freq, time, dur }) => {
+      const startTime = now + time;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.linearRampToValueAtTime(0.32, startTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + dur);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+
+      osc.start(startTime);
+      osc.stop(startTime + dur + 0.05);
+    });
+
+    setTimeout(() => {
+      masterGain.disconnect();
+    }, 800);
+  } catch (err) {
+    console.warn("[soundFx] playTaskSubmitted error:", err);
+  }
+}

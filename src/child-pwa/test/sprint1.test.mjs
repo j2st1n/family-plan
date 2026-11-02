@@ -80,6 +80,7 @@ test("soundFx exports and plays all three sounds safely and configures audioSess
   assert.equal(typeof soundFx.initAudioUnlock, "function");
   assert.equal(typeof soundFx.configureAudioSession, "function");
   assert.equal(typeof soundFx.playTaskComplete, "function");
+  assert.equal(typeof soundFx.playTaskSubmitted, "function");
   assert.equal(typeof soundFx.playFanfare, "function");
   assert.equal(typeof soundFx.playTimerDone, "function");
 
@@ -91,6 +92,10 @@ test("soundFx exports and plays all three sounds safely and configures audioSess
 
   // Initial state is suspended, playTaskComplete must trigger resume
   await soundFx.playTaskComplete();
+  assert.equal(ctx.state, "running");
+
+  // Test playTaskSubmitted
+  await soundFx.playTaskSubmitted();
   assert.equal(ctx.state, "running");
 
   // Simulate iOS system interruption (e.g. phone call or background lock)
