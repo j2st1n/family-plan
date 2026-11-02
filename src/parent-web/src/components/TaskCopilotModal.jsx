@@ -1,0 +1,514 @@
+import { useState } from "react";
+import api from "../api.js";
+import { CATEGORIES, CATEGORY_ICONS, inferCategory } from "../utils/category.js";
+
+const QUICK_PROMPTS = [
+  "每天晚上7点练琴20分钟给1星需确认",
+  "明天上午读绘本20分钟，下午跳绳500下(2星)，晚上口算拍照审核",
+  "做完作业整理书包15分钟 1星",
+];
+
+export default function TaskCopilotModal({
+  isOpen,
+  onClose,
+  token,
+  child,
+  planId,
+  targetDate,
+  onSuccess,
+}) {
+  const [prompt, setPrompt] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState(null);
+
+  if (!isOpen) return null;
+
+  async function handleParse() {
+    if (!prompt.trim()) {
+      setError("请输入口语描述");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    try {
+      const res = await api.parseCopilotTasks(token, {
+        prompt: prompt.trim(),
+        child_id: child?.id,
+        target_date: targetDate,
+      });
+      setResult(res);
+    } catch (err) {
+      setError(`解析失败：${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleUpdateTask(index, field, value) {
+    if (!result?.tasks) return;
+    const updated = [...result.tasks];
+    updated[index] = { ...updated[index], [field]: value };
+    if (field === "title" && !updated[index]._categoryManuallySet) {
+      updated[index].category = inferCategory(value);
+    }
+    setResult({ ...result, tasks: updated });
+  }
+
+  function handleSelectCategory(index, cat) {
+    if (!result?.tasks) return;
+    const updated = [...result.tasks];
+    updated[index] = { ...updated[index], category: cat, _categoryManuallySet: true };
+    setResult({ ...result, tasks: updated });
+  }
+
+  function handleDeleteDraft(index) {
+    if (!result?.tasks) return;
+    const updated = result.tasks.filter((_, i) => i !== index);
+    setResult({ ...result, tasks: updated });
+  }
+
+  function handleAddEmptyDraft() {
+    const newTask = {
+      title: "新任务",
+      expected_minutes: 20,
+      reward_stars: 1,
+      category: "学习思考",
+      start: "",
+      end: "",
+      require_approval: false,
+    };
+    const currentTasks = result?.tasks || [];
+    setResult({
+      ...result,
+      raw_summary: result?.raw_summary || "任务草稿箱",
+      tasks: [...currentTasks, newTask],
+    });
+  }
+
+  async function handlePublish() {
+    if (!result?.tasks || result.tasks.length === 0) {
+      setError("没有可发布的任务");
+      return;
+    }
+    if (!planId) {
+      setError("当前孩子未初始化学习计划，请先创建计划");
+      return;
+    }
+
+    setPublishing(true);
+    setError("");
+    try {
+      const payloadTasks = result.tasks.map((t) => ({
+        title: (t.title || "").trim(),
+        expected_minutes: parseInt(t.expected_minutes) || 20,
+        reward_stars: parseInt(t.reward_stars) || 1,
+        require_approval: !!t.require_approval,
+        scheduled_start: t.start || t.scheduled_start || null,
+        scheduled_end: t.end || t.scheduled_end || null,
+        description: t.description || (t.category ? `[${t.category}]` : null),
+      }));
+
+      await api.createManualTasks(token, planId, targetDate, payloadTasks);
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setError(`发布任务失败：${err.message}`);
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(45, 55, 49, 0.45)",
+        backdropFilter: "blur(4px)",
+        WebkitBackdropFilter: "blur(4px)",
+        zIndex: 1000,
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "600px",
+          maxHeight: "90vh",
+          backgroundColor: "var(--card)",
+          borderTopLeftRadius: "var(--radius-lg)",
+          borderTopRightRadius: "var(--radius-lg)",
+          border: "1px solid var(--border)",
+          boxShadow: "var(--shadow-hover)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: "16px 20px",
+            borderBottom: "1px solid var(--border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "1.2rem" }}>✨</span>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>
+              AI 一句话建任务 (Copilot)
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              fontSize: "1.2rem",
+              color: "var(--muted)",
+              cursor: "pointer",
+              padding: "4px 8px",
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Content body */}
+        <div style={{ padding: "16px 20px", overflowY: "auto", flex: 1 }}>
+          {error && (
+            <div
+              style={{
+                backgroundColor: "var(--danger-bg)",
+                border: "1px solid var(--danger-border)",
+                color: "var(--danger)",
+                padding: "8px 12px",
+                borderRadius: "var(--radius-sm)",
+                fontSize: "0.85rem",
+                marginBottom: "12px",
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          {/* Spoken prompt textarea */}
+          <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 650, color: "var(--muted)", marginBottom: "6px" }}>
+            口语描述想让孩子做的事：
+          </label>
+          <textarea
+            rows={3}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="如：每天晚上7点练琴20分钟给1星需确认；或明天上午读绘本20分钟，下午跳绳500下(2星)..."
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              fontSize: "0.9rem",
+              borderRadius: "var(--radius-sm)",
+              border: "1px solid var(--border)",
+              backgroundColor: "var(--bg)",
+              color: "var(--text)",
+              resize: "none",
+              outline: "none",
+              marginBottom: "8px",
+              boxSizing: "border-box",
+            }}
+          />
+
+          {/* Quick chips */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "14px" }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--muted)", alignSelf: "center" }}>试试示例：</span>
+            {QUICK_PROMPTS.map((q, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setPrompt(q)}
+                style={{
+                  fontSize: "0.75rem",
+                  padding: "4px 8px",
+                  borderRadius: "var(--radius-pill)",
+                  backgroundColor: "var(--accent-light)",
+                  color: "var(--accent)",
+                  border: "1px solid var(--border)",
+                  cursor: "pointer",
+                }}
+              >
+                {q.length > 18 ? q.slice(0, 18) + "…" : q}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleParse}
+            disabled={loading}
+            style={{ width: "100%", marginBottom: "16px" }}
+          >
+            {loading ? "⚡ 正在智能解析中..." : "⚡ 开始智能解析"}
+          </button>
+
+          {/* Parse Results Preview */}
+          {result && (
+            <div style={{ borderTop: "1px dashed var(--border)", paddingTop: "14px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+                <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--accent)" }}>
+                  💡 {result.raw_summary}
+                </span>
+                {result.is_degraded && (
+                  <span
+                    style={{
+                      fontSize: "0.72rem",
+                      padding: "2px 6px",
+                      borderRadius: "var(--radius-pill)",
+                      backgroundColor: "var(--card-subtle)",
+                      border: "1px solid var(--border)",
+                      color: "var(--muted)",
+                    }}
+                  >
+                    离线极速模式
+                  </span>
+                )}
+              </div>
+
+              {/* Task drafts cards */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {result.tasks.map((task, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      backgroundColor: "var(--card-subtle)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius)",
+                      padding: "12px 14px",
+                    }}
+                  >
+                    {/* Title and remove button */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                      <input
+                        type="text"
+                        value={task.title}
+                        onChange={(e) => handleUpdateTask(idx, "title", e.target.value)}
+                        style={{
+                          flex: 1,
+                          fontSize: "0.95rem",
+                          fontWeight: 700,
+                          color: "var(--text)",
+                          border: "1px solid var(--border)",
+                          borderRadius: "6px",
+                          padding: "6px 8px",
+                          backgroundColor: "var(--card)",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDraft(idx)}
+                        style={{
+                          color: "var(--muted)",
+                          border: "none",
+                          background: "none",
+                          cursor: "pointer",
+                          fontSize: "0.85rem",
+                        }}
+                        title="删除该草稿项"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+
+                    {/* Category 4-choice capsule */}
+                    <div style={{ display: "flex", gap: "6px", marginBottom: "8px", overflowX: "auto" }}>
+                      {CATEGORIES.map((cat) => {
+                        const isSelected = task.category === cat;
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => handleSelectCategory(idx, cat)}
+                            style={{
+                              padding: "3px 8px",
+                              fontSize: "0.75rem",
+                              fontWeight: isSelected ? 700 : 500,
+                              borderRadius: "var(--radius-pill)",
+                              border: isSelected ? "1px solid var(--accent)" : "1px solid var(--border)",
+                              backgroundColor: isSelected ? "var(--accent-light)" : "var(--card)",
+                              color: isSelected ? "var(--accent)" : "var(--muted)",
+                              cursor: "pointer",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            <span>{CATEGORY_ICONS[cat]} {cat}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Meta row: duration, stars, times, approval */}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        alignItems: "center",
+                        gap: "8px",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      <label style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ color: "var(--muted)" }}>⏱️</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={240}
+                          value={task.expected_minutes}
+                          onChange={(e) => handleUpdateTask(idx, "expected_minutes", parseInt(e.target.value) || 1)}
+                          style={{
+                            width: "50px",
+                            padding: "3px 4px",
+                            border: "1px solid var(--border)",
+                            borderRadius: "4px",
+                            textAlign: "center",
+                            backgroundColor: "var(--card)",
+                          }}
+                        />
+                        <span style={{ color: "var(--muted)" }}>分</span>
+                      </label>
+
+                      <label style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ color: "var(--star)" }}>⭐</span>
+                        <select
+                          value={task.reward_stars}
+                          onChange={(e) => handleUpdateTask(idx, "reward_stars", parseInt(e.target.value))}
+                          style={{
+                            padding: "3px 4px",
+                            border: "1px solid var(--border)",
+                            borderRadius: "4px",
+                            backgroundColor: "var(--card)",
+                          }}
+                        >
+                          {[0, 1, 2, 3, 4, 5].map((n) => (
+                            <option key={n} value={n}>
+                              {n} 星
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ color: "var(--muted)" }}>🕒</span>
+                        <input
+                          type="text"
+                          placeholder="开始"
+                          value={task.start || ""}
+                          onChange={(e) => handleUpdateTask(idx, "start", e.target.value)}
+                          style={{
+                            width: "52px",
+                            padding: "3px 4px",
+                            border: "1px solid var(--border)",
+                            borderRadius: "4px",
+                            textAlign: "center",
+                            backgroundColor: "var(--card)",
+                          }}
+                        />
+                        <span>-</span>
+                        <input
+                          type="text"
+                          placeholder="结束"
+                          value={task.end || ""}
+                          onChange={(e) => handleUpdateTask(idx, "end", e.target.value)}
+                          style={{
+                            width: "52px",
+                            padding: "3px 4px",
+                            border: "1px solid var(--border)",
+                            borderRadius: "4px",
+                            textAlign: "center",
+                            backgroundColor: "var(--card)",
+                          }}
+                        />
+                      </label>
+
+                      <label
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          cursor: "pointer",
+                          marginLeft: "auto",
+                          padding: "3px 6px",
+                          borderRadius: "4px",
+                          backgroundColor: task.require_approval ? "var(--star-bg)" : "transparent",
+                          border: task.require_approval ? "1px solid var(--star-border)" : "1px solid transparent",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!task.require_approval}
+                          onChange={(e) => handleUpdateTask(idx, "require_approval", e.target.checked)}
+                        />
+                        <span style={{ color: task.require_approval ? "var(--star)" : "var(--muted)", fontWeight: 600 }}>
+                          需家长审核
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddEmptyDraft}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  marginTop: "10px",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px dashed var(--border)",
+                  backgroundColor: "transparent",
+                  color: "var(--muted)",
+                  fontSize: "0.85rem",
+                  cursor: "pointer",
+                }}
+              >
+                + 添加一项任务
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Footer actions */}
+        <div
+          style={{
+            padding: "12px 20px",
+            borderTop: "1px solid var(--border)",
+            backgroundColor: "var(--card-subtle)",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "10px",
+          }}
+        >
+          <button type="button" className="btn-secondary" onClick={onClose} disabled={publishing}>
+            取消
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handlePublish}
+            disabled={publishing || !result?.tasks || result.tasks.length === 0}
+          >
+            {publishing
+              ? "发布中..."
+              : `确认一键发布 (${result?.tasks?.length || 0})`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

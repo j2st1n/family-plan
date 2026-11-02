@@ -214,6 +214,18 @@ const api = {
   fetchChildFreeze(token, childId) {
     return request(`/shop/children/${childId}/freeze`, { headers: h(token) });
   },
+
+  parseCopilotTasks(token, data) {
+    return request("/ai/copilot/parse-tasks", {
+      method: "POST",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
+  },
+
+  fetchAiHealth(token) {
+    return request("/ai/health", { headers: h(token) });
+  },
 };
 
 export default api;

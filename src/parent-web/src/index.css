@@ -81,75 +81,180 @@ h1, h2, h3, h4, .display-text {
   color: var(--text);
 }
 
-#root {
-  max-width: 520px;
-  margin: 0 auto;
-  padding: 24px 16px 84px;
+/* ==========================================================================
+   响应式导航纪律规范 (Responsive Navigation Discipline)
+   ========================================================================== */
+
+/* 1. 移动端默认规则 (< 768px) */
+@media (max-width: 767px) {
+  #root {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 12px 14px calc(76px + env(safe-area-inset-bottom, 12px));
+  }
+
+  /* 彻底隐藏桌面端顶部导航链接与旧顶部导航 */
+  .desktop-nav-links,
+  .top-nav {
+    display: none !important;
+  }
+
+  /* 移动端极简 Header */
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 12px;
+    margin-bottom: 8px;
+  }
+
+  /* 移动端底部 4 栏 TabBar 规范 */
+  .bottom-tabbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(56px + env(safe-area-inset-bottom, 8px));
+    padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 8px));
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: rgba(250, 248, 245, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    z-index: 500;
+  }
+
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px 0;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.15s ease, transform 0.1s ease;
+  }
+
+  .tab-item:active {
+    transform: scale(0.92);
+  }
+
+  .tab-item.active {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .tab-item .tab-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  /* 待审批徽标 */
+  .tab-badge {
+    position: absolute;
+    top: 2px;
+    right: 22%;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--flame);
+    color: #FFFFFF;
+    font-size: 0.65rem;
+    font-weight: 750;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--card);
+  }
 }
 
-.top-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0 0.8rem;
-  margin-bottom: 0.8rem;
-  border-bottom: 1px solid var(--border);
+/* 2. 桌面与平板宽屏规则 (>= 768px) */
+@media (min-width: 768px) {
+  #root {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 24px 28px 48px;
+  }
+
+  /* 桌面端强制隐藏底部 TabBar，杜绝重叠 */
+  .bottom-tabbar,
+  .nav-tabs {
+    display: none !important;
+  }
+
+  /* 桌面端统一一体化 Header */
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0 20px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .desktop-nav-links {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .desktop-nav-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .desktop-nav-btn:hover {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+
+  .desktop-nav-btn.active {
+    background: var(--accent);
+    color: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(67, 106, 84, 0.25);
+  }
+
+  .desktop-nav-btn .tab-badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--flame);
+    color: #FFFFFF;
+    font-size: 0.65rem;
+    font-weight: 750;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+  }
 }
 
-.top-nav-btn {
-  padding: 6px 14px;
-  border-radius: var(--radius-pill);
-  border: none;
-  font-size: 0.85rem;
-  font-weight: 650;
-  cursor: pointer;
-  background: transparent;
-  color: var(--muted);
-  transition: all 0.18s ease;
-}
-
-.top-nav-btn.active {
-  background: var(--accent);
-  color: #FFFFFF;
-  box-shadow: 0 2px 6px rgba(67, 106, 84, 0.2);
-}
-
-.nav-tabs {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
-  background: rgba(250, 248, 245, 0.94);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-top: 1px solid var(--border);
-  z-index: 200;
-}
-
-.nav-tab {
-  flex: 1;
-  max-width: 140px;
-  padding: 10px 16px;
-  text-align: center;
-  font-size: 0.9rem;
-  font-weight: 600;
-  font-family: inherit;
-  letter-spacing: -0.01em;
-  color: var(--muted);
-  background: transparent;
-  border-radius: var(--radius);
-  border: none;
-  cursor: pointer;
-  transition: all 0.18s ease;
-}
-
-.nav-tab.on {
-  background: var(--accent-light);
-  color: var(--accent);
+/* 旧版导航保底重定向隐藏 */
+.top-nav, .nav-tabs {
+  display: none !important;
 }
 
 .brand-icon {

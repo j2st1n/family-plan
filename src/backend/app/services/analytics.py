@@ -41,10 +41,14 @@ CATEGORY_KEYWORDS = {
 
 def classify_task_category(title: str, description: str | None = None) -> str:
     text = f"{title} {description or ''}"
+    best_cat = "学习思考"
+    best_score = 0
     for cat, keywords in CATEGORY_KEYWORDS.items():
-        if any(kw in text for kw in keywords):
-            return cat
-    return "学习思考"
+        score = sum(len(kw) for kw in keywords if kw in text)
+        if score > best_score:
+            best_score = score
+            best_cat = cat
+    return best_cat
 
 
 def get_child_analytics(db: Session, child_id: UUID, days: int = 30) -> dict:
