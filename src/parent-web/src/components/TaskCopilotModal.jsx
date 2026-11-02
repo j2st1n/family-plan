@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../api.js";
 import { CATEGORIES, CATEGORY_ICONS, inferCategory } from "../utils/category.js";
 
