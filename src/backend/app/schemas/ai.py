@@ -60,6 +60,7 @@ class CopilotParseRequest(BaseModel):
 class CopilotParseResult(BaseModel):
     tasks: list[ParsedTaskItem] = Field(default_factory=list, description="解析出的任务列表")
     raw_summary: str = Field(..., description="AI 意图理解与友好反馈话术")
+    resolved_date: date = Field(default_factory=date.today, description="识别出的目标任务日期")
     is_degraded: bool = Field(default=False, description="是否触发离线规则降级")
 
 

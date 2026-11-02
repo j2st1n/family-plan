@@ -34,6 +34,7 @@ from app.services.daily_tasks import (
     get_reward_summary,
     get_todays_tasks,
     list_tasks_for_date,
+    parent_check_daily_task,
     reject_daily_task,
     revoke_daily_task,
     schedule_child_task,
@@ -106,6 +107,17 @@ def approve_task(
 ) -> DailyTaskItem:
     task = approve_daily_task(db, task_id, parent.id)
     event_hub.publish(parent.id, "tasks", "task_approved", task.child_id)
+    return _daily_to_item(task)
+
+
+@parent_router.post("/tasks/{task_id}/check", response_model=DailyTaskItem)
+def check_task(
+    task_id: UUID,
+    parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+) -> DailyTaskItem:
+    task = parent_check_daily_task(db, task_id, parent.id)
+    event_hub.publish(parent.id, "tasks", "task_completed", task.child_id)
     return _daily_to_item(task)
 
 

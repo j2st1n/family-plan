@@ -449,3 +449,43 @@ def test_revoke_resyncs_streak_and_last_completed_date(client, auth_family, db_s
     # Because there are no other completed tasks, last_completed_date must be None (re-synced!)
     assert streak.last_completed_date is None
 
+
+def test_parent_check_task_proxy(client, auth_family, db_session):
+    """测试家长直接代打卡（支持未提交和待完成任务一键标记完成并给星）"""
+    fam = auth_family
+    # 1. 创建未完成的待办任务
+    task_resp = client.post(
+        f"/api/v1/plans/{fam['plan_id']}/daily-tasks",
+        headers=fam["parent_headers"],
+        json={
+            "task_date": date.today().isoformat(),
+            "tasks": [
+                {
+                    "title": "唱歌练习",
+                    "expected_minutes": 30,
+                    "reward_stars": 1,
+                    "require_approval": False,
+                }
+            ],
+        },
+    )
+    assert task_resp.status_code == 201
+    task_id = task_resp.json()[0]["id"]
+
+    # 2. 家长代打卡
+    check_resp = client.post(
+        f"/api/v1/plans/tasks/{task_id}/check",
+        headers=fam["parent_headers"],
+    )
+    assert check_resp.status_code == 200, check_resp.text
+    data = check_resp.json()
+    assert data["status"] == "completed"
+    assert data["id"] == task_id
+
+    # 3. 验证数据库状态与给星
+    db_session.expire_all()
+    task = db_session.scalar(select(DailyTask).where(DailyTask.id == UUID(task_id)))
+    assert task.status == "completed"
+    assert task.completed_at is not None
+
+

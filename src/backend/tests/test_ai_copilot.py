@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date
+from datetime import date, timedelta
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 import pytest
@@ -49,6 +49,7 @@ class TestHeuristicParser:
         prompt = "明天上午读绘本20分钟，下午跳绳500下(2星)，晚上口算拍照审核"
         res: CopilotParseResult = heuristic_parse_tasks(prompt)
         assert res.is_degraded is True
+        assert res.resolved_date == date.today() + timedelta(days=1)
         assert len(res.tasks) == 3
 
         # Task 1: 读绘本

@@ -18,10 +18,17 @@ export default function TaskCopilotModal({
   onSuccess,
 }) {
   const [prompt, setPrompt] = useState("");
+  const [taskDate, setTaskDate] = useState(() => targetDate || new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    if (targetDate) {
+      setTaskDate(targetDate);
+    }
+  }, [targetDate]);
 
   if (!isOpen) return null;
 
@@ -36,9 +43,12 @@ export default function TaskCopilotModal({
       const res = await api.parseCopilotTasks(token, {
         prompt: prompt.trim(),
         child_id: child?.id,
-        target_date: targetDate,
+        target_date: taskDate,
       });
       setResult(res);
+      if (res.resolved_date) {
+        setTaskDate(res.resolved_date);
+      }
     } catch (err) {
       setError(`解析失败：${err.message}`);
     } finally {
@@ -110,8 +120,8 @@ export default function TaskCopilotModal({
         description: t.description || (t.category ? `[${t.category}]` : null),
       }));
 
-      await api.createManualTasks(token, planId, targetDate, payloadTasks);
-      onSuccess?.();
+      await api.createManualTasks(token, planId, taskDate, payloadTasks);
+      onSuccess?.(taskDate);
       onClose();
     } catch (err) {
       setError(`发布任务失败：${err.message}`);
@@ -278,6 +288,39 @@ export default function TaskCopilotModal({
                     离线极速模式
                   </span>
                 )}
+              </div>
+
+              {/* Date preview / selector */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "8px 12px",
+                  backgroundColor: "var(--card-subtle)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--border)",
+                  marginBottom: "10px",
+                }}
+              >
+                <span style={{ fontSize: "0.85rem", fontWeight: 650, color: "var(--text)" }}>
+                  📅 安排任务到日期：
+                </span>
+                <input
+                  type="date"
+                  value={taskDate}
+                  onChange={(e) => setTaskDate(e.target.value)}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "6px",
+                    border: "1px solid var(--border)",
+                    backgroundColor: "var(--card)",
+                    color: "var(--text)",
+                    fontSize: "0.85rem",
+                    outline: "none",
+                    fontWeight: 600,
+                  }}
+                />
               </div>
 
               {/* Task drafts cards */}

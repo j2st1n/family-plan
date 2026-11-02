@@ -241,20 +241,16 @@ export default function TodayDashboard({
     }
   };
 
-  // Parent manual mark complete
+  // Parent manual mark complete (代打卡)
   const handleParentCheckTask = async (taskId) => {
-    if (actionInProgress || !plan) return;
+    if (actionInProgress) return;
     setActionInProgress(true);
     try {
-      // Update task to completed or trigger approve if submitted
-      await api.updateDailyTask(token, plan.id, taskId, {
-        status: "completed",
-        approved: true,
-      });
-      await loadChildData();
+      await api.checkTask(token, taskId);
+      await loadChildData(false);
       onRefreshMeta?.();
     } catch (err) {
-      alert(`操作失败：${err.message}`);
+      alert(`代打卡失败：${err.message}`);
     } finally {
       setActionInProgress(false);
     }
@@ -900,8 +896,12 @@ export default function TodayDashboard({
         child={activeChild}
         planId={plan?.id}
         targetDate={date}
-        onSuccess={() => {
-          loadChildData();
+        onSuccess={(createdDate) => {
+          if (createdDate && createdDate !== date) {
+            setDate(createdDate);
+          } else {
+            loadChildData(false);
+          }
           onRefreshMeta?.();
         }}
       />

@@ -3,7 +3,7 @@ import json
 import logging
 import re
 import time
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, Optional
 import httpx
 
@@ -236,6 +236,31 @@ def _parse_single_task_segment(raw_segment: str) -> Optional[ParsedTaskItem]:
     )
 
 
+def extract_relative_date(prompt: str, base_date: Optional[date] = None) -> date:
+    """从口语文本中识别相对或绝对日期（如：明天、后天、周三、11月5日）"""
+    base = base_date or date.today()
+    if re.search(r"大后天", prompt):
+        return base + timedelta(days=3)
+    if re.search(r"后天", prompt):
+        return base + timedelta(days=2)
+    if re.search(r"明天|次日|明儿|明晨", prompt):
+        return base + timedelta(days=1)
+    if re.search(r"今天|当日|今日|今晚|今晨", prompt):
+        return base
+
+    # 识别特定日期如 11月3日 / 11-03 / 11.03
+    m = re.search(r"(\d{1,2})[月\.\-](\d{1,2})[日号]?", prompt)
+    if m:
+        try:
+            month = int(m.group(1))
+            day = int(m.group(2))
+            return date(base.year, month, day)
+        except ValueError:
+            pass
+
+    return base
+
+
 def heuristic_parse_tasks(prompt: str, target_date: Optional[date] = None) -> CopilotParseResult:
     """
     确定性离线启发式正则降级解析引擎：
@@ -278,10 +303,12 @@ def heuristic_parse_tasks(prompt: str, target_date: Optional[date] = None) -> Co
                 )
             )
 
+    resolved_date = extract_relative_date(prompt, target_date)
     summary = f"已使用启发式规则为您极速生成 {len(parsed_items)} 项任务草稿，可自由微调后一键发布。"
     return CopilotParseResult(
         tasks=parsed_items,
         raw_summary=summary,
+        resolved_date=resolved_date,
         is_degraded=True,
     )
 
@@ -317,11 +344,14 @@ class AIService:
             return heuristic_parse_tasks(prompt, target_date)
 
         # 2. 组装 OpenAI 兼容协议请求
+        today_date = target_date or date.today()
         system_prompt = (
             "你是一个专业的家庭亲子习惯养成助手。请将家长的口语任务描述精准解析为结构化任务列表。\n"
+            f"今天基准日期是：{today_date.isoformat()}。\n"
             "输出必须是严格合法的 JSON 对象，格式如下：\n"
             "{\n"
             '  "raw_summary": "一句话友好反馈，如：已为您安排了练琴和跳绳任务",\n'
+            f'  "resolved_date": "YYYY-MM-DD（若口语中提及“明天”、“后天”、“周三”等日期，请推算为标准公历日期；若未提及则填 {today_date.isoformat()}）",\n'
             '  "tasks": [\n'
             "    {\n"
             '      "title": "任务名称（简洁明确，如：练琴20分钟）",\n'
@@ -337,9 +367,7 @@ class AIService:
             "注意：分类必须严格属于['学习思考', '体育运动', '生活自理', '家务协助']之一。"
         )
 
-        user_content = f"家长录入内容：{prompt}"
-        if target_date:
-            user_content += f"\n计划执行日期：{target_date.isoformat()}"
+        user_content = f"家长录入内容：{prompt}\n当前基准日期：{today_date.isoformat()}"
 
         endpoint = f"{base_url}/chat/completions" if base_url else "https://api.deepseek.com/v1/chat/completions"
         payload = {
@@ -372,6 +400,15 @@ class AIService:
                 raw_summary = parsed_json.get("raw_summary", f"已为您解析生成 {len(parsed_json.get('tasks', []))} 项任务")
                 raw_tasks = parsed_json.get("tasks", [])
 
+                # 解析目标日期
+                resolved_date_val = parsed_json.get("resolved_date")
+                final_resolved_date = extract_relative_date(prompt, today_date)
+                if resolved_date_val and isinstance(resolved_date_val, str):
+                    try:
+                        final_resolved_date = date.fromisoformat(resolved_date_val[:10])
+                    except Exception:
+                        pass
+
                 task_items: list[ParsedTaskItem] = []
                 for rt in raw_tasks:
                     task_items.append(
@@ -396,6 +433,7 @@ class AIService:
                 return CopilotParseResult(
                     tasks=task_items,
                     raw_summary=raw_summary,
+                    resolved_date=final_resolved_date,
                     is_degraded=False,
                 )
 

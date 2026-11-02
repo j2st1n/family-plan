@@ -222,6 +222,32 @@ def approve_daily_task(db: Session, task_id: UUID, parent_id: UUID) -> DailyTask
     return task
 
 
+def parent_check_daily_task(db: Session, task_id: UUID, parent_id: UUID) -> DailyTask:
+    """家长直接代打卡（标记任务完成并给星发奖、更新连胜）"""
+    task = db.scalar(
+        select(DailyTask)
+        .join(Child, DailyTask.child_id == Child.id)
+        .where(
+            DailyTask.id == task_id,
+            Child.parent_id == parent_id,
+            DailyTask.status != "deleted",
+        )
+        .with_for_update()
+    )
+    if task is None:
+        raise api_error("not_found", "Task not found", 404)
+    if task.status == "completed":
+        return task
+
+    task.status = "completed"
+    task.completed_at = datetime.now(UTC)
+    task.approved = True
+
+    _award_task_and_update_streak(db, task)
+    db.refresh(task)
+    return task
+
+
 def reject_daily_task(db: Session, task_id: UUID, parent_id: UUID) -> DailyTask:
     task = db.scalar(
         select(DailyTask)

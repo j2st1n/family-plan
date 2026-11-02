@@ -140,6 +140,10 @@ const api = {
     return request(`/plans/tasks/${taskId}/approve`, { method: "POST", headers: h(token) });
   },
 
+  checkTask(token, taskId) {
+    return request(`/plans/tasks/${taskId}/check`, { method: "POST", headers: h(token) });
+  },
+
   rejectTask(token, taskId) {
     return request(`/plans/tasks/${taskId}/reject`, { method: "POST", headers: h(token) });
   },
