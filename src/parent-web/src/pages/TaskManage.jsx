@@ -3,6 +3,7 @@ import api from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
+import { useFeedback } from "../components/FeedbackContext.jsx";
 
 function parseLocal(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
 function fmtDate(d) { const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, "0"); const dd = String(d.getDate()).padStart(2, "0"); return `${y}-${m}-${dd}`; }
@@ -17,6 +18,7 @@ function minutesToTime(m) { return `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60
 function autoFillTime(minutes, start, end) { const dur = parseInt(minutes) || 0; if (!dur) return { start, end }; if (start && !end) return { start, end: minutesToTime(timeToMinutes(start) + dur) }; if (end && !start) return { start: minutesToTime(timeToMinutes(end) - dur), end }; return { start, end }; }
 
 export default function TaskManage({ token, child, isActive, onExpired, onBack }) {
+  const { toast, confirm } = useFeedback();
   const [date, setDate] = useState(() => fmtDate(new Date()));
   const [plan, setPlan] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -116,7 +118,14 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
     if (savingTask) return;
     const task = tasks.find(item => item.id === taskId);
     if (!task?.plan_id) { setTaskError("任务信息已变化，请刷新后重试"); return; }
-    if (!window.confirm("删除这个任务？")) return;
+    const ok = await confirm({
+      title: "删除任务",
+      message: "确定删除这个任务？",
+      confirmText: "删除",
+      cancelText: "取消",
+      isDestructive: true,
+    });
+    if (!ok) return;
     await runTaskAction(async () => { await api.deleteDailyTask(token, task.plan_id, taskId); await loadTasks(); });
   }
 
@@ -159,7 +168,14 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
   }
 
   async function handleRevokeTask(taskId) {
-    if (!window.confirm("确定撤回该任务吗？撤回后任务将重置为待完成，并扣回奖励的星星。")) return;
+    const ok = await confirm({
+      title: "撤回任务",
+      message: "确定撤回该任务吗？撤回后任务将重置为待完成，并扣回奖励的星星。",
+      confirmText: "撤回",
+      cancelText: "取消",
+      isDestructive: true,
+    });
+    if (!ok) return;
     await runTaskAction(async () => {
       await api.revokeTask(token, taskId);
       await loadTasks();
@@ -212,7 +228,14 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
     if (savingTask) return;
     const routine = routineTasks.find(item => item.id === tid);
     if (!routine?.plan_id) { setTaskError("重复任务信息已变化，请刷新后重试"); return; }
-    if (!window.confirm("删除这条重复任务？")) return;
+    const ok = await confirm({
+      title: "删除重复任务",
+      message: "删除这条重复任务？",
+      confirmText: "删除",
+      cancelText: "取消",
+      isDestructive: true,
+    });
+    if (!ok) return;
     await runTaskAction(async () => { await api.deleteRoutineTask(token, routine.plan_id, tid); await loadRoutines(); await loadTasks(); });
   }
 

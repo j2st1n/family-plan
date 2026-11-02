@@ -548,3 +548,379 @@ textarea {
   background: var(--card-subtle);
   border: 1px solid var(--border-subtle);
 }
+
+/* ==========================================================================
+   Hand-Drawn Journal Style Modal Drawers & Setting Rows
+   ========================================================================== */
+
+.hand-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(45, 55, 49, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  animation: fadeIn 0.18s ease;
+}
+
+@media (min-width: 768px) {
+  .hand-drawer-overlay {
+    align-items: center;
+    padding: 24px;
+  }
+}
+
+.hand-drawer-sheet {
+  background: var(--card);
+  width: 100%;
+  max-height: 88vh;
+  border-radius: 20px 20px 0 0;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  box-shadow: var(--shadow-hover);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUpSheet 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 768px) {
+  .hand-drawer-sheet {
+    max-width: 600px;
+    max-height: 85vh;
+    border-radius: var(--radius-lg);
+    border-bottom: 1px solid var(--border);
+    animation: scaleModal 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes slideUpSheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes scaleModal {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.drawer-handle-bar {
+  width: 38px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--border);
+  margin: 10px auto 2px auto;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .drawer-handle-bar {
+    display: none;
+  }
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.drawer-header-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.drawer-close-btn {
+  background: var(--card-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.drawer-close-btn:hover {
+  color: var(--text);
+  background: var(--border-subtle);
+}
+
+.drawer-body {
+  padding: 16px 18px calc(20px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Grouped List & Setting Rows */
+.setting-group-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.setting-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  transition: background-color 0.15s ease;
+}
+
+.setting-row-item:last-child {
+  border-bottom: none;
+}
+
+.setting-row-item:hover,
+.setting-row-item:active {
+  background-color: var(--card-subtle);
+}
+
+.setting-row-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.setting-row-title {
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.setting-row-subtitle {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.setting-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setting-row-chevron {
+  color: var(--muted);
+  font-size: 1.15rem;
+  opacity: 0.5;
+  font-weight: 300;
+  transform: translateY(-1px);
+}
+
+/* iOS Style Compact Setting Form Rows */
+.ios-setting-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.ios-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.ios-setting-row:last-child {
+  border-bottom: none;
+}
+
+.ios-row-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ios-row-title {
+  font-size: 0.88rem;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.ios-row-hint {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.compact-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 3px 6px;
+}
+
+.stepper-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.stepper-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stepper-val {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 28px;
+  text-align: center;
+}
+
+.pill-segment-group {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--card-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 2px;
+}
+
+.pill-segment-btn {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.76rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.pill-segment-btn.active {
+  background: var(--accent);
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(67, 106, 84, 0.2);
+}
+
+/* Capsule Micro Buttons */
+.capsule-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.capsule-accent {
+  background: var(--accent);
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(67, 106, 84, 0.2);
+}
+
+.capsule-danger {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+
+.capsule-muted {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+/* Journal Input with Focus Aperture Ring */
+.form-input-journal {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.88rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.form-input-journal:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(67, 106, 84, 0.15);
+}
+
+.task-action-cluster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.task-micro-action {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: all 0.12s ease;
+}
+
+.task-micro-action:hover {
+  background: var(--card-subtle);
+  color: var(--text);
+}
+
+.task-micro-action.delete:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: var(--danger-border);
+}

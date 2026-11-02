@@ -6,6 +6,7 @@ import ChildCreate from "./ChildCreate.jsx";
 import RewardSettings from "./RewardSettings.jsx";
 import TaskManage from "./TaskManage.jsx";
 import { formatStars } from "../utils/format.js";
+import { useFeedback } from "../components/FeedbackContext.jsx";
 
 const AVATARS = ["#436A54", "#9A6700", "#C2410C", "#0E7490", "#637A6D", "#507A65"];
 
@@ -33,6 +34,7 @@ function composeGradeLabel(stage, grade) {
 }
 
 export default function Home({ token, isActive, onLogout, onExpired }) {
+  const { toast, confirm } = useFeedback();
   const [children, setChildren] = useState([]);
   const [dashboards, setDashboards] = useState({});
   const [view, setView] = useState("home");
@@ -85,9 +87,17 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
   }
 
   async function handleDelete(childId) {
-    if (!window.confirm("确定要删除吗？")) return;
+    const ok = await confirm({
+      title: "删除人员",
+      message: "确定要删除该人员档案吗？此操作不可逆。",
+      confirmText: "删除",
+      cancelText: "取消",
+      isDestructive: true,
+    });
+    if (!ok) return;
     try {
       await api.deleteChild(token, childId);
+      toast.success("已删除人员档案");
       load();
     } catch (err) {
       setError("删除人员失败: " + (err.message || "未知错误"));

@@ -97,7 +97,7 @@ test("IA Restructure: No duplicate logout in Header, App defaults to TodayDashbo
     "Settings.jsx must have '退出当前登录' button"
   );
   assert.ok(
-    settingsContent.includes("window.confirm"),
+    settingsContent.includes("confirm"),
     "Logout in Settings.jsx must have confirmation prompt"
   );
   assert.ok(

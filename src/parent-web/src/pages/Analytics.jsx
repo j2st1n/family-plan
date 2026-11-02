@@ -5,12 +5,13 @@ import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
 import { alignHeatmapToCalendar } from "../utils/calendar.js";
 import StreakFreezeModal from "../components/StreakFreezeModal.jsx";
+import { useFeedback } from "../components/FeedbackContext.jsx";
 
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 
 const STATUS_CONFIG = {
-  perfect: { label: "满分达标", color: "#FFFFFF", bg: "#436A54", icon: "🌲" },
-  qualified: { label: "达标完成", color: "#2D3731", bg: "#8FB299", icon: "🌱" },
+  perfect: { label: "满分达标", color: "#244432", bg: "var(--cell-perfect)", icon: "🌲" },
+  qualified: { label: "达标完成", color: "#3B5C35", bg: "var(--cell-qualified)", icon: "🌱" },
   missed: { label: "未达标", color: "#BA3A3A", bg: "#FDF2F2", icon: "🍂" },
   rest: { label: "休息日", color: "#2D3731", bg: "#F0ECE4", icon: "☁️" },
   vacation: { label: "休假中", color: "#8F5E00", bg: "#FCF4E4", icon: "🌴" },
@@ -25,6 +26,8 @@ const CATEGORY_ICONS = {
 };
 
 export default function Analytics({ token, isActive, onExpired }) {
+  const { toast, confirm } = useFeedback();
+
   const [children, setChildren] = useState([]);
   const [selectedChildId, setSelectedChildId] = useState(null);
   const [days, setDays] = useState(30);
@@ -151,9 +154,18 @@ export default function Analytics({ token, isActive, onExpired }) {
   };
 
   const handleDeleteVacation = async (vacationId) => {
-    if (!window.confirm("确定删除这条休假记录吗？")) return;
+    const ok = await confirm({
+      title: "删除休假记录",
+      message: "确定删除这条休假记录吗？删除后该日期将恢复正常习惯考核。",
+      confirmText: "删除",
+      cancelText: "取消",
+      isDestructive: true,
+    });
+    if (!ok) return;
+
     try {
       await api.deleteVacation(token, selectedChildId, vacationId);
+      toast.success("休假记录已删除");
       await loadVacations();
       loadData();
     } catch (err) {
@@ -354,7 +366,7 @@ export default function Analytics({ token, isActive, onExpired }) {
                       style={{
                         ...styles.progressBar,
                         width: `${cat.completion_rate}%`,
-                        backgroundColor: cat.completion_rate >= 80 ? "var(--accent)" : "#76A28A",
+                        backgroundColor: cat.completion_rate >= 80 ? "var(--accent)" : "#5C856E",
                       }}
                     />
                   </div>

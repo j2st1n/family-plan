@@ -5,6 +5,7 @@ import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
 import { CATEGORIES, CATEGORY_ICONS, inferCategory } from "../utils/category.js";
 import TaskCopilotModal from "../components/TaskCopilotModal.jsx";
+import { useFeedback } from "../components/FeedbackContext.jsx";
 
 function parseLocal(s) {
   if (!s || typeof s !== "string") return new Date();
@@ -71,6 +72,8 @@ export default function TodayDashboard({
   onExpired,
   onNavigateSettings,
 }) {
+  const { toast, confirm } = useFeedback();
+
   const [date, setDate] = useState(() => fmtDate(new Date()));
   const [tasks, setTasks] = useState([]);
   const [plan, setPlan] = useState(null);
@@ -185,11 +188,12 @@ export default function TodayDashboard({
     setActionInProgress(true);
     try {
       await api.approveTask(token, taskId);
+      toast.success("已点赞发星！");
       await loadChildData();
       await refreshPendingBadges();
       onRefreshMeta?.();
     } catch (err) {
-      alert(`批准失败：${err.message}`);
+      toast.error(`批准失败：${err.message}`);
     } finally {
       setActionInProgress(false);
     }
@@ -201,11 +205,12 @@ export default function TodayDashboard({
     setActionInProgress(true);
     try {
       await api.rejectTask(token, taskId);
+      toast.info("已退回任务重做");
       await loadChildData();
       await refreshPendingBadges();
       onRefreshMeta?.();
     } catch (err) {
-      alert(`退回失败：${err.message}`);
+      toast.error(`退回失败：${err.message}`);
     } finally {
       setActionInProgress(false);
     }
@@ -220,11 +225,12 @@ export default function TodayDashboard({
       for (const t of submitted) {
         await api.approveTask(token, t.id);
       }
+      toast.success(`已全部点赞批准 ${submitted.length} 项任务！`);
       await loadChildData();
       await refreshPendingBadges();
       onRefreshMeta?.();
     } catch (err) {
-      alert(`批量批准失败：${err.message}`);
+      toast.error(`批量批准失败：${err.message}`);
     } finally {
       setActionInProgress(false);
     }
@@ -233,14 +239,23 @@ export default function TodayDashboard({
   // Revoke completed task
   const handleRevoke = async (taskId) => {
     if (actionInProgress) return;
-    if (!window.confirm("确定要撤回此已完成任务吗？相应星星与连胜将自动回退。")) return;
+    const ok = await confirm({
+      title: "撤回任务",
+      message: "确定要撤回此已完成任务吗？相应星星与连胜将自动回退。",
+      confirmText: "确认撤回",
+      cancelText: "取消",
+      isDestructive: true,
+    });
+    if (!ok) return;
+
     setActionInProgress(true);
     try {
       await api.revokeTask(token, taskId);
+      toast.success("已撤回任务并扣回奖励");
       await loadChildData();
       onRefreshMeta?.();
     } catch (err) {
-      alert(`撤回失败：${err.message}`);
+      toast.error(`撤回失败：${err.message}`);
     } finally {
       setActionInProgress(false);
     }
@@ -252,10 +267,11 @@ export default function TodayDashboard({
     setActionInProgress(true);
     try {
       await api.checkTask(token, taskId);
+      toast.success("代打卡成功并已发放奖励！");
       await loadChildData(false);
       onRefreshMeta?.();
     } catch (err) {
-      alert(`代打卡失败：${err.message}`);
+      toast.error(`代打卡失败：${err.message}`);
     } finally {
       setActionInProgress(false);
     }
@@ -264,14 +280,23 @@ export default function TodayDashboard({
   // Delete task
   const handleDeleteTask = async (taskId) => {
     if (actionInProgress || !plan) return;
-    if (!window.confirm("确定要删除这项任务吗？")) return;
+    const ok = await confirm({
+      title: "删除任务",
+      message: "确定要删除这项日常任务吗？",
+      confirmText: "删除",
+      cancelText: "保留",
+      isDestructive: true,
+    });
+    if (!ok) return;
+
     setActionInProgress(true);
     try {
       await api.deleteDailyTask(token, plan.id, taskId);
+      toast.success("任务已删除");
       await loadChildData();
       onRefreshMeta?.();
     } catch (err) {
-      alert(`删除任务失败：${err.message}`);
+      toast.error(`删除任务失败：${err.message}`);
     } finally {
       setActionInProgress(false);
     }
@@ -360,10 +385,11 @@ export default function TodayDashboard({
         ]);
       }
       setShowTaskModal(false);
+      toast.success(editingTask ? "任务已更新！" : "已添加日常任务！");
       await loadChildData();
       onRefreshMeta?.();
     } catch (err) {
-      alert(`保存任务失败：${err.message}`);
+      toast.error(`保存任务失败：${err.message}`);
     } finally {
       setActionInProgress(false);
     }
@@ -790,54 +816,42 @@ export default function TodayDashboard({
                   </p>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div className="task-action-cluster">
                   <button
                     type="button"
                     onClick={() => handleParentCheckTask(t.id)}
-                    style={{
-                      padding: "4px 8px",
-                      fontSize: "0.78rem",
-                      borderRadius: "6px",
-                      backgroundColor: "var(--accent-light)",
-                      color: "var(--accent)",
-                      border: "1px solid var(--border)",
-                      cursor: "pointer",
-                      fontWeight: 600,
-                    }}
+                    className="capsule-btn capsule-accent"
+                    style={{ padding: "5px 12px", fontSize: "0.8rem" }}
                     title="家长代为标记完成并给星"
                   >
                     代打卡
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => openEditTaskModal(t)}
-                    style={{
-                      padding: "4px 6px",
-                      fontSize: "0.8rem",
-                      color: "var(--muted)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                    title="编辑任务"
-                  >
-                    ✎
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteTask(t.id)}
-                    style={{
-                      padding: "4px 6px",
-                      fontSize: "0.8rem",
-                      color: "var(--muted)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                    title="删除任务"
-                  >
-                    🗑️
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <button
+                      type="button"
+                      onClick={() => openEditTaskModal(t)}
+                      className="task-micro-action"
+                      title="编辑任务"
+                      aria-label="编辑任务"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 20h9"/>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteTask(t.id)}
+                      className="task-micro-action delete"
+                      title="删除任务"
+                      aria-label="删除任务"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -953,18 +967,8 @@ export default function TodayDashboard({
               placeholder="如：练琴20分钟、口算一页、跳绳500下..."
               value={taskForm.title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px 10px",
-                borderRadius: "8px",
-                border: "1px solid var(--border)",
-                backgroundColor: "var(--bg)",
-                fontSize: "0.9rem",
-                color: "var(--text)",
-                marginBottom: "12px",
-                boxSizing: "border-box",
-                outline: "none",
-              }}
+              className="form-input-journal"
+              style={{ marginBottom: "12px" }}
             />
 
             {/* 四维习惯分类 4 选 1 胶囊 */}
@@ -1010,14 +1014,7 @@ export default function TodayDashboard({
                   max={240}
                   value={taskForm.minutes}
                   onChange={(e) => setTaskForm({ ...taskForm, minutes: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--border)",
-                    backgroundColor: "var(--bg)",
-                    boxSizing: "border-box",
-                  }}
+                  className="form-input-journal"
                 />
               </label>
 
@@ -1028,14 +1025,7 @@ export default function TodayDashboard({
                 <select
                   value={taskForm.stars}
                   onChange={(e) => setTaskForm({ ...taskForm, stars: parseInt(e.target.value) })}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--border)",
-                    backgroundColor: "var(--bg)",
-                    boxSizing: "border-box",
-                  }}
+                  className="form-input-journal"
                 >
                   {[0, 1, 2, 3, 4, 5].map((n) => (
                     <option key={n} value={n}>
@@ -1046,45 +1036,37 @@ export default function TodayDashboard({
               </label>
             </div>
 
-            {/* Time range */}
+            {/* Time range with purified journal style */}
             <div style={{ display: "flex", gap: "10px", marginBottom: "14px" }}>
               <label style={{ flex: 1 }}>
-                <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                  计划开始 (HH:MM)
-                </span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
+                  <span style={{ fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)" }}>
+                    计划开始
+                  </span>
+                  <span style={{ fontSize: "0.72rem", color: "var(--muted)", opacity: 0.8 }}>HH:MM</span>
+                </div>
                 <input
                   type="text"
-                  placeholder="如 19:00"
+                  placeholder="19:00"
                   value={taskForm.start}
                   onChange={(e) => setTaskForm({ ...taskForm, start: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--border)",
-                    backgroundColor: "var(--bg)",
-                    boxSizing: "border-box",
-                  }}
+                  className="form-input-journal"
                 />
               </label>
 
               <label style={{ flex: 1 }}>
-                <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                  计划结束 (HH:MM)
-                </span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
+                  <span style={{ fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)" }}>
+                    计划结束
+                  </span>
+                  <span style={{ fontSize: "0.72rem", color: "var(--muted)", opacity: 0.8 }}>自动推算</span>
+                </div>
                 <input
                   type="text"
-                  placeholder="如 19:20"
+                  placeholder="19:20"
                   value={taskForm.end}
                   onChange={(e) => setTaskForm({ ...taskForm, end: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--border)",
-                    backgroundColor: "var(--bg)",
-                    boxSizing: "border-box",
-                  }}
+                  className="form-input-journal"
                 />
               </label>
             </div>

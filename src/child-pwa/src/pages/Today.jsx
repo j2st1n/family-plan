@@ -13,6 +13,7 @@ import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
 import { playTaskComplete, playTaskSubmitted, initAudioUnlock } from "../utils/soundFx.js";
 import FocusTimer from "../components/FocusTimer.jsx";
+import { childFeedback } from "../components/ChildFeedback.jsx";
 
 const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -221,7 +222,14 @@ export default function Today({ child, onExpired, active }) {
   }
 
   async function handleDelete(taskId) {
-    if (!window.confirm("删除这个任务？")) return;
+    const ok = await childFeedback.confirm({
+      title: "删除任务",
+      message: "确定删除这个任务吗？",
+      confirmText: "删除",
+      cancelText: "保留",
+      icon: "🗑️",
+    });
+    if (!ok) return;
     await deleteChildTask(taskId);
     load();
   }

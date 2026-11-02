@@ -3,6 +3,7 @@ import { fetchShop, fetchToday, fetchChildFreeze, purchaseChildFreeze, redeemIte
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
+import { childFeedback } from "../components/ChildFeedback.jsx";
 
 function fmtDate(s) { if (!s) return ""; return new Date(s).toLocaleDateString("zh-CN", { month: "short", day: "numeric" }); }
 
@@ -47,7 +48,14 @@ const load = useCallback(async () => {
 
 async function handleRedeem(item) {
   const cost = item.discounted_star_cost ?? item.star_cost;
-  if (!window.confirm(`用 ${formatStars(cost)}⭐ 兑换「${item.title}」？`)) return;
+  const ok = await childFeedback.confirm({
+    title: "兑换商品",
+    message: `用 ${formatStars(cost)}⭐ 兑换「${item.title}」？`,
+    confirmText: "立即兑换",
+    cancelText: "再想想",
+    icon: "🎁",
+  });
+  if (!ok) return;
   try { await redeemItem(item.id, onExpired); load(); } catch (err) {
     if (err.message === "token_expired") {
       setError("登录已过期，请重新绑定");
@@ -92,7 +100,14 @@ async function saveEdit() {
 async function handlePurchaseFreeze() {
   if (purchasingFreeze) return;
   const cost = freezeInfo?.star_cost != null ? Number(freezeInfo.star_cost) : 5;
-  if (!window.confirm(`用 ${cost}⭐ 购买 1 张连击保护卡？`)) return;
+  const ok = await childFeedback.confirm({
+    title: "购买连击保护卡",
+    message: `用 ${cost}⭐ 购买 1 张连击保护卡？`,
+    confirmText: "立即购买",
+    cancelText: "再想想",
+    icon: "❄️",
+  });
+  if (!ok) return;
   setPurchasingFreeze(true);
   try {
     const updated = await purchaseChildFreeze(onExpired);
