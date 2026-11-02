@@ -2,6 +2,9 @@ from app.models.child import Child
 from app.models.child_access_code import ChildAccessCode
 from app.models.child_device import ChildDevice
 from app.models.child_reward_settings import ChildRewardSettings
+from app.models.child_streak_freeze import ChildStreakFreeze
+from app.models.child_streak_freeze_usage import ChildStreakFreezeUsage
+from app.models.child_vacation import ChildVacation
 from app.models.daily_task import DailyTask
 from app.models.parent import Parent
 from app.models.plan import Plan
@@ -18,6 +21,9 @@ __all__ = [
     "ChildAccessCode",
     "ChildDevice",
     "ChildRewardSettings",
+    "ChildStreakFreeze",
+    "ChildStreakFreezeUsage",
+    "ChildVacation",
     "DailyTask",
     "Parent",
     "Plan",

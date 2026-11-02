@@ -9,12 +9,68 @@ from app.db.session import get_db
 from app.models.child import Child
 from app.models.child_device import ChildDevice
 from app.models.parent import Parent
-from app.schemas.shop import ShopItemCreate, ShopItemResponse, WishApprove, WishCreate
+from app.schemas.shop import ChildFreezeResponse, FreezeUsageItem, ShopItemCreate, ShopItemResponse, WishApprove, WishCreate
+from app.services.daily_tasks import _get_stars_total
 from app.services.event_hub import event_hub
-from app.services.shop import approve_wish, create_shop_item, create_wish, fulfill_item, list_parent_shop, list_redemptions, list_shop_items, redeem_item, remove_shop_item, update_child_wish, update_parent_item
+from app.services.shop import (
+    _verify_child_for_parent,
+    approve_wish,
+    create_shop_item,
+    create_wish,
+    fulfill_item,
+    list_parent_shop,
+    list_redemptions,
+    list_shop_items,
+    redeem_item,
+    remove_shop_item,
+    update_child_wish,
+    update_parent_item,
+)
+from app.services.streak_freeze import (
+    FREEZE_CARD_DEFAULT_STAR_COST,
+    get_freeze_usages,
+    get_or_create_streak_freeze,
+    purchase_streak_freeze,
+)
+
+def _make_child_freeze_response(db: Session, child_id: UUID) -> ChildFreezeResponse:
+    freeze = get_or_create_streak_freeze(db, child_id)
+    usages = get_freeze_usages(db, child_id)
+    total_stars = _get_stars_total(db, child_id)
+    return ChildFreezeResponse(
+        child_id=child_id,
+        available_count=freeze.available_count,
+        last_granted_month=freeze.last_granted_month,
+        star_cost=FREEZE_CARD_DEFAULT_STAR_COST,
+        can_purchase=total_stars >= FREEZE_CARD_DEFAULT_STAR_COST,
+        usages=[FreezeUsageItem.model_validate(u, from_attributes=True) for u in usages],
+    )
+
 
 router = APIRouter(prefix="/shop", tags=["shop"])
 child_router = APIRouter(prefix="/child/shop", tags=["child shop"])
+
+
+@router.get("/children/{child_id}/freeze", response_model=ChildFreezeResponse)
+def get_parent_child_freeze(
+    child_id: UUID,
+    parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+) -> ChildFreezeResponse:
+    _verify_child_for_parent(db, child_id, parent.id)
+    return _make_child_freeze_response(db, child_id)
+
+
+@router.post("/children/{child_id}/freeze/purchase", response_model=ChildFreezeResponse)
+def purchase_child_freeze_by_parent(
+    child_id: UUID,
+    parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+) -> ChildFreezeResponse:
+    _verify_child_for_parent(db, child_id, parent.id)
+    purchase_streak_freeze(db, child_id)
+    event_hub.publish(parent.id, "shop", "freeze_purchased", child_id)
+    return _make_child_freeze_response(db, child_id)
 
 
 @router.get("/items", response_model=list[ShopItemResponse])
@@ -91,3 +147,23 @@ def edit_wish(payload: WishCreate, item_id: UUID, child_device: tuple[Child, Chi
     item = update_child_wish(db, item_id, child.id, payload)
     event_hub.publish(child.parent_id, "shop", "wish_updated", child.id)
     return ShopItemResponse.model_validate(item)
+
+
+@child_router.get("/freeze", response_model=ChildFreezeResponse)
+def get_child_freeze(
+    child_device: tuple[Child, ChildDevice] = Depends(get_current_child),
+    db: Session = Depends(get_db),
+) -> ChildFreezeResponse:
+    child, _ = child_device
+    return _make_child_freeze_response(db, child.id)
+
+
+@child_router.post("/freeze/purchase", response_model=ChildFreezeResponse)
+def purchase_child_freeze(
+    child_device: tuple[Child, ChildDevice] = Depends(get_current_child),
+    db: Session = Depends(get_db),
+) -> ChildFreezeResponse:
+    child, _ = child_device
+    purchase_streak_freeze(db, child.id)
+    event_hub.publish(child.parent_id, "shop", "freeze_purchased", child.id)
+    return _make_child_freeze_response(db, child.id)

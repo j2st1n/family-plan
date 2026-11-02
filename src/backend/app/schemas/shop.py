@@ -1,8 +1,26 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class FreezeUsageItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    used_date: date
+    reason: str | None = None
+    created_at: datetime
+
+
+class ChildFreezeResponse(BaseModel):
+    child_id: UUID
+    available_count: int
+    last_granted_month: str | None = None
+    star_cost: Decimal = Decimal("5.00")
+    can_purchase: bool = True
+    usages: list[FreezeUsageItem] = []
 
 
 class ShopItemCreate(BaseModel):

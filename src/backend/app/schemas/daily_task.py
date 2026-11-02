@@ -39,6 +39,8 @@ class DailyTaskItem(BaseModel):
 class RewardSummary(BaseModel):
     stars_total: Decimal
     current_streak_days: int
+    streak_freeze_count: int = 0
+    is_on_vacation: bool = False
 
 
 class ChildTodayResponse(BaseModel):

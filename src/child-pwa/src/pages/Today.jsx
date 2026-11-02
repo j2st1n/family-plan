@@ -256,24 +256,67 @@ export default function Today({ child, onExpired, active }) {
   return (
     <div>
       <div style={{ marginBottom: "1.4rem" }}>
-        <h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>
-          你好，{child?.name ?? "小朋友"}
-        </h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>
+            你好，{child?.name ?? "小朋友"}
+          </h1>
+          {data?.rewards?.is_on_vacation && (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "4px 12px",
+                borderRadius: "999px",
+                background: "#fef3c7",
+                color: "#b45309",
+                border: "1px solid #fde68a",
+                fontWeight: 750,
+                fontSize: "0.85rem",
+              }}
+            >
+              🌴 休假中
+            </span>
+          )}
+        </div>
         <p style={{ color: "#73706b", marginTop: "0.3rem", fontSize: "0.95rem" }}>{dateStr}</p>
       </div>
 
-      <div style={{ display: "flex", gap: "0.8rem", marginBottom: "1.4rem" }}>
+      {data?.rewards?.is_on_vacation && (
+        <div
+          style={{
+            background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+            border: "1px solid #fcd34d",
+            borderRadius: "16px",
+            padding: "0.75rem 1rem",
+            marginBottom: "1.2rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.6rem",
+            color: "#92400e",
+            boxShadow: "0 2px 6px rgba(245, 158, 11, 0.12)",
+          }}
+        >
+          <span style={{ fontSize: "1.5rem" }}>🌴</span>
+          <div>
+            <div style={{ fontWeight: 750, fontSize: "0.95rem" }}>休假中 · 任务自动豁免</div>
+            <div style={{ fontSize: "0.78rem", color: "#b45309" }}>尽情享受假期，连击不会中断哦！</div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: "0.6rem", marginBottom: "1.4rem" }}>
         <div
           style={{
             flex: 1,
             background: "#fff",
             borderRadius: "18px",
-            padding: "1rem",
+            padding: "0.9rem 0.4rem",
             textAlign: "center",
             boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
           }}
         >
-          <p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#c4912a" }}>
+          <p style={{ fontSize: "1.6rem", fontWeight: 700, color: "#c4912a" }}>
             ⭐ {formatStars(data?.rewards?.stars_total ?? 0)}
           </p>
           <p style={{ fontSize: "0.75rem", color: "#73706b" }}>星星</p>
@@ -283,15 +326,30 @@ export default function Today({ child, onExpired, active }) {
             flex: 1,
             background: "#fff",
             borderRadius: "18px",
-            padding: "1rem",
+            padding: "0.9rem 0.4rem",
             textAlign: "center",
             boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
           }}
         >
-          <p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>
+          <p style={{ fontSize: "1.6rem", fontWeight: 700, color: "#3d9e6b" }}>
             🔥 {data?.rewards?.current_streak_days ?? 0}
           </p>
-          <p style={{ fontSize: "0.8rem", color: "#73706b" }}>连续天数</p>
+          <p style={{ fontSize: "0.75rem", color: "#73706b" }}>连续天数</p>
+        </div>
+        <div
+          style={{
+            flex: 1,
+            background: "#fff",
+            borderRadius: "18px",
+            padding: "0.9rem 0.4rem",
+            textAlign: "center",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+          }}
+        >
+          <p style={{ fontSize: "1.6rem", fontWeight: 700, color: "#0891b2" }}>
+            ❄️ {data?.rewards?.streak_freeze_count ?? 0}
+          </p>
+          <p style={{ fontSize: "0.75rem", color: "#73706b" }}>保护卡</p>
         </div>
       </div>
 

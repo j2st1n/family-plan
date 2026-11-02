@@ -150,3 +150,29 @@ export async function editWish(itemId, title, description, onExpired) {
   }
   return res.json();
 }
+
+export async function fetchChildFreeze(onExpired) {
+  const res = await fetch(`${API}/child/shop/freeze`, { headers: headers() });
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("device_token");
+      if (onExpired) onExpired();
+      throw new Error("token_expired");
+    }
+    throw new Error(await extractError(res, "加载连击卡失败"));
+  }
+  return res.json();
+}
+
+export async function purchaseChildFreeze(onExpired) {
+  const res = await fetch(`${API}/child/shop/freeze/purchase`, { method: "POST", headers: headers() });
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("device_token");
+      if (onExpired) onExpired();
+      throw new Error("token_expired");
+    }
+    throw new Error(await extractError(res, "购买连击保护卡失败"));
+  }
+  return res.json();
+}

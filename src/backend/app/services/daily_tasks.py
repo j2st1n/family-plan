@@ -14,6 +14,8 @@ from app.models.streak import Streak
 from app.models.task_template import TaskTemplate
 from app.schemas.daily_task import ChildScheduleRequest, ChildTaskCreate, ManualTaskItem
 from app.services.reward_settings import get_or_create_reward_settings
+from app.services.streak_freeze import consume_freeze_for_date, get_or_create_streak_freeze, is_date_frozen
+from app.services.vacations import is_child_on_vacation
 
 
 def _get_or_create_streak(db: Session, child_id: UUID) -> Streak:
@@ -56,13 +58,34 @@ def _has_missed_task_day(
     for task_date, status in tasks:
         tasks_by_date.setdefault(task_date, []).append(status)
 
-    for statuses in tasks_by_date.values():
+    for task_date in sorted(tasks_by_date.keys()):
+        statuses = tasks_by_date[task_date]
         completed = sum(1 for status in statuses if status == "completed")
+        is_missed = False
         if threshold <= 0:
             if completed == 0:
-                return True
+                is_missed = True
         elif int((completed / len(statuses)) * 100) < threshold:
-            return True
+            is_missed = True
+
+        if not is_missed:
+            continue
+
+        # 1. Vacation exemption: dates within any vacation interval are automatically exempt
+        if is_child_on_vacation(db, child_id, task_date):
+            continue
+
+        # 2. Already protected by freeze card
+        if is_date_frozen(db, child_id, task_date):
+            continue
+
+        # 3. Try to consume 1 available freeze card
+        if consume_freeze_for_date(db, child_id, task_date):
+            continue
+
+        # Cannot be exempted or protected -> missed day breaks streak
+        return True
+
     return False
 
 
@@ -298,7 +321,16 @@ def get_reward_summary(db: Session, child_id: UUID) -> dict:
     if effective_date and _has_missed_task_day(db, child_id, effective_date, today, threshold):
         streak.current_days = 0
         db.commit()
-    return {"stars_total": stars_total, "current_streak_days": streak.current_days}
+
+    freeze = get_or_create_streak_freeze(db, child_id)
+    on_vacation = is_child_on_vacation(db, child_id, today)
+
+    return {
+        "stars_total": stars_total,
+        "current_streak_days": streak.current_days,
+        "streak_freeze_count": freeze.available_count,
+        "is_on_vacation": on_vacation,
+    }
 
 
 def create_manual_daily_tasks(

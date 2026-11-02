@@ -58,3 +58,45 @@ test("parent-web api handles errors and extracts detail.message properly", async
     }
   );
 });
+
+test("parent-web api exposes Sprint 3 analytics, vacation, and freeze endpoints", async () => {
+  const calls = [];
+  globalThis.fetch = async (url, opts) => {
+    calls.push({ url, opts });
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({ success: true }),
+    };
+  };
+
+  const { default: api } = await import("../src/api.js");
+
+  // Test fetchAnalytics
+  await api.fetchAnalytics("tok-a", "child-1", 30);
+  assert.equal(calls[0].url, "/api/v1/plans/children/child-1/analytics?days=30");
+  assert.equal(calls[0].opts.headers.Authorization, "Bearer tok-a");
+
+  // Test fetchVacations
+  await api.fetchVacations("tok-b", "child-1");
+  assert.equal(calls[1].url, "/api/v1/plans/children/child-1/vacations");
+
+  // Test createVacation
+  await api.createVacation("tok-c", "child-1", {
+    start_date: "2026-11-01",
+    end_date: "2026-11-03",
+    reason: "Holiday",
+  });
+  assert.equal(calls[2].url, "/api/v1/plans/children/child-1/vacations");
+  assert.equal(calls[2].opts.method, "POST");
+  assert.equal(JSON.parse(calls[2].opts.body).reason, "Holiday");
+
+  // Test deleteVacation
+  await api.deleteVacation("tok-d", "child-1", "vac-999");
+  assert.equal(calls[3].url, "/api/v1/plans/children/child-1/vacations/vac-999");
+  assert.equal(calls[3].opts.method, "DELETE");
+
+  // Test fetchChildFreeze
+  await api.fetchChildFreeze("tok-e", "child-1");
+  assert.equal(calls[4].url, "/api/v1/shop/children/child-1/freeze");
+});

@@ -187,6 +187,33 @@ const api = {
   fulfillItem(token, redemptionId) {
     return request(`/shop/redemptions/${redemptionId}/fulfill`, { method: "PATCH", headers: h(token) });
   },
+
+  fetchAnalytics(token, childId, days = 30) {
+    return request(`/plans/children/${childId}/analytics?days=${days}`, { headers: h(token) });
+  },
+
+  fetchVacations(token, childId) {
+    return request(`/plans/children/${childId}/vacations`, { headers: h(token) });
+  },
+
+  createVacation(token, childId, data) {
+    return request(`/plans/children/${childId}/vacations`, {
+      method: "POST",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
+  },
+
+  deleteVacation(token, childId, vacationId) {
+    return request(`/plans/children/${childId}/vacations/${vacationId}`, {
+      method: "DELETE",
+      headers: h(token),
+    });
+  },
+
+  fetchChildFreeze(token, childId) {
+    return request(`/shop/children/${childId}/freeze`, { headers: h(token) });
+  },
 };
 
 export default api;

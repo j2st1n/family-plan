@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchShop, fetchToday, redeemItem, makeWish, editWish } from "../api.js";
+import { fetchShop, fetchToday, fetchChildFreeze, purchaseChildFreeze, redeemItem, makeWish, editWish } from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
@@ -18,6 +18,7 @@ export default function Shop({ onExpired, active }) {
   const [wishForm, setWishForm] = useState({ title: "", desc: "" });
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", desc: "" });
+  const [freezeInfo, setFreezeInfo] = useState(null);
 
 const load = useCallback(async () => {
   setLoading(true); setError("");
@@ -27,6 +28,7 @@ const load = useCallback(async () => {
     setWishes(all.filter(i => i.status === "pending"));
     setRedeemed(all.filter(i => i.redeemed_by_child));
     try { const today = await fetchToday(onExpired); setStars(today.rewards?.stars_total ?? 0); } catch (error) { console.warn("Failed to load rewards", error); }
+    try { const freeze = await fetchChildFreeze(onExpired); setFreezeInfo(freeze); } catch (error) { console.warn("Failed to load freeze", error); }
   } catch (err) {
     if (err.message === "token_expired") {
       setError("登录已过期，请重新绑定");
@@ -86,6 +88,22 @@ async function saveEdit() {
   }
 }
 
+async function handlePurchaseFreeze() {
+  if (!window.confirm("用 5⭐ 购买 1 张连击保护卡？")) return;
+  try {
+    const updated = await purchaseChildFreeze(onExpired);
+    setFreezeInfo(updated);
+    load();
+  } catch (err) {
+    if (err.message === "token_expired") {
+      setError("登录已过期，请重新绑定");
+      if (onExpired) onExpired();
+    } else {
+      setError(err.message || "购买失败");
+    }
+  }
+}
+
   if (loading) return <p style={{ color: "#73706b", textAlign: "center", paddingTop: "3rem" }}>加载中…</p>;
 
   const pendingRedemptions = redeemed.filter(r => r.redemption_status === "pending");
@@ -103,6 +121,21 @@ async function saveEdit() {
         <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#3d9e6b" }}>星星商城</h2>
         <p style={{ fontSize: "0.9rem", color: "#c4912a", marginTop: "0.2rem" }}>余额 ⭐{formatStars(stars)}</p>
       </div>
+
+      {freezeInfo && (
+        <div style={{ ...s.card, background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)", border: "1px solid #bae6fd", marginBottom: "0.8rem" }}>
+          <span style={{ fontSize: "1.8rem" }}>❄️</span>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontWeight: 650, fontSize: "0.95rem", color: "#0369a1" }}>连击保护卡</p>
+            <p style={{ fontSize: "0.75rem", color: "#0284c7", marginTop: "0.1rem" }}>
+              当前可用 {freezeInfo.available_count ?? 0} 张 · 遗漏任务自动保活
+            </p>
+          </div>
+          <button onClick={handlePurchaseFreeze} style={{ ...s.redeemBtn, background: "#0284c7" }}>
+            ⭐5 购买
+          </button>
+        </div>
+      )}
 
       {items.map(item => {
         const discounted = item.discounted_star_cost != null && Number(item.discounted_star_cost) < Number(item.star_cost);
