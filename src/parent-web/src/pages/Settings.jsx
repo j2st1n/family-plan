@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../api.js";
+import StreakFreezeModal from "../components/StreakFreezeModal.jsx";
 
 const GRADE_OPTIONS = {
   幼儿园: ["小班", "中班", "大班"],
@@ -21,6 +22,18 @@ function parseGradeLabel(label) {
 
 function composeGradeLabel(stage, grade) {
   return stage && grade ? stage + grade : "";
+}
+
+function formatLogDate(isoStr) {
+  if (!isoStr) return "";
+  try {
+    const d = new Date(isoStr);
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${m}-${day}`;
+  } catch {
+    return isoStr;
+  }
 }
 
 const WEEKDAYS = [
@@ -74,6 +87,42 @@ export default function Settings({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Streak Freeze Management state
+  const [freezeChildId, setFreezeChildId] = useState(children[0]?.id || "");
+  const [freezeData, setFreezeData] = useState(null);
+  const [freezeLoading, setFreezeLoading] = useState(false);
+  const [freezeError, setFreezeError] = useState("");
+  const [freezeSuccess, setFreezeSuccess] = useState("");
+  const [freezeModalChild, setFreezeModalChild] = useState(null);
+  const [freezeStarCost, setFreezeStarCost] = useState("5");
+  const [freezeMaxLimit, setFreezeMaxLimit] = useState(2);
+  const [freezeMonthlyGrant, setFreezeMonthlyGrant] = useState(1);
+  const [savingFreezeRules, setSavingFreezeRules] = useState(false);
+  const [freezeAdjustDelta, setFreezeAdjustDelta] = useState(null);
+  const [freezeAdjustReason, setFreezeAdjustReason] = useState("");
+  const [adjustingFreeze, setAdjustingFreeze] = useState(false);
+
+  const loadFreezeData = useCallback(async () => {
+    if (!token || !freezeChildId) return;
+    setFreezeLoading(true);
+    setFreezeError("");
+    try {
+      const data = await api.fetchChildFreeze(token, freezeChildId);
+      setFreezeData(data);
+      setFreezeStarCost(data.star_cost ? String(Number(data.star_cost)) : "5");
+      setFreezeMaxLimit(data.max_limit ?? 2);
+      setFreezeMonthlyGrant(data.monthly_grant ?? 1);
+    } catch (err) {
+      setFreezeError("加载保护卡数据失败: " + (err.message || "未知错误"));
+    } finally {
+      setFreezeLoading(false);
+    }
+  }, [token, freezeChildId]);
+
+  useEffect(() => {
+    loadFreezeData();
+  }, [loadFreezeData]);
+
   useEffect(() => {
     if (children.length > 0) {
       if (!selectedChildId || !children.find((c) => c.id === selectedChildId)) {
@@ -81,6 +130,9 @@ export default function Settings({
       }
       if (!routineChildId || !children.find((c) => c.id === routineChildId)) {
         setRoutineChildId(children[0].id);
+      }
+      if (!freezeChildId || !children.find((c) => c.id === freezeChildId)) {
+        setFreezeChildId(children[0].id);
       }
     }
   }, [children, selectedChildId, routineChildId]);
@@ -355,6 +407,22 @@ export default function Settings({
                 <button
                   type="button"
                   className="btn-secondary"
+                  onClick={() => {
+                    setFreezeModalChild(child);
+                    setFreezeChildId(child.id);
+                  }}
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: "0.78rem",
+                    color: "var(--protect)",
+                    borderColor: "var(--protect-border)",
+                  }}
+                >
+                  ❄️ 保护卡
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
                   onClick={() => openRewardSettings(child)}
                   style={{ padding: "4px 8px", fontSize: "0.78rem" }}
                 >
@@ -572,7 +640,326 @@ export default function Settings({
         )}
       </section>
 
-      {/* Section 4: 账号与系统信息，规范退出收纳在页面最下方 */}
+      {/* Section 4: 连击保护卡与补签管理 */}
+      <section
+        style={{
+          backgroundColor: "var(--card)",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius)",
+          padding: "16px",
+          boxShadow: "var(--shadow-card)",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "1.1rem" }}>❄️</span>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text)" }}>连击保护卡与补签管理</h3>
+          </div>
+          {children.length > 1 && (
+            <select
+              value={freezeChildId}
+              onChange={(e) => setFreezeChildId(e.target.value)}
+              style={{
+                padding: "4px 8px",
+                borderRadius: "6px",
+                border: "1px solid var(--border)",
+                backgroundColor: "var(--card-subtle)",
+                fontSize: "0.82rem",
+                color: "var(--text)",
+              }}
+            >
+              {children.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginBottom: "12px" }}>
+          配置连击保护卡兑换价格、防囤积上限，支持家长手动奖惩增减卡片，并可查阅全生命周期审计流水。
+        </p>
+
+        {freezeError && (
+          <div style={{ padding: "8px 12px", background: "var(--danger-bg)", color: "var(--danger)", borderRadius: "8px", fontSize: "0.8rem", marginBottom: "10px" }}>
+            {freezeError}
+          </div>
+        )}
+        {freezeSuccess && (
+          <div style={{ padding: "8px 12px", background: "var(--accent-light)", color: "var(--accent)", borderRadius: "8px", fontSize: "0.8rem", marginBottom: "10px" }}>
+            {freezeSuccess}
+          </div>
+        )}
+
+        {freezeLoading && !freezeData ? (
+          <p style={{ textAlign: "center", color: "var(--muted)", fontSize: "0.85rem", padding: "12px 0" }}>加载中…</p>
+        ) : freezeData && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {/* 库存展示与奖惩 */}
+            <div style={{ backgroundColor: "var(--card-subtle)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-sm)", padding: "12px 14px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                    <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text)" }}>
+                      ❄️ {freezeData.available_count} 张
+                    </span>
+                    <span style={{ fontSize: "0.82rem", color: "var(--muted)", fontWeight: 600 }}>
+                      / 持有上限 {freezeData.max_limit} 张
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>
+                    商城兑换单价：⭐{Number(freezeData.star_cost)} 颗星星 · 每月赠送：{freezeData.monthly_grant} 张
+                  </p>
+                </div>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    disabled={freezeData.available_count <= 0}
+                    onClick={() => {
+                      setFreezeAdjustDelta(-1);
+                      setFreezeAdjustReason("");
+                    }}
+                    style={{
+                      padding: "4px 8px",
+                      fontSize: "0.78rem",
+                      color: freezeData.available_count <= 0 ? "var(--muted)" : "var(--danger)",
+                    }}
+                  >
+                    - 扣除 1 张
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => {
+                      setFreezeAdjustDelta(1);
+                      setFreezeAdjustReason("");
+                    }}
+                    style={{
+                      padding: "4px 8px",
+                      fontSize: "0.78rem",
+                      color: "var(--protect)",
+                      borderColor: "var(--protect-border)",
+                    }}
+                  >
+                    + 奖励 1 张
+                  </button>
+                </div>
+              </div>
+
+              {/* 手动调整对话输入框 */}
+              {freezeAdjustDelta !== null && (
+                <div style={{ marginTop: "10px", padding: "10px", backgroundColor: "var(--card)", border: "1px dashed var(--border)", borderRadius: "8px" }}>
+                  <p style={{ fontSize: "0.8rem", fontWeight: 700, marginBottom: "6px" }}>
+                    {freezeAdjustDelta > 0 ? "🎁 家长手动奖励 1 张保护卡" : "⚠️ 家长手动扣除 1 张保护卡"}
+                  </p>
+                  <input
+                    type="text"
+                    value={freezeAdjustReason}
+                    onChange={(e) => setFreezeAdjustReason(e.target.value)}
+                    placeholder={freezeAdjustDelta > 0 ? "请输入奖励理由，如：发烧生病特许免死金牌" : "请输入扣除理由，如：错记纠偏回收"}
+                    style={{ width: "100%", padding: "6px 10px", fontSize: "0.82rem", borderRadius: "6px", border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)", boxSizing: "border-box" }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "8px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setFreezeAdjustDelta(null)}
+                      style={{ padding: "4px 10px", fontSize: "0.75rem", border: "1px solid var(--border)", background: "transparent", color: "var(--muted)", borderRadius: "6px", cursor: "pointer" }}
+                    >
+                      取消
+                    </button>
+                    <button
+                      type="button"
+                      disabled={adjustingFreeze}
+                      onClick={async () => {
+                        setAdjustingFreeze(true);
+                        setFreezeError("");
+                        setFreezeSuccess("");
+                        try {
+                          const defReason = freezeAdjustDelta > 0 ? "家长手动奖励" : "家长手动扣除";
+                          const res = await api.adjustChildFreeze(token, freezeChildId, freezeAdjustDelta, freezeAdjustReason.trim() || defReason);
+                          setFreezeData(res);
+                          setFreezeSuccess(freezeAdjustDelta > 0 ? "🎁 成功奖励 1 张保护卡！" : "⚠️ 成功扣除 1 张保护卡！");
+                          setFreezeAdjustDelta(null);
+                        } catch (err) {
+                          setFreezeError("调整失败: " + (err.message || "未知错误"));
+                        } finally {
+                          setAdjustingFreeze(false);
+                        }
+                      }}
+                      style={{
+                        padding: "4px 12px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        color: "#FFFFFF",
+                        backgroundColor: freezeAdjustDelta > 0 ? "var(--protect)" : "var(--danger)",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {adjustingFreeze ? "提交中…" : "确认"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 规则配置表单 */}
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setSavingFreezeRules(true);
+                setFreezeError("");
+                setFreezeSuccess("");
+                try {
+                  const res = await api.updateFreezeSettings(token, freezeChildId, {
+                    star_cost: Number(freezeStarCost),
+                    max_limit: Number(freezeMaxLimit),
+                    monthly_grant: Number(freezeMonthlyGrant),
+                  });
+                  setFreezeData(res);
+                  setFreezeSuccess("✅ 规则与风控设定已保存！");
+                } catch (err) {
+                  setFreezeError("保存规则失败: " + (err.message || "未知错误"));
+                } finally {
+                  setSavingFreezeRules(false);
+                }
+              }}
+              style={{
+                backgroundColor: "var(--card-subtle)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "var(--radius-sm)",
+                padding: "12px 14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+              }}
+            >
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 650, color: "var(--text)", marginBottom: "4px" }}>
+                    ⭐ 兑换星数 (1~50星)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={freezeStarCost}
+                    onChange={(e) => setFreezeStarCost(e.target.value)}
+                    style={{ width: "100%", padding: "6px 10px", fontSize: "0.82rem", borderRadius: "6px", border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)", boxSizing: "border-box" }}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 650, color: "var(--text)", marginBottom: "4px" }}>
+                    🛡️ 最大持有上限 (1~5张)
+                  </label>
+                  <select
+                    value={freezeMaxLimit}
+                    onChange={(e) => setFreezeMaxLimit(Number(e.target.value))}
+                    style={{ width: "100%", padding: "6px 10px", fontSize: "0.82rem", borderRadius: "6px", border: "1px solid var(--border)", backgroundColor: "var(--card)", color: "var(--text)", boxSizing: "border-box" }}
+                  >
+                    {[1, 2, 3, 5].map((lim) => (
+                      <option key={lim} value={lim}>
+                        {lim} 张 {lim === 2 ? "(推荐)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "2px" }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                  每月初自动赠送：{freezeMonthlyGrant} 张保底
+                </span>
+                <button
+                  type="submit"
+                  disabled={savingFreezeRules}
+                  className="btn-primary"
+                  style={{ padding: "4px 12px", fontSize: "0.8rem", borderRadius: "var(--radius-pill)" }}
+                >
+                  {savingFreezeRules ? "保存中…" : "保存规则修改"}
+                </button>
+              </div>
+            </form>
+
+            {/* 流水明细查阅 */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text)" }}>
+                  📜 流水与抵扣明细 ({freezeData.history?.length ?? freezeData.usages?.length ?? 0}条)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFreezeModalChild(children.find((c) => c.id === freezeChildId) || { id: freezeChildId, name: "孩子" })}
+                  style={{ background: "none", border: "none", color: "var(--protect)", fontSize: "0.75rem", cursor: "pointer", fontWeight: 600 }}
+                >
+                  打开完整抽屉 ↗
+                </button>
+              </div>
+
+              {(!freezeData.history || freezeData.history.length === 0) && (!freezeData.usages || freezeData.usages.length === 0) ? (
+                <p style={{ fontSize: "0.75rem", color: "var(--muted)", textAlign: "center", padding: "8px 0" }}>
+                  暂无流水记录
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "150px", overflowY: "auto" }}>
+                  {freezeData.history && freezeData.history.length > 0 ? (
+                    freezeData.history.slice(0, 5).map((h) => (
+                      <div
+                        key={h.id}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "6px 8px",
+                          borderRadius: "6px",
+                          backgroundColor: "var(--card-subtle)",
+                          border: "1px solid var(--border-subtle)",
+                          fontSize: "0.78rem",
+                        }}
+                      >
+                        <div>
+                          <strong style={{ color: "var(--text)" }}>{h.reason || h.event_type}</strong>
+                          <span style={{ fontSize: "0.7rem", color: "var(--muted)", marginLeft: "6px" }}>
+                            {formatLogDate(h.created_at)}
+                          </span>
+                        </div>
+                        <span style={{ fontWeight: 700, color: h.delta > 0 ? "var(--accent)" : "var(--flame)" }}>
+                          {h.delta > 0 ? `+${h.delta}` : h.delta} 张 (余{h.balance_after})
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    freezeData.usages?.slice(0, 5).map((u) => (
+                      <div
+                        key={u.id}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "6px 8px",
+                          borderRadius: "6px",
+                          backgroundColor: "var(--card-subtle)",
+                          border: "1px solid var(--border-subtle)",
+                          fontSize: "0.78rem",
+                        }}
+                      >
+                        <span>🤖 {u.used_date} 遗漏自动抵扣</span>
+                        <span style={{ fontWeight: 700, color: "var(--flame)" }}>-1 张</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Section 5: 账号与系统信息，规范退出收纳在页面最下方 */}
       <section
         style={{
           backgroundColor: "var(--card)",
@@ -1076,6 +1463,17 @@ export default function Settings({
             </div>
           </div>
         </div>
+      )}
+      {/* Streak Freeze Management Modal */}
+      {freezeModalChild && (
+        <StreakFreezeModal
+          isOpen={Boolean(freezeModalChild)}
+          onClose={() => setFreezeModalChild(null)}
+          token={token}
+          childId={freezeModalChild.id}
+          childName={freezeModalChild.name}
+          onUpdated={loadFreezeData}
+        />
       )}
     </div>
   );

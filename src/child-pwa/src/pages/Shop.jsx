@@ -91,7 +91,8 @@ async function saveEdit() {
 
 async function handlePurchaseFreeze() {
   if (purchasingFreeze) return;
-  if (!window.confirm("用 5⭐ 购买 1 张连击保护卡？")) return;
+  const cost = freezeInfo?.star_cost != null ? Number(freezeInfo.star_cost) : 5;
+  if (!window.confirm(`用 ${cost}⭐ 购买 1 张连击保护卡？`)) return;
   setPurchasingFreeze(true);
   try {
     const updated = await purchaseChildFreeze(onExpired);
@@ -127,29 +128,40 @@ async function handlePurchaseFreeze() {
         <p style={{ fontSize: "0.9rem", color: "var(--star)", fontWeight: 650, marginTop: "0.2rem" }}>余额 ⭐{formatStars(stars)}</p>
       </div>
 
-      {freezeInfo && (
-        <div style={{ ...s.card, background: "var(--protect-bg)", border: "1px solid var(--protect-border)", marginBottom: "0.8rem" }}>
-          <span style={{ fontSize: "1.8rem" }}>❄️</span>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 650, fontSize: "0.95rem", color: "var(--protect)" }}>连击保护卡</p>
-            <p style={{ fontSize: "0.75rem", color: "var(--protect)", opacity: 0.85, marginTop: "0.1rem" }}>
-              当前可用 {freezeInfo.available_count ?? 0} 张 · 遗漏任务自动保活
-            </p>
+      {freezeInfo && (() => {
+        const cost = freezeInfo?.star_cost != null ? Number(freezeInfo.star_cost) : 5;
+        const maxLimit = freezeInfo?.max_limit != null ? Number(freezeInfo.max_limit) : 2;
+        const isLimitReached = (freezeInfo?.available_count ?? 0) >= maxLimit;
+        const canBuy = Boolean(freezeInfo?.can_purchase && !isLimitReached && Number(stars) >= cost);
+
+        return (
+          <div style={{ ...s.card, background: "var(--protect-bg)", border: "1px solid var(--protect-border)", marginBottom: "0.8rem" }}>
+            <span style={{ fontSize: "1.8rem" }}>❄️</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontWeight: 650, fontSize: "0.95rem", color: "var(--protect)" }}>连击保护卡</p>
+              <p style={{ fontSize: "0.75rem", color: "var(--protect)", opacity: 0.85, marginTop: "0.1rem" }}>
+                当前可用 {freezeInfo.available_count ?? 0} 张 / 上限 {maxLimit} 张 · 遗漏任务自动保活
+              </p>
+            </div>
+            <button
+              onClick={handlePurchaseFreeze}
+              disabled={purchasingFreeze || !canBuy}
+              style={{
+                ...s.redeemBtn,
+                background: (!canBuy || purchasingFreeze) ? "var(--border)" : "var(--protect)",
+                color: (!canBuy || purchasingFreeze) ? "var(--muted)" : "#FFFFFF",
+                cursor: (!canBuy || purchasingFreeze) ? "not-allowed" : "pointer",
+              }}
+            >
+              {purchasingFreeze
+                ? "购买中…"
+                : isLimitReached
+                  ? `已达上限 (${freezeInfo.available_count}/${maxLimit})`
+                  : `⭐${cost} 购买`}
+            </button>
           </div>
-          <button
-            onClick={handlePurchaseFreeze}
-            disabled={purchasingFreeze || !freezeInfo.can_purchase || Number(stars) < 5}
-            style={{
-              ...s.redeemBtn,
-              background: (!freezeInfo.can_purchase || Number(stars) < 5 || purchasingFreeze) ? "var(--border)" : "var(--protect)",
-              color: (!freezeInfo.can_purchase || Number(stars) < 5 || purchasingFreeze) ? "var(--muted)" : "#FFFFFF",
-              cursor: (!freezeInfo.can_purchase || Number(stars) < 5 || purchasingFreeze) ? "not-allowed" : "pointer",
-            }}
-          >
-            {purchasingFreeze ? "购买中…" : "⭐5 购买"}
-          </button>
-        </div>
-      )}
+        );
+      })()}
 
       {items.map(item => {
         const discounted = item.discounted_star_cost != null && Number(item.discounted_star_cost) < Number(item.star_cost);

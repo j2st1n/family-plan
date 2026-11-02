@@ -1,8 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import api from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
+import { alignHeatmapToCalendar } from "../utils/calendar.js";
+import StreakFreezeModal from "../components/StreakFreezeModal.jsx";
+
+const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 
 const STATUS_CONFIG = {
   perfect: { label: "满分达标", color: "#FFFFFF", bg: "#436A54", icon: "🌲" },
@@ -42,6 +46,11 @@ export default function Analytics({ token, isActive, onExpired }) {
 
   // Selected cell hover/click preview
   const [selectedCell, setSelectedCell] = useState(null);
+  const [showFreezeModal, setShowFreezeModal] = useState(false);
+
+  const alignedHeatmap = useMemo(() => {
+    return alignHeatmapToCalendar(analyticsData?.heatmap || []);
+  }, [analyticsData?.heatmap]);
 
   // Initial load children
   const loadChildren = useCallback(async () => {
@@ -211,9 +220,23 @@ export default function Analytics({ token, isActive, onExpired }) {
         </div>
 
         {freezeInfo && (
-          <div style={styles.freezeChip} title="每月初自动赠送1张，未达标日期自动抵扣">
-            ❄️ 连击保护卡 <strong>{freezeInfo.available_count}</strong> 张
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowFreezeModal(true)}
+            style={{
+              ...styles.freezeChip,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              boxShadow: "0 1px 3px rgba(14, 116, 144, 0.12)",
+              transition: "transform 0.12s ease",
+            }}
+            title="点击打开连击保护卡与补签管理抽屉"
+          >
+            <span>❄️ 连击保护卡 <strong>{freezeInfo.available_count}</strong> 张</span>
+            <span style={{ fontSize: "0.68rem", opacity: 0.85, background: "rgba(14, 116, 144, 0.1)", padding: "1px 5px", borderRadius: "var(--radius-pill)" }}>管理⚙️</span>
+          </button>
         )}
       </div>
 
@@ -224,9 +247,9 @@ export default function Analytics({ token, isActive, onExpired }) {
       {analyticsData && (
         <>
           {/* Heatmap Card */}
-          <div style={styles.card}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.8rem" }}>
-              <h2 style={styles.cardTitle}>📅 每日习惯达成热力图 ({days}天)</h2>
+          <div className="compact-heatmap-card" style={styles.card}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+              <h2 style={styles.cardTitle}>📅 习惯微日历 ({days}天)</h2>
               <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
                 {analyticsData.start_date} ~ {analyticsData.end_date}
               </span>
@@ -234,83 +257,78 @@ export default function Analytics({ token, isActive, onExpired }) {
 
             {/* Heatmap Grid */}
             <div style={styles.heatmapWrapper}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: `repeat(${days === 90 ? 13 : 7}, 1fr)`,
-                  gap: "6px",
-                }}
-              >
-                {analyticsData.heatmap.map((item) => {
-                  const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.rest;
-                  const isSelected = selectedCell?.date === item.date;
-                  return (
-                    <div
-                      key={item.date}
-                      onClick={() => setSelectedCell(item)}
-                      title={`${item.date}: ${cfg.label} (${item.completed_tasks}/${item.total_tasks})`}
+              <div className="heatmap-matrix-box">
+                {/* 星期微标行 */}
+                <div className="weekday-header-row">
+                  {WEEKDAYS.map((w, idx) => (
+                    <span key={idx} className="weekday-micro-label">
+                      {w}
+                    </span>
+                  ))}
+                </div>
+
+                {/* 7 列严格对齐微日历网格 */}
+                <div className="micro-calendar-grid">
+                  {alignedHeatmap.map((item) => {
+                    if (item.isPlaceholder) {
+                      return <div key={item.key} className="cell-placeholder" />;
+                    }
+                    const isSelected = selectedCell?.date === item.date;
+                    const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.rest;
+                    return (
+                      <button
+                        type="button"
+                        key={item.key}
+                        onClick={() => setSelectedCell(item)}
+                        title={`${item.date}: ${cfg.label} (${item.completed_tasks}/${item.total_tasks})`}
+                        className={`heatmap-cell status-${item.status} ${isSelected ? "selected" : ""}`}
+                      >
+                        {item.status === "frozen" && "❄️"}
+                        {item.status === "vacation" && "🌴"}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 内联单行详情微胶囊 */}
+              {selectedCell && (
+                <div className={`selected-pill status-${selectedCell.status}`}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "0.85rem" }}>
+                      {selectedCell.status === "frozen" ? "❄️" : selectedCell.status === "vacation" ? "🌴" : STATUS_CONFIG[selectedCell.status]?.icon || "🌟"}
+                    </span>
+                    <strong style={{ fontSize: "0.78rem" }}>{selectedCell.date}</strong>
+                    <span
                       style={{
-                        aspectRatio: "1",
-                        borderRadius: "5px",
-                        backgroundColor: cfg.bg,
-                        border: isSelected ? "2px solid var(--text)" : "1px solid var(--border)",
-                        boxShadow: isSelected ? "0 2px 6px rgba(45, 55, 49, 0.25)" : "none",
-                        cursor: "pointer",
-                        transition: "transform 0.12s ease",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "0.65rem",
+                        fontSize: "0.68rem",
+                        padding: "1px 6px",
+                        borderRadius: "var(--radius-pill)",
+                        background: STATUS_CONFIG[selectedCell.status]?.bg || "var(--card-subtle)",
+                        color: STATUS_CONFIG[selectedCell.status]?.color || "var(--text)",
+                        fontWeight: 650,
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.15)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1.0)")}
                     >
-                      {item.status === "frozen" && "❄️"}
-                      {item.status === "vacation" && "🌴"}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+                      {STATUS_CONFIG[selectedCell.status]?.label || selectedCell.status}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "0.72rem", color: "var(--muted)" }}>
+                    {selectedCell.total_tasks > 0
+                      ? `完成 ${selectedCell.completed_tasks}/${selectedCell.total_tasks} 项 (${selectedCell.completion_rate}%)`
+                      : "休息日无任务"}
+                  </div>
+                </div>
+              )}
 
-            {/* Selected Cell Detail Info */}
-            {selectedCell && (
-              <div style={styles.selectedDetail}>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "1rem" }}>
-                    {STATUS_CONFIG[selectedCell.status]?.icon || "⬜"}
-                  </span>
-                  <strong style={{ fontSize: "0.9rem" }}>{selectedCell.date}</strong>
-                  <span
-                    style={{
-                      fontSize: "0.75rem",
-                      padding: "2px 8px",
-                      borderRadius: "var(--radius-pill)",
-                      background: STATUS_CONFIG[selectedCell.status]?.bg || "var(--card-subtle)",
-                      color: STATUS_CONFIG[selectedCell.status]?.color || "var(--text)",
-                      border: `1px solid ${selectedCell.status === 'rest' ? 'var(--border)' : 'transparent'}`,
-                      fontWeight: 650,
-                    }}
-                  >
-                    {STATUS_CONFIG[selectedCell.status]?.label}
-                  </span>
-                </div>
-                <div style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
-                  {selectedCell.total_tasks > 0
-                    ? `完成 ${selectedCell.completed_tasks}/${selectedCell.total_tasks} 项 (达成率 ${selectedCell.completion_rate}%)`
-                    : "无安排任务 (休息日)"}
-                </div>
+              {/* 单行横向微图例 */}
+              <div className="compact-legend-row">
+                <span className="legend-chip"><i className="dot dot-perfect" />完美</span>
+                <span className="legend-chip"><i className="dot dot-qualified" />达标</span>
+                <span className="legend-chip"><i className="dot dot-missed" />未达标</span>
+                <span className="legend-chip">❄️ 保护</span>
+                <span className="legend-chip">🌴 休假</span>
+                <span className="legend-chip"><i className="dot dot-rest" />休息</span>
               </div>
-            )}
-
-            {/* Heatmap Legend */}
-            <div style={styles.legendRow}>
-              {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                <div key={key} style={styles.legendItem}>
-                  <span style={{ ...styles.legendDot, backgroundColor: cfg.bg }} />
-                  <span>{cfg.label}</span>
-                </div>
-              ))}
             </div>
           </div>
 
@@ -494,6 +512,16 @@ export default function Analytics({ token, isActive, onExpired }) {
           </div>
         </div>
       )}
+
+      {/* Streak Freeze Management Modal / Drawer */}
+      <StreakFreezeModal
+        isOpen={showFreezeModal}
+        onClose={() => setShowFreezeModal(false)}
+        token={token}
+        childId={selectedChildId}
+        childName={currentChild?.name}
+        onUpdated={loadData}
+      />
     </div>
   );
 }

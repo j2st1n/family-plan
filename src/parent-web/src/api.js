@@ -215,6 +215,22 @@ const api = {
     return request(`/shop/children/${childId}/freeze`, { headers: h(token) });
   },
 
+  adjustChildFreeze(token, childId, delta, reason = "") {
+    return request(`/shop/children/${childId}/freeze/adjust`, {
+      method: "PATCH",
+      headers: h(token),
+      body: JSON.stringify({ delta, reason }),
+    });
+  },
+
+  updateFreezeSettings(token, childId, data) {
+    return request(`/shop/children/${childId}/freeze/settings`, {
+      method: "PUT",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
+  },
+
   parseCopilotTasks(token, data) {
     return request("/ai/copilot/parse-tasks", {
       method: "POST",

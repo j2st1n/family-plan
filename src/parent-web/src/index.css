@@ -36,6 +36,20 @@
   --danger-bg: #FDF2F2;
   --danger-border: #FECACA;
 
+  /* 单元格手账质感配色 (Heatmap Micro Calendar) */
+  --cell-perfect: #D8EAD9;
+  --cell-perfect-border: #7DAE88;
+  --cell-qualified: #EBF2DC;
+  --cell-qualified-border: #9FBF78;
+  --cell-missed: #FAE3DC;
+  --cell-missed-border: #DE876E;
+  --cell-frozen: #DCECF8;
+  --cell-frozen-border: #6BA6DC;
+  --cell-vacation: #FEF4DB;
+  --cell-vacation-border: #E5C06A;
+  --cell-rest: #F6F4EE;
+  --cell-rest-border: #DDD9D0;
+
   /* 圆角与阴影：低饱和温润漫反射投影 */
   --radius-sm: 8px;
   --radius: 14px;
@@ -407,4 +421,130 @@ textarea {
 .btn-ghost:hover {
   background: rgba(0, 0, 0, 0.04);
   color: var(--text);
+}
+
+/* ==========================================================================
+   Compact Heatmap & Micro Calendar Styles
+   ========================================================================== */
+.compact-heatmap-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-card);
+}
+
+.heatmap-matrix-box {
+  max-width: 272px;
+  margin: 0 auto 8px auto;
+}
+
+.weekday-header-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 26px));
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.weekday-micro-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.micro-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 26px));
+  justify-content: center;
+  gap: 4px;
+}
+
+.heatmap-cell {
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 26px;
+  max-height: 26px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  background: var(--cell-rest);
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.15);
+  z-index: 2;
+}
+
+.heatmap-cell.selected {
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
+}
+
+.heatmap-cell.status-perfect { background: var(--cell-perfect); border-color: var(--cell-perfect-border); }
+.heatmap-cell.status-qualified { background: var(--cell-qualified); border-color: var(--cell-qualified-border); }
+.heatmap-cell.status-missed { background: var(--cell-missed); border-color: var(--cell-missed-border); }
+.heatmap-cell.status-frozen { background: var(--cell-frozen); border-color: var(--cell-frozen-border); }
+.heatmap-cell.status-vacation { background: var(--cell-vacation); border-color: var(--cell-vacation-border); }
+.heatmap-cell.status-rest { background: var(--cell-rest); border-style: dashed; border-color: var(--cell-rest-border); }
+
+.cell-placeholder {
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 26px;
+  max-height: 26px;
+  background: transparent;
+}
+
+.compact-legend-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  padding-top: 4px;
+  flex-wrap: wrap;
+}
+
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
+}
+
+.legend-chip .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.legend-chip .dot.dot-perfect { background: var(--cell-perfect); border: 1px solid var(--cell-perfect-border); }
+.legend-chip .dot.dot-qualified { background: var(--cell-qualified); border: 1px solid var(--cell-qualified-border); }
+.legend-chip .dot.dot-missed { background: var(--cell-missed); border: 1px solid var(--cell-missed-border); }
+.legend-chip .dot.dot-rest { background: var(--cell-rest); border: 1px dashed var(--cell-rest-border); }
+
+.selected-pill {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  margin-bottom: 6px;
+  background: var(--card-subtle);
+  border: 1px solid var(--border-subtle);
 }
