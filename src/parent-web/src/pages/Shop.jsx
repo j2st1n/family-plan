@@ -84,7 +84,7 @@ export default function Shop({ token, isActive, onExpired }) {
   const pendingRedemptions = redemptions.filter(r => r.redemption_status === "pending");
   const fulfilledRedemptions = redemptions.filter(r => r.redemption_status === "fulfilled");
 
-  if (loading) return <p style={{ color: "#73706b", textAlign: "center", paddingTop: "2rem" }}>加载中…</p>;
+  if (loading) return <p style={{ color: "var(--muted)", textAlign: "center", paddingTop: "2rem" }}>加载中…</p>;
 
   return (
     <div>
@@ -98,7 +98,7 @@ export default function Shop({ token, isActive, onExpired }) {
       <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1rem", fontFamily: "\"Noto Sans SC\", \"PingFang SC\", -apple-system, BlinkMacSystemFont, sans-serif", letterSpacing: "-0.01em" }}>星星商城</h2>
 
       <div style={s.section}>
-        <div style={s.sectionHd}><h3 style={s.sh}>货架商品</h3><span style={{ fontSize: "0.8rem", color: "#73706b" }}>{active.length} 件</span></div>
+        <div style={s.sectionHd}><h3 style={s.sh}>货架商品</h3><span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{active.length} 件</span></div>
         {active.length === 0 && <p style={s.empty}>还没有上架商品</p>}
         {active.map(item => (
           <div key={item.id} style={s.row}>
@@ -114,12 +114,12 @@ export default function Shop({ token, isActive, onExpired }) {
             ) : (
               <>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{item.title}</p>
-                  {item.stock != null && <p style={{ fontSize: "0.72rem", color: "#c97070", marginTop: 2 }}>库存 {item.stock}</p>}
+                  <p style={{ fontWeight: 650, fontSize: "0.9rem", color: "var(--text)" }}>{item.title}</p>
+                  {item.stock != null && <p style={{ fontSize: "0.72rem", color: "var(--danger)", marginTop: 2 }}>库存 {item.stock}</p>}
                 </div>
-                <span style={{ fontSize: "0.8rem", color: "#c4912a", whiteSpace: "nowrap" }}>⭐{formatStars(item.star_cost)}</span>
-                <button onClick={() => startEdit(item)} style={s.ib}>✎</button>
-                <button onClick={() => handleDelete(item.id)} style={s.ib}>✕</button>
+                <span style={{ fontSize: "0.8rem", color: "var(--star)", fontWeight: 700, whiteSpace: "nowrap" }}>⭐{formatStars(item.star_cost)}</span>
+                <button onClick={() => startEdit(item)} style={s.ib} title="编辑">✎</button>
+                <button onClick={() => handleDelete(item.id)} style={s.ib} title="删除">✕</button>
               </>
             )}
           </div>
@@ -143,11 +143,11 @@ export default function Shop({ token, isActive, onExpired }) {
 
       {wishes.length > 0 && (
         <div style={s.section}>
-          <div style={s.sectionHd}><h3 style={s.sh}>许愿审核</h3><span style={{ fontSize: "0.8rem", color: "#c97070" }}>{wishes.length} 条待审</span></div>
+          <div style={s.sectionHd}><h3 style={s.sh}>许愿审核</h3><span style={{ fontSize: "0.8rem", color: "var(--danger)", fontWeight: 650 }}>{wishes.length} 条待审</span></div>
           {wishes.map(w => (
             <div key={w.id} style={s.row}>
-              <div style={{ flex: 1 }}><p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{w.title}</p></div>
-              <input type="number" placeholder="星星" value={approveStars[w.id] || ""} onChange={e => setApproveStars({ ...approveStars, [w.id]: e.target.value })} style={{ width: "3.5rem", padding: "0.25rem", fontSize: "0.85rem", border: "1px solid #e8e4df", borderRadius: "8px", textAlign: "center" }} />
+              <div style={{ flex: 1 }}><p style={{ fontWeight: 650, fontSize: "0.9rem", color: "var(--text)" }}>{w.title}</p></div>
+              <input type="number" placeholder="星星" value={approveStars[w.id] || ""} onChange={e => setApproveStars({ ...approveStars, [w.id]: e.target.value })} style={{ width: "3.5rem", padding: "0.25rem", fontSize: "0.85rem", border: "1px solid var(--border)", borderRadius: "8px", textAlign: "center", background: "var(--card)", color: "var(--text)" }} />
               <button onClick={() => handleApprove(w.id)} style={s.act}>✓</button>
               <button onClick={() => handleDelete(w.id)} style={s.del}>✕</button>
             </div>
@@ -159,13 +159,13 @@ export default function Shop({ token, isActive, onExpired }) {
         <div style={s.section}>
           <div style={s.sectionHd}>
             <h3 style={s.sh}>已兑换</h3>
-            <span style={{ fontSize: "0.8rem", color: "#73706b" }}>待兑现 {pendingRedemptions.length} · 已兑现 {fulfilledRedemptions.length}</span>
+            <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>待兑现 {pendingRedemptions.length} · 已兑现 {fulfilledRedemptions.length}</span>
           </div>
           {pendingRedemptions.map(r => (
             <div key={r.id} style={{ ...s.row }}>
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{r.title}</p>
-                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>{redemptionPrice(r)}{r.child_id ? " · 孩子兑换" : ""}</p>
+                <p style={{ fontWeight: 650, fontSize: "0.9rem", color: "var(--text)" }}>{r.title}</p>
+                <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>{redemptionPrice(r)}{r.child_id ? " · 孩子兑换" : ""}</p>
               </div>
               <button onClick={() => handleFulfill(r.redemption_id)} style={s.act}>兑现</button>
             </div>
@@ -176,12 +176,12 @@ export default function Shop({ token, isActive, onExpired }) {
             </button>
           )}
           {showFulfilledRedemptions && fulfilledRedemptions.map(r => (
-            <div key={r.id} style={{ ...s.row, background: "#fafafa" }}>
+            <div key={r.id} style={{ ...s.row, background: "var(--card-subtle)" }}>
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{r.title}</p>
-                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>{redemptionPrice(r)}{r.child_id ? " · 孩子兑换" : ""}</p>
+                <p style={{ fontWeight: 650, fontSize: "0.9rem", color: "var(--text)" }}>{r.title}</p>
+                <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>{redemptionPrice(r)}{r.child_id ? " · 孩子兑换" : ""}</p>
               </div>
-              <span style={{ fontSize: "0.78rem", color: "#4b9c64", fontWeight: 600 }}>已兑现</span>
+              <span style={{ fontSize: "0.78rem", color: "var(--accent)", fontWeight: 650 }}>已兑现</span>
             </div>
           ))}
         </div>
@@ -196,28 +196,28 @@ function redemptionPrice(r) {
 }
 
 const s = {
-  section: { background: "#fff", borderRadius: "14px", padding: "1rem", marginBottom: "0.8rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
+  section: { background: "var(--card)", borderRadius: "var(--radius)", padding: "1.1rem", marginBottom: "0.85rem", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" },
   sectionHd: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" },
-  sh: { fontSize: "0.95rem", fontWeight: 700 },
-  empty: { color: "#73706b", textAlign: "center", padding: "1rem 0", fontSize: "0.88rem" },
-  row: { display: "flex", alignItems: "center", gap: "0.4rem", background: "#f8f8fb", borderRadius: "10px", padding: "0.5rem 0.7rem", marginBottom: "0.3rem" },
-  ib: { width: "1.4rem", height: "1.4rem", borderRadius: "50%", fontSize: "0.7rem", fontWeight: 600, color: "#73706b", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
-  ei: { padding: "0.3rem 0.4rem", fontSize: "0.85rem", border: "1px solid #e8e4df", borderRadius: "8px", outline: "none", background: "#fff", marginBottom: "0.3rem", display: "block", width: "100%" },
-  act: { padding: "0.25rem 0.5rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", border: "none", cursor: "pointer" },
-  del: { padding: "0.25rem 0.5rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 600, color: "#c97070", background: "#fef0f0", border: "none", cursor: "pointer" },
-  addBtn: { width: "100%", padding: "0.5rem", fontSize: "0.9rem", color: "#3d9e6b", border: "1px dashed #3d9e6b", borderRadius: "10px", background: "transparent", cursor: "pointer", marginTop: "0.4rem" },
-  foldBtn: { width: "100%", padding: "0.45rem", fontSize: "0.82rem", color: "#73706b", border: "1px dashed #d6d0c8", borderRadius: "10px", background: "transparent", cursor: "pointer", margin: "0.2rem 0 0.4rem" },
-  formBox: { background: "#f8f8fb", borderRadius: "10px", padding: "0.5rem", marginTop: "0.4rem" },
+  sh: { fontSize: "0.95rem", fontWeight: 700, color: "var(--text)" },
+  empty: { color: "var(--muted)", textAlign: "center", padding: "1.2rem 0", fontSize: "0.88rem" },
+  row: { display: "flex", alignItems: "center", gap: "0.5rem", background: "var(--card-subtle)", border: "1px solid var(--border-subtle)", borderRadius: "10px", padding: "0.55rem 0.75rem", marginBottom: "0.35rem" },
+  ib: { width: "1.4rem", height: "1.4rem", borderRadius: "50%", fontSize: "0.7rem", fontWeight: 600, color: "var(--muted)", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
+  ei: { padding: "0.4rem 0.5rem", fontSize: "0.85rem", border: "1px solid var(--border)", borderRadius: "8px", outline: "none", background: "var(--card)", marginBottom: "0.3rem", display: "block", width: "100%", color: "var(--text)" },
+  act: { padding: "0.3rem 0.6rem", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 650, color: "#fff", background: "var(--accent)", border: "none", cursor: "pointer" },
+  del: { padding: "0.3rem 0.6rem", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 650, color: "var(--danger)", background: "var(--danger-bg)", border: "1px solid var(--danger-border)", cursor: "pointer" },
+  addBtn: { width: "100%", padding: "0.55rem", fontSize: "0.9rem", color: "var(--accent)", border: "1.5px dashed var(--accent)", borderRadius: "10px", background: "transparent", cursor: "pointer", marginTop: "0.4rem", fontWeight: 600 },
+  foldBtn: { width: "100%", padding: "0.45rem", fontSize: "0.82rem", color: "var(--muted)", border: "1px dashed var(--border)", borderRadius: "10px", background: "transparent", cursor: "pointer", margin: "0.2rem 0 0.4rem" },
+  formBox: { background: "var(--card-subtle)", border: "1px solid var(--border-subtle)", borderRadius: "12px", padding: "0.7rem", marginTop: "0.4rem" },
   errorBanner: {
-    background: "#fef0f0",
-    border: "1px solid #f8d0d0",
+    background: "var(--danger-bg)",
+    border: "1px solid var(--danger-border)",
     borderRadius: "10px",
     padding: "0.8rem 1rem",
     marginBottom: "0.8rem",
     display: "flex",
     alignItems: "center",
     gap: "0.6rem",
-    color: "#c97070",
+    color: "var(--danger)",
     fontSize: "0.85rem",
   },
   errorIcon: {
@@ -227,7 +227,7 @@ const s = {
   errorClose: {
     marginLeft: "auto",
     fontSize: "0.9rem",
-    color: "#c97070",
+    color: "var(--danger)",
     background: "transparent",
     border: "none",
     cursor: "pointer",

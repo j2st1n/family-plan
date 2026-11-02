@@ -109,7 +109,7 @@ async function handlePurchaseFreeze() {
   }
 }
 
-  if (loading) return <p style={{ color: "#73706b", textAlign: "center", paddingTop: "3rem" }}>加载中…</p>;
+  if (loading) return <p style={{ color: "var(--muted)", textAlign: "center", paddingTop: "3rem" }}>加载中…</p>;
 
   const pendingRedemptions = redeemed.filter(r => r.redemption_status === "pending");
   const fulfilledRedemptions = redeemed.filter(r => r.redemption_status === "fulfilled");
@@ -117,22 +117,22 @@ async function handlePurchaseFreeze() {
   return (
     <div>
       {error && (
-        <div style={{ background: "#fef0f0", borderRadius: "12px", padding: "0.7rem 1rem", marginBottom: "0.8rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span style={{ flex: 1, fontSize: "#0.85rem", color: "#c97070" }}>{error}</span>
-          <button onClick={() => setError("")} style={{ color: "#c97070", fontSize: "1rem", fontWeight: 700, padding: "0.1rem 0.3rem" }}>✕</button>
+        <div style={{ background: "var(--danger-bg)", border: "1px solid var(--danger-border)", borderRadius: "12px", padding: "0.7rem 1rem", marginBottom: "0.8rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span style={{ flex: 1, fontSize: "0.85rem", color: "var(--danger)" }}>{error}</span>
+          <button onClick={() => setError("")} style={{ color: "var(--danger)", fontSize: "1rem", fontWeight: 700, padding: "0.1rem 0.3rem" }}>✕</button>
         </div>
       )}
       <div style={{ marginBottom: "1rem" }}>
-        <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#3d9e6b" }}>星星商城</h2>
-        <p style={{ fontSize: "0.9rem", color: "#c4912a", marginTop: "0.2rem" }}>余额 ⭐{formatStars(stars)}</p>
+        <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "var(--accent)", letterSpacing: "-0.015em" }}>星星商城</h2>
+        <p style={{ fontSize: "0.9rem", color: "var(--star)", fontWeight: 650, marginTop: "0.2rem" }}>余额 ⭐{formatStars(stars)}</p>
       </div>
 
       {freezeInfo && (
-        <div style={{ ...s.card, background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)", border: "1px solid #bae6fd", marginBottom: "0.8rem" }}>
+        <div style={{ ...s.card, background: "var(--protect-bg)", border: "1px solid var(--protect-border)", marginBottom: "0.8rem" }}>
           <span style={{ fontSize: "1.8rem" }}>❄️</span>
           <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 650, fontSize: "0.95rem", color: "#0369a1" }}>连击保护卡</p>
-            <p style={{ fontSize: "0.75rem", color: "#0284c7", marginTop: "0.1rem" }}>
+            <p style={{ fontWeight: 650, fontSize: "0.95rem", color: "var(--protect)" }}>连击保护卡</p>
+            <p style={{ fontSize: "0.75rem", color: "var(--protect)", opacity: 0.85, marginTop: "0.1rem" }}>
               当前可用 {freezeInfo.available_count ?? 0} 张 · 遗漏任务自动保活
             </p>
           </div>
@@ -141,7 +141,8 @@ async function handlePurchaseFreeze() {
             disabled={purchasingFreeze || !freezeInfo.can_purchase || Number(stars) < 5}
             style={{
               ...s.redeemBtn,
-              background: (!freezeInfo.can_purchase || Number(stars) < 5 || purchasingFreeze) ? "#94a3b8" : "#0284c7",
+              background: (!freezeInfo.can_purchase || Number(stars) < 5 || purchasingFreeze) ? "var(--border)" : "var(--protect)",
+              color: (!freezeInfo.can_purchase || Number(stars) < 5 || purchasingFreeze) ? "var(--muted)" : "#FFFFFF",
               cursor: (!freezeInfo.can_purchase || Number(stars) < 5 || purchasingFreeze) ? "not-allowed" : "pointer",
             }}
           >
@@ -156,32 +157,32 @@ async function handlePurchaseFreeze() {
         return (
           <div key={item.id} style={s.card}>
             <div style={{ flex: 1 }}>
-              <p style={{ fontWeight: 600, fontSize: "1rem" }}>{item.title}</p>
-              {item.stock != null && <p style={{ fontSize: "0.75rem", color: "#c97070" }}>仅剩 {item.stock} 件</p>}
-              {discounted && <p style={{ fontSize: "0.75rem", color: "#3d9e6b", marginTop: "0.15rem" }}>{item.discount_label || `支付 ${item.discount_percent}%`} · 原价 {formatStars(item.star_cost)}⭐</p>}
+              <p style={{ fontWeight: 650, fontSize: "1rem", color: "var(--text)" }}>{item.title}</p>
+              {item.stock != null && <p style={{ fontSize: "0.75rem", color: "var(--danger)", marginTop: "0.1rem" }}>仅剩 {item.stock} 件</p>}
+              {discounted && <p style={{ fontSize: "0.75rem", color: "var(--accent)", marginTop: "0.15rem" }}>{item.discount_label || `支付 ${item.discount_percent}%`} · 原价 {formatStars(item.star_cost)}⭐</p>}
             </div>
             <button onClick={() => handleRedeem(item)} style={s.redeemBtn}>⭐{formatStars(cost)} 兑换</button>
           </div>
         );
       })}
 
-      {items.length === 0 && <p style={{ color: "#73706b", textAlign: "center" }}>暂无商品</p>}
+      {items.length === 0 && <p style={{ color: "var(--muted)", textAlign: "center", padding: "1.5rem 0" }}>暂无商品</p>}
 
       {redeemed.length > 0 && (
-        <div style={{ marginTop: "1.5rem", borderTop: "1px solid #e8e4df", paddingTop: "1rem" }}>
+        <div style={{ marginTop: "1.5rem", borderTop: "1px solid var(--border)", paddingTop: "1rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
-            <h3 style={{ fontWeight: 600 }}>我的兑换</h3>
-            <span style={{ fontSize: "0.75rem", color: "#73706b" }}>待兑现 {pendingRedemptions.length} · 已收到 {fulfilledRedemptions.length}</span>
+            <h3 style={{ fontWeight: 650, color: "var(--text)" }}>我的兑换</h3>
+            <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>待兑现 {pendingRedemptions.length} · 已收到 {fulfilledRedemptions.length}</span>
           </div>
           {pendingRedemptions.map(r => (
-            <div key={r.id} style={{ ...s.card, background: "#fafafa", opacity: 0.7 }}>
+            <div key={r.id} style={{ ...s.card, background: "var(--card-subtle)", opacity: 0.85 }}>
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>{r.title}</p>
-                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>
+                <p style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--text)" }}>{r.title}</p>
+                <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
                   {redemptionPrice(r)} · 等待兑现 {fmtDate(r.created_at)}
                 </p>
               </div>
-              <span style={{ fontSize: "0.75rem", color: "#c4912a" }}>待兑现</span>
+              <span style={{ fontSize: "0.75rem", color: "var(--star)", fontWeight: 650 }}>待兑现</span>
             </div>
           ))}
           {fulfilledRedemptions.length > 0 && (
@@ -190,27 +191,27 @@ async function handlePurchaseFreeze() {
             </button>
           )}
           {showFulfilledRedemptions && fulfilledRedemptions.map(r => (
-            <div key={r.id} style={{ ...s.card, background: "#fafafa", opacity: 0.7 }}>
+            <div key={r.id} style={{ ...s.card, background: "var(--card-subtle)", opacity: 0.85 }}>
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>{r.title}</p>
-                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>
+                <p style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--text)" }}>{r.title}</p>
+                <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
                   {redemptionPrice(r)} · 已收到 {fmtDate(r.fulfilled_at)}
                 </p>
               </div>
-              <span style={{ fontSize: "0.75rem", color: "#4b9c64" }}>已收到</span>
+              <span style={{ fontSize: "0.75rem", color: "var(--accent)", fontWeight: 650 }}>已收到</span>
             </div>
           ))}
         </div>
       )}
 
-      <div style={{ marginTop: "1.5rem", borderTop: "1px solid #e8e4df", paddingTop: "1rem" }}>
-        <h3 style={{ fontWeight: 600, marginBottom: "0.4rem" }}>我的许愿</h3>
+      <div style={{ marginTop: "1.5rem", borderTop: "1px solid var(--border)", paddingTop: "1rem" }}>
+        <h3 style={{ fontWeight: 650, color: "var(--text)", marginBottom: "0.4rem" }}>我的许愿</h3>
         {wishes.map(w => (
-          <div key={w.id} style={{ ...s.card, background: "#fafafa" }}>
+          <div key={w.id} style={{ ...s.card, background: "var(--card-subtle)" }}>
             {editingId === w.id ? (
               <div style={{ flex: 1 }}>
-                <input value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} style={{ width: "100%", padding: "0.3rem 0.5rem", fontSize: "0.9rem", border: "1px solid #e8e4df", borderRadius: "8px", marginBottom: "0.3rem" }} autoFocus />
-                <input value={editForm.desc} onChange={e => setEditForm({ ...editForm, desc: e.target.value })} placeholder="说明" style={{ width: "100%", padding: "0.3rem 0.5rem", fontSize: "0.9rem", border: "1px solid #e8e4df", borderRadius: "8px", marginBottom: "0.3rem" }} />
+                <input value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} style={{ width: "100%", padding: "0.4rem 0.6rem", fontSize: "0.9rem", border: "1px solid var(--border)", borderRadius: "8px", marginBottom: "0.3rem", background: "var(--card)", color: "var(--text)" }} autoFocus />
+                <input value={editForm.desc} onChange={e => setEditForm({ ...editForm, desc: e.target.value })} placeholder="说明" style={{ width: "100%", padding: "0.4rem 0.6rem", fontSize: "0.9rem", border: "1px solid var(--border)", borderRadius: "8px", marginBottom: "0.3rem", background: "var(--card)", color: "var(--text)" }} />
                 <div style={{ display: "flex", gap: "0.4rem" }}>
                   <button onClick={saveEdit} style={s.smallBtn}>保存</button>
                   <button onClick={() => setEditingId(null)} style={s.cancelBtn}>取消</button>
@@ -219,9 +220,9 @@ async function handlePurchaseFreeze() {
             ) : (
               <>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 600, fontSize: "0.95rem" }}>{w.title}</p>
-                  {w.description && <p style={{ fontSize: "0.8rem", color: "#73706b" }}>{w.description}</p>}
-                  <p style={{ fontSize: "0.75rem", color: "#c97070", marginTop: "0.15rem" }}>审核中</p>
+                  <p style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--text)" }}>{w.title}</p>
+                  {w.description && <p style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{w.description}</p>}
+                  <p style={{ fontSize: "0.75rem", color: "var(--star)", fontWeight: 650, marginTop: "0.15rem" }}>审核中</p>
                 </div>
                 <button onClick={() => startEdit(w)} style={s.smallBtn}>修改</button>
               </>
@@ -234,12 +235,12 @@ async function handlePurchaseFreeze() {
         {!showWish ? (
           <button onClick={() => setShowWish(true)} style={s.addBtn}>+ 许愿</button>
         ) : (
-          <div style={{ background: "#fff", borderRadius: "14px", padding: "0.8rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-            <input placeholder="想要什么" value={wishForm.title} onChange={e => setWishForm({ ...wishForm, title: e.target.value })} style={{ width: "100%", padding: "0.5rem", fontSize: "0.95rem", border: "1px solid #e8e4df", borderRadius: "10px", marginBottom: "0.4rem" }} autoFocus />
-            <input placeholder="说明（选填）" value={wishForm.desc} onChange={e => setWishForm({ ...wishForm, desc: e.target.value })} style={{ width: "100%", padding: "0.5rem", fontSize: "0.95rem", border: "1px solid #e8e4df", borderRadius: "10px", marginBottom: "0.4rem" }} />
+          <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "16px", padding: "1rem", boxShadow: "var(--shadow-card)" }}>
+            <input placeholder="想要什么" value={wishForm.title} onChange={e => setWishForm({ ...wishForm, title: e.target.value })} style={{ width: "100%", padding: "0.55rem 0.7rem", fontSize: "0.95rem", border: "1px solid var(--border)", borderRadius: "10px", marginBottom: "0.4rem", background: "var(--card)", color: "var(--text)" }} autoFocus />
+            <input placeholder="说明（选填）" value={wishForm.desc} onChange={e => setWishForm({ ...wishForm, desc: e.target.value })} style={{ width: "100%", padding: "0.55rem 0.7rem", fontSize: "0.95rem", border: "1px solid var(--border)", borderRadius: "10px", marginBottom: "0.4rem", background: "var(--card)", color: "var(--text)" }} />
             <div style={{ display: "flex", gap: "0.4rem" }}>
-              <button onClick={handleWish} style={{ flex: 1, padding: "0.45rem", fontSize: "0.9rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "10px" }}>许愿</button>
-              <button onClick={() => setShowWish(false)} style={{ flex: 1, padding: "0.45rem", fontSize: "0.9rem", fontWeight: 600, color: "#73706b", background: "#efece8", borderRadius: "10px" }}>取消</button>
+              <button onClick={handleWish} style={{ flex: 1, padding: "0.5rem", fontSize: "0.9rem", fontWeight: 650, color: "#FFFFFF", background: "var(--accent)", borderRadius: "10px", border: "none", cursor: "pointer" }}>许愿</button>
+              <button onClick={() => setShowWish(false)} style={{ flex: 1, padding: "0.5rem", fontSize: "0.9rem", fontWeight: 600, color: "var(--muted)", background: "#F0ECE4", border: "1px solid var(--border)", borderRadius: "10px", cursor: "pointer" }}>取消</button>
             </div>
           </div>
         )}
@@ -256,10 +257,10 @@ function redemptionPrice(r) {
 }
 
 const s = {
-  card: { background: "#fff", borderRadius: "14px", padding: "0.8rem 1rem", marginBottom: "0.5rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", display: "flex", alignItems: "center", gap: "0.5rem" },
-  redeemBtn: { padding: "0.4rem 0.8rem", borderRadius: "999px", background: "#3d9e6b", color: "#fff", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" },
-  addBtn: { width: "100%", padding: "0.6rem", fontSize: "0.95rem", color: "#3d9e6b", border: "1px dashed #3d9e6b", borderRadius: "14px", background: "transparent" },
-  foldBtn: { width: "100%", padding: "0.5rem", fontSize: "0.82rem", color: "#73706b", border: "1px dashed #d6d0c8", borderRadius: "14px", background: "transparent", margin: "0.2rem 0 0.5rem" },
-  smallBtn: { padding: "0.3rem 0.6rem", borderRadius: "8px", background: "#3d9e6b", color: "#fff", fontSize: "0.8rem", fontWeight: 600 },
-  cancelBtn: { padding: "0.3rem 0.6rem", borderRadius: "8px", background: "#efece8", color: "#73706b", fontSize: "0.8rem" },
+  card: { background: "var(--card)", border: "1px solid var(--border)", borderRadius: "16px", padding: "0.85rem 1.1rem", marginBottom: "0.6rem", boxShadow: "var(--shadow-card)", display: "flex", alignItems: "center", gap: "0.5rem" },
+  redeemBtn: { padding: "0.4rem 0.9rem", borderRadius: "var(--radius-pill)", background: "var(--accent)", color: "#FFFFFF", fontSize: "0.8rem", fontWeight: 650, border: "none", cursor: "pointer", whiteSpace: "nowrap" },
+  addBtn: { width: "100%", padding: "0.7rem", fontSize: "0.95rem", fontWeight: 650, color: "var(--accent)", border: "1.5px dashed var(--accent)", borderRadius: "14px", background: "var(--accent-light)", cursor: "pointer" },
+  foldBtn: { width: "100%", padding: "0.5rem", fontSize: "0.82rem", color: "var(--muted)", border: "1px dashed var(--border)", borderRadius: "12px", background: "transparent", cursor: "pointer", margin: "0.2rem 0 0.5rem" },
+  smallBtn: { padding: "0.35rem 0.7rem", borderRadius: "8px", background: "var(--accent-light)", color: "var(--accent)", border: "1px solid var(--accent-pill)", fontSize: "0.8rem", fontWeight: 650, cursor: "pointer" },
+  cancelBtn: { padding: "0.35rem 0.7rem", borderRadius: "8px", background: "#F0ECE4", border: "1px solid var(--border)", color: "var(--muted)", fontSize: "0.8rem", cursor: "pointer" },
 };

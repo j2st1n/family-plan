@@ -49,14 +49,15 @@ export default function App() {
             className={`top-nav-btn ${tab === "home" ? "active" : ""}`}
             onClick={() => setTab("home")}
             style={{
-              padding: "5px 12px",
-              borderRadius: "999px",
+              padding: "6px 14px",
+              borderRadius: "var(--radius-pill)",
               border: "none",
               fontSize: "0.85rem",
               fontWeight: 650,
               cursor: "pointer",
               background: tab === "home" ? "var(--accent)" : "transparent",
-              color: tab === "home" ? "#fff" : "var(--muted)",
+              color: tab === "home" ? "#FFFFFF" : "var(--muted)",
+              boxShadow: tab === "home" ? "0 2px 6px rgba(67, 106, 84, 0.2)" : "none",
             }}
           >
             首页
@@ -65,14 +66,15 @@ export default function App() {
             className={`top-nav-btn ${tab === "analytics" ? "active" : ""}`}
             onClick={() => setTab("analytics")}
             style={{
-              padding: "5px 12px",
-              borderRadius: "999px",
+              padding: "6px 14px",
+              borderRadius: "var(--radius-pill)",
               border: "none",
               fontSize: "0.85rem",
               fontWeight: 650,
               cursor: "pointer",
               background: tab === "analytics" ? "var(--accent)" : "transparent",
-              color: tab === "analytics" ? "#fff" : "var(--muted)",
+              color: tab === "analytics" ? "#FFFFFF" : "var(--muted)",
+              boxShadow: tab === "analytics" ? "0 2px 6px rgba(67, 106, 84, 0.2)" : "none",
             }}
           >
             成长看板
@@ -81,14 +83,15 @@ export default function App() {
             className={`top-nav-btn ${tab === "shop" ? "active" : ""}`}
             onClick={() => setTab("shop")}
             style={{
-              padding: "5px 12px",
-              borderRadius: "999px",
+              padding: "6px 14px",
+              borderRadius: "var(--radius-pill)",
               border: "none",
               fontSize: "0.85rem",
               fontWeight: 650,
               cursor: "pointer",
               background: tab === "shop" ? "var(--accent)" : "transparent",
-              color: tab === "shop" ? "#fff" : "var(--muted)",
+              color: tab === "shop" ? "#FFFFFF" : "var(--muted)",
+              boxShadow: tab === "shop" ? "0 2px 6px rgba(67, 106, 84, 0.2)" : "none",
             }}
           >
             星星商城

@@ -29,24 +29,24 @@ function minutesToTime(m) {
  */
 function fireCelebration(originX = 0.5, originY = 0.6) {
   try {
-    // 1. 五彩礼花粒子
+    // 1. 五彩礼花粒子（自然手账温润色系：森林绿、琥珀金、陶土橙、青瓷蓝）
     confetti({
       particleCount: 55,
       spread: 70,
       origin: { x: originX, y: originY },
-      colors: ["#3d9e6b", "#f59e0b", "#3b82f6", "#ec4899", "#8b5cf6", "#10b981"],
+      colors: ["#436A54", "#9A6700", "#C2410C", "#0E7490", "#76A28A", "#D4A373"],
       disableForReducedMotion: true,
       ticks: 200,
       gravity: 1.1,
       scalar: 1.0,
     });
 
-    // 2. 飞星粒子动画
+    // 2. 飞星粒子动画（温润琥珀金阶）
     confetti({
       particleCount: 22,
       spread: 90,
       shapes: ["star"],
-      colors: ["#ffd700", "#ffb703", "#fb8500", "#fff275"],
+      colors: ["#9A6700", "#D4A373", "#F3D794", "#E8C547"],
       origin: { x: originX, y: originY },
       disableForReducedMotion: true,
       ticks: 180,
@@ -241,13 +241,13 @@ export default function Today({ child, onExpired, active }) {
 
   if (loading)
     return (
-      <div style={{ textAlign: "center", paddingTop: "40vh", color: "#73706b" }}>加载中…</div>
+      <div style={{ textAlign: "center", paddingTop: "40vh", color: "var(--muted)" }}>加载中…</div>
     );
   if (error)
     return (
       <div style={{ textAlign: "center", paddingTop: "40vh" }}>
-        <p style={{ color: "#c97070", marginBottom: "1rem" }}>{error}</p>
-        <button onClick={load} style={{ color: "#3d9e6b", fontSize: "1rem" }}>
+        <p style={{ color: "var(--danger)", marginBottom: "1rem" }}>{error}</p>
+        <button onClick={load} style={{ color: "var(--accent)", fontSize: "1rem", fontWeight: 600 }}>
           重试
         </button>
       </div>
@@ -257,7 +257,7 @@ export default function Today({ child, onExpired, active }) {
     <div>
       <div style={{ marginBottom: "1.4rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>
+          <h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "var(--accent)", letterSpacing: "-0.015em" }}>
             你好，{child?.name ?? "小朋友"}
           </h1>
           {data?.rewards?.is_on_vacation && (
@@ -267,11 +267,11 @@ export default function Today({ child, onExpired, active }) {
                 alignItems: "center",
                 gap: "4px",
                 padding: "4px 12px",
-                borderRadius: "999px",
-                background: "#fef3c7",
-                color: "#b45309",
-                border: "1px solid #fde68a",
-                fontWeight: 750,
+                borderRadius: "var(--radius-pill)",
+                background: "var(--star-bg)",
+                color: "var(--star)",
+                border: "1px solid var(--star-border)",
+                fontWeight: 700,
                 fontSize: "0.85rem",
               }}
             >
@@ -279,28 +279,28 @@ export default function Today({ child, onExpired, active }) {
             </span>
           )}
         </div>
-        <p style={{ color: "#73706b", marginTop: "0.3rem", fontSize: "0.95rem" }}>{dateStr}</p>
+        <p style={{ color: "var(--muted)", marginTop: "0.3rem", fontSize: "0.95rem" }}>{dateStr}</p>
       </div>
 
       {data?.rewards?.is_on_vacation && (
         <div
           style={{
-            background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
-            border: "1px solid #fcd34d",
+            background: "var(--star-bg)",
+            border: "1px solid var(--star-border)",
             borderRadius: "16px",
             padding: "0.75rem 1rem",
             marginBottom: "1.2rem",
             display: "flex",
             alignItems: "center",
             gap: "0.6rem",
-            color: "#92400e",
-            boxShadow: "0 2px 6px rgba(245, 158, 11, 0.12)",
+            color: "var(--star)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           <span style={{ fontSize: "1.5rem" }}>🌴</span>
           <div>
             <div style={{ fontWeight: 750, fontSize: "0.95rem" }}>休假中 · 任务自动豁免</div>
-            <div style={{ fontSize: "0.78rem", color: "#b45309" }}>尽情享受假期，连击不会中断哦！</div>
+            <div style={{ fontSize: "0.78rem", color: "var(--star)", opacity: 0.85 }}>尽情享受假期，连击不会中断哦！</div>
           </div>
         </div>
       )}
@@ -309,57 +309,78 @@ export default function Today({ child, onExpired, active }) {
         <div
           style={{
             flex: 1,
-            background: "#fff",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
             borderRadius: "18px",
             padding: "0.9rem 0.4rem",
             textAlign: "center",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
-          <p style={{ fontSize: "1.6rem", fontWeight: 700, color: "#c4912a" }}>
+          <p style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--star)", fontVariantNumeric: "tabular-nums" }}>
             ⭐ {formatStars(data?.rewards?.stars_total ?? 0)}
           </p>
-          <p style={{ fontSize: "0.75rem", color: "#73706b" }}>星星</p>
+          <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>星星</p>
         </div>
         <div
           style={{
             flex: 1,
-            background: "#fff",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
             borderRadius: "18px",
             padding: "0.9rem 0.4rem",
             textAlign: "center",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
-          <p style={{ fontSize: "1.6rem", fontWeight: 700, color: "#3d9e6b" }}>
+          <p style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--flame)", fontVariantNumeric: "tabular-nums" }}>
             🔥 {data?.rewards?.current_streak_days ?? 0}
           </p>
-          <p style={{ fontSize: "0.75rem", color: "#73706b" }}>连续天数</p>
+          <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>连续天数</p>
         </div>
         <div
           style={{
             flex: 1,
-            background: "#fff",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
             borderRadius: "18px",
             padding: "0.9rem 0.4rem",
             textAlign: "center",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
-          <p style={{ fontSize: "1.6rem", fontWeight: 700, color: "#0891b2" }}>
+          <p style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--protect)", fontVariantNumeric: "tabular-nums" }}>
             ❄️ {data?.rewards?.streak_freeze_count ?? 0}
           </p>
-          <p style={{ fontSize: "0.75rem", color: "#73706b" }}>保护卡</p>
+          <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>保护卡</p>
         </div>
       </div>
 
       {data?.tasks?.length === 0 && (
-        <p style={{ textAlign: "center", color: "#73706b", marginTop: "2rem" }}>今天没有任务</p>
+        <div
+          style={{
+            textAlign: "center",
+            padding: "2.6rem 1rem",
+            background: "var(--card)",
+            borderRadius: "var(--radius)",
+            border: "1px dashed var(--border)",
+            margin: "1.5rem 0",
+            boxShadow: "var(--shadow-sm)",
+          }}
+        >
+          <span style={{ fontSize: "2.4rem", display: "block", marginBottom: "0.5rem" }}>🌿</span>
+          <p style={{ fontWeight: 650, fontSize: "1.05rem", color: "var(--text)", marginBottom: "0.3rem" }}>
+            今天的所有任务都整理好啦
+          </p>
+          <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
+            享受充实的一天，尽情去探索与玩耍吧！
+          </p>
+        </div>
       )}
 
       {timed.length > 0 && (
-        <div style={{ marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.8rem", color: "#73706b", marginBottom: "0.4rem" }}>
+        <div style={{ marginBottom: "1.2rem" }}>
+          <p style={{ fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "0.5rem" }}>
             已安排时间
           </p>
           {timed.map((task) => (
@@ -391,8 +412,8 @@ export default function Today({ child, onExpired, active }) {
       )}
 
       {free.length > 0 && (
-        <div style={{ marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.8rem", color: "#73706b", marginBottom: "0.4rem" }}>
+        <div style={{ marginBottom: "1.2rem" }}>
+          <p style={{ fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "0.5rem" }}>
             自由安排
           </p>
           {free.map((task) => (
@@ -426,9 +447,9 @@ export default function Today({ child, onExpired, active }) {
       {completed.length > 0 && (
         <div
           style={{
-            borderTop: "1px solid #e8e4df",
-            paddingTop: "0.5rem",
-            marginBottom: "1rem",
+            borderTop: "1px solid var(--border)",
+            paddingTop: "0.8rem",
+            marginBottom: "1.2rem",
           }}
         >
           <button
@@ -436,15 +457,20 @@ export default function Today({ child, onExpired, active }) {
             style={{
               width: "100%",
               textAlign: "left",
-              padding: "0.3rem 0",
+              padding: "0.4rem 0",
               background: "none",
               border: "none",
               cursor: "pointer",
-              fontSize: "0.85rem",
-              color: "#73706b",
+              fontSize: "0.88rem",
+              fontWeight: 650,
+              color: "var(--muted)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
-            {showCompleted ? "▼" : "▶"} 已完成 {completed.length} 项
+            <span>{showCompleted ? "▼" : "▶"} 已完成 {completed.length} 项 · 每一项都是成长的印记 🌱</span>
+            <span style={{ fontSize: "0.78rem", color: "var(--accent)" }}>{showCompleted ? "收起" : "展开查看"}</span>
           </button>
           {showCompleted && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}>
@@ -486,12 +512,15 @@ export default function Today({ child, onExpired, active }) {
             onClick={() => setShowAdd(true)}
             style={{
               width: "100%",
-              padding: "0.6rem",
+              padding: "0.75rem",
               fontSize: "0.95rem",
-              color: "#3d9e6b",
-              border: "1px dashed #3d9e6b",
-              borderRadius: "14px",
-              background: "transparent",
+              fontWeight: 650,
+              color: "var(--accent)",
+              border: "1.5px dashed var(--accent)",
+              borderRadius: "16px",
+              background: "var(--accent-light)",
+              boxShadow: "var(--shadow-sm)",
+              cursor: "pointer",
             }}
           >
             + 添加任务
@@ -499,10 +528,11 @@ export default function Today({ child, onExpired, active }) {
         ) : (
           <div
             style={{
-              background: "#fff",
-              borderRadius: "16px",
-              padding: "1rem",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              background: "var(--card)",
+              border: "1px solid var(--border)",
+              borderRadius: "18px",
+              padding: "1.1rem",
+              boxShadow: "var(--shadow-card)",
             }}
           >
             <input
@@ -559,19 +589,20 @@ export default function Today({ child, onExpired, active }) {
             bottom: "30px",
             left: "50%",
             transform: "translateX(-50%)",
-            background: justCompleted.isSubmitted ? "#d97706" : "#3d9e6b",
-            color: "#fff",
-            padding: "0.8rem 1.5rem",
-            borderRadius: "20px",
+            background: justCompleted.isSubmitted ? "var(--star)" : "var(--accent)",
+            color: "#FFFFFF",
+            padding: "0.8rem 1.6rem",
+            borderRadius: "var(--radius-pill)",
             fontSize: "1rem",
-            fontWeight: 600,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+            fontWeight: 650,
+            boxShadow: "0 6px 20px rgba(67, 106, 84, 0.28)",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
             zIndex: 1200,
           }}
         >
           {justCompleted.isSubmitted
             ? `⏳ ${justCompleted.title} 已提交，等待家长点赞！`
-            : `✅ ${justCompleted.title} 完成！+${justCompleted.stars}⭐`}
+            : `🌱 ${justCompleted.title} 完成！+${justCompleted.stars}⭐`}
         </div>
       )}
 
@@ -702,7 +733,7 @@ function TaskCard({
         </div>
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          {/* 72x72px 超大彩色复选圆钮 (Min Target >= 64px 符合儿童人体工学) */}
+          {/* 72x72px 精致印章/素雅纸贴般触控复选圆钮 (Min Target >= 64px 符合儿童人体工学) */}
           {isSubmitted ? (
             <button
               type="button"
@@ -717,8 +748,8 @@ function TaskCard({
                 justifyContent: "center",
               }}
             >
-              <span style={{ fontSize: "1.6rem", lineHeight: 1 }}>⏳</span>
-              <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#b45309", marginTop: 2 }}>
+              <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>⏳</span>
+              <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--star)", marginTop: 2 }}>
                 待点赞
               </span>
             </button>
@@ -732,18 +763,18 @@ function TaskCard({
               style={{ flexShrink: 0 }}
             >
               {isCompleted ? (
-                <span style={{ fontSize: "2rem", fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+                <span style={{ fontSize: "2rem", fontWeight: 800, color: "#FFFFFF", lineHeight: 1 }}>
                   ✓
                 </span>
               ) : isCompleting ? (
-                <span style={{ fontSize: "1.2rem", fontWeight: 700 }}>…</span>
+                <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--accent)" }}>…</span>
               ) : (
                 <span
                   style={{
                     fontSize: "1.9rem",
                     fontWeight: 800,
-                    color: "#3d9e6b",
-                    opacity: 0.65,
+                    color: "var(--accent)",
+                    opacity: 0.45,
                     lineHeight: 1,
                   }}
                 >
@@ -759,8 +790,8 @@ function TaskCard({
                 minWidth: 72,
                 minHeight: 72,
                 borderRadius: "50%",
-                border: "2.5px dashed #c97070",
-                background: "#fff7f7",
+                border: "2.5px dashed var(--danger)",
+                background: "var(--danger-bg)",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -768,7 +799,7 @@ function TaskCard({
                 flexShrink: 0,
               }}
             >
-              <span style={{ fontSize: "0.75rem", color: "#c97070", fontWeight: 600 }}>待确认</span>
+              <span style={{ fontSize: "0.75rem", color: "var(--danger)", fontWeight: 700 }}>待确认</span>
             </div>
           )}
 
@@ -778,10 +809,11 @@ function TaskCard({
               <p
                 style={{
                   fontSize: "1.15rem",
-                  fontWeight: 600,
-                  color: isCompleted ? "#73706b" : isSubmitted ? "#92400e" : "#2d2b28",
+                  fontWeight: 650,
+                  color: isCompleted ? "var(--muted)" : isSubmitted ? "var(--star)" : "var(--text)",
                   textDecoration: isCompleted ? "line-through" : "none",
                   wordBreak: "break-word",
+                  letterSpacing: "-0.01em",
                 }}
               >
                 {task.title}
@@ -794,12 +826,13 @@ function TaskCard({
               {task.require_approval && !isSubmitted && !isCompleted && (
                 <span
                   style={{
-                    padding: "0.15rem 0.5rem",
-                    borderRadius: "999px",
-                    background: "#fef3c7",
-                    color: "#b45309",
+                    padding: "0.15rem 0.55rem",
+                    borderRadius: "var(--radius-pill)",
+                    background: "var(--star-bg)",
+                    color: "var(--star)",
+                    border: "1px solid var(--star-border)",
                     fontSize: "0.72rem",
-                    fontWeight: 600,
+                    fontWeight: 700,
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -810,11 +843,12 @@ function TaskCard({
                 <span
                   style={{
                     padding: "0.2rem 0.6rem",
-                    borderRadius: "999px",
-                    background: "#d4e8da",
-                    color: "#3d9e6b",
+                    borderRadius: "var(--radius-pill)",
+                    background: "var(--accent-light)",
+                    color: "var(--accent)",
+                    border: "1px solid var(--accent-pill)",
                     fontSize: "0.75rem",
-                    fontWeight: 600,
+                    fontWeight: 650,
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -823,7 +857,7 @@ function TaskCard({
               )}
             </div>
 
-            <p style={{ fontSize: "0.82rem", color: "#73706b", marginTop: "0.25rem" }}>
+            <p style={{ fontSize: "0.82rem", color: "var(--muted)", marginTop: "0.25rem" }}>
               {task.expected_minutes ? `${task.expected_minutes}分钟 · ` : ""}⭐{task.reward_stars}
               {isScheduled ? ` · ${scheduleLabel(task)}${src ? ` (${src})` : ""}` : " · 自由安排"}
             </p>
@@ -858,7 +892,7 @@ function TaskCard({
               {isUnapproved && (
                 <button
                   onClick={() => onDelete(task.id)}
-                  style={{ ...st.pillBtn, background: "#fef0f0", color: "#c97070" }}
+                  style={{ ...st.pillBtn, background: "var(--danger-bg)", color: "var(--danger)", border: "1px solid var(--danger-border)" }}
                 >
                   删除
                 </button>
@@ -894,54 +928,59 @@ function RewardSelect({ value, onChange }) {
 
 const st = {
   tc: {
-    background: "#fff",
+    background: "var(--card)",
+    border: "1px solid var(--border)",
     borderRadius: "20px",
     padding: "1rem 1.15rem",
     marginBottom: "0.85rem",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+    boxShadow: "var(--shadow-card)",
+    transition: "box-shadow 0.2s ease, border-color 0.2s ease",
   },
   fi: {
-    padding: "0.5rem 0.6rem",
+    padding: "0.55rem 0.7rem",
     fontSize: "0.9rem",
-    border: "1px solid #d6d2cc",
+    border: "1px solid var(--border)",
     borderRadius: "12px",
     outline: "none",
-    background: "#fff",
+    background: "var(--card)",
+    color: "var(--text)",
     display: "block",
     marginBottom: "0.5rem",
     width: "100%",
+    fontVariantNumeric: "tabular-nums",
   },
   fsb: {
     flex: 1,
-    padding: "0.5rem",
+    padding: "0.55rem",
     fontSize: "0.9rem",
-    fontWeight: 600,
-    color: "#fff",
-    background: "#3d9e6b",
+    fontWeight: 650,
+    color: "#FFFFFF",
+    background: "var(--accent)",
     borderRadius: "12px",
     border: "none",
     cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(67, 106, 84, 0.2)",
   },
   fcb: {
     flex: 1,
-    padding: "0.5rem",
+    padding: "0.55rem",
     fontSize: "0.9rem",
     fontWeight: 600,
-    color: "#73706b",
-    background: "#efece8",
+    color: "var(--muted)",
+    background: "#F0ECE4",
+    border: "1px solid var(--border)",
     borderRadius: "12px",
-    border: "none",
     cursor: "pointer",
   },
   pillBtn: {
-    padding: "0.35rem 0.65rem",
-    borderRadius: "999px",
-    background: "#e3f0e8",
-    color: "#3d9e6b",
+    padding: "0.35rem 0.7rem",
+    borderRadius: "var(--radius-pill)",
+    background: "var(--accent-light)",
+    color: "var(--accent)",
+    border: "1px solid var(--accent-pill)",
     fontSize: "0.8rem",
-    fontWeight: 600,
+    fontWeight: 650,
     whiteSpace: "nowrap",
-    border: "none",
     cursor: "pointer",
   },
 };

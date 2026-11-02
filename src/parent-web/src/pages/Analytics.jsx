@@ -5,12 +5,12 @@ import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
 
 const STATUS_CONFIG = {
-  perfect: { label: "满分达标", color: "#2da44e", bg: "#2da44e", icon: "🌲" },
-  qualified: { label: "达标完成", color: "#66c282", bg: "#85e89d", icon: "🟩" },
-  missed: { label: "未达标", color: "#cf222e", bg: "#fdaeb7", icon: "🟥" },
-  rest: { label: "休息日", color: "#6e7781", bg: "#ebedf0", icon: "⬜" },
-  vacation: { label: "休假中", color: "#d97706", bg: "#fde68a", icon: "🌴" },
-  frozen: { label: "保护卡抵扣", color: "#0891b2", bg: "#a5f3fc", icon: "❄️" },
+  perfect: { label: "满分达标", color: "#FFFFFF", bg: "#436A54", icon: "🌲" },
+  qualified: { label: "达标完成", color: "#2D3731", bg: "#8FB299", icon: "🌱" },
+  missed: { label: "未达标", color: "#BA3A3A", bg: "#FDF2F2", icon: "🍂" },
+  rest: { label: "休息日", color: "#2D3731", bg: "#F0ECE4", icon: "☁️" },
+  vacation: { label: "休假中", color: "#8F5E00", bg: "#FCF4E4", icon: "🌴" },
+  frozen: { label: "保护卡抵扣", color: "#0E7490", bg: "#EDF9FA", icon: "❄️" },
 };
 
 const CATEGORY_ICONS = {
@@ -253,7 +253,8 @@ export default function Analytics({ token, isActive, onExpired }) {
                         aspectRatio: "1",
                         borderRadius: "5px",
                         backgroundColor: cfg.bg,
-                        border: isSelected ? "2px solid #2d2b28" : "1px solid rgba(0,0,0,0.06)",
+                        border: isSelected ? "2px solid var(--text)" : "1px solid var(--border)",
+                        boxShadow: isSelected ? "0 2px 6px rgba(45, 55, 49, 0.25)" : "none",
                         cursor: "pointer",
                         transition: "transform 0.12s ease",
                         display: "flex",
@@ -284,10 +285,11 @@ export default function Analytics({ token, isActive, onExpired }) {
                     style={{
                       fontSize: "0.75rem",
                       padding: "2px 8px",
-                      borderRadius: "999px",
-                      background: STATUS_CONFIG[selectedCell.status]?.bg || "#eee",
-                      color: STATUS_CONFIG[selectedCell.status]?.color || "#333",
-                      fontWeight: 600,
+                      borderRadius: "var(--radius-pill)",
+                      background: STATUS_CONFIG[selectedCell.status]?.bg || "var(--card-subtle)",
+                      color: STATUS_CONFIG[selectedCell.status]?.color || "var(--text)",
+                      border: `1px solid ${selectedCell.status === 'rest' ? 'var(--border)' : 'transparent'}`,
+                      fontWeight: 650,
                     }}
                   >
                     {STATUS_CONFIG[selectedCell.status]?.label}
@@ -334,7 +336,7 @@ export default function Analytics({ token, isActive, onExpired }) {
                       style={{
                         ...styles.progressBar,
                         width: `${cat.completion_rate}%`,
-                        backgroundColor: cat.completion_rate >= 80 ? "#2da44e" : "#5b8fb9",
+                        backgroundColor: cat.completion_rate >= 80 ? "var(--accent)" : "#76A28A",
                       }}
                     />
                   </div>
@@ -349,14 +351,14 @@ export default function Analytics({ token, isActive, onExpired }) {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.8rem", marginTop: "0.8rem" }}>
               {/* Best habit */}
               <div style={styles.insightBox}>
-                <div style={{ fontSize: "0.75rem", color: "#15803d", fontWeight: 700, marginBottom: "4px" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--accent)", fontWeight: 700, marginBottom: "4px" }}>
                   🌟 最易坚持习惯
                 </div>
-                <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#166534" }}>
+                <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text)" }}>
                   {analyticsData.insights.best_habit?.title || "暂无足够数据"}
                 </div>
                 {analyticsData.insights.best_habit && (
-                  <div style={{ fontSize: "0.75rem", color: "#15803d", marginTop: "4px" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "4px" }}>
                     完成 {analyticsData.insights.best_habit.completed_count}/
                     {analyticsData.insights.best_habit.total_count} 次 ({analyticsData.insights.best_habit.completion_rate}%)
                   </div>
@@ -364,15 +366,15 @@ export default function Analytics({ token, isActive, onExpired }) {
               </div>
 
               {/* Attention needed */}
-              <div style={{ ...styles.insightBox, background: "#fef2f2", borderColor: "#fecaca" }}>
-                <div style={{ fontSize: "0.75rem", color: "#b91c1c", fontWeight: 700, marginBottom: "4px" }}>
+              <div style={{ ...styles.insightBox, background: "var(--danger-bg)", borderColor: "var(--danger-border)" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--danger)", fontWeight: 700, marginBottom: "4px" }}>
                   🎯 最需关注任务
                 </div>
-                <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#991b1b" }}>
+                <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--danger)" }}>
                   {analyticsData.insights.attention_needed?.title || "保持优秀，无"}
                 </div>
                 {analyticsData.insights.attention_needed && (
-                  <div style={{ fontSize: "0.75rem", color: "#b91c1c", marginTop: "4px" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--danger)", marginTop: "4px" }}>
                     完成率 {analyticsData.insights.attention_needed.completion_rate}% (缺{" "}
                     {analyticsData.insights.attention_needed.total_count - analyticsData.insights.attention_needed.completed_count} 次)
                   </div>
@@ -400,10 +402,10 @@ export default function Analytics({ token, isActive, onExpired }) {
               </div>
             </div>
 
-            <div style={{ marginTop: "0.8rem", paddingTop: "0.8rem", borderTop: "1px solid #f0ece6", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.8rem" }}>
-              <span>⭐ 本期获得: <strong>+{formatStars(analyticsData.insights.stars.stars_earned)}</strong></span>
-              <span>🛍️ 本期兑换: <strong>-{formatStars(analyticsData.insights.stars.stars_spent)}</strong></span>
-              <span>💰 结余: <strong>{formatStars(analyticsData.insights.stars.current_stars)}</strong></span>
+            <div style={{ marginTop: "0.8rem", paddingTop: "0.8rem", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.8rem", color: "var(--muted)" }}>
+              <span>⭐ 本期获得: <strong style={{ color: "var(--star)" }}>+{formatStars(analyticsData.insights.stars.stars_earned)}</strong></span>
+              <span>🛍️ 本期兑换: <strong style={{ color: "var(--text)" }}>-{formatStars(analyticsData.insights.stars.stars_spent)}</strong></span>
+              <span>💰 结余: <strong style={{ color: "var(--accent)" }}>{formatStars(analyticsData.insights.stars.current_stars)}</strong></span>
             </div>
           </div>
         </>
@@ -414,7 +416,7 @@ export default function Analytics({ token, isActive, onExpired }) {
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: 700 }}>🌴 休假模式管理</h3>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>🌴 休假模式管理</h3>
               <button onClick={() => setShowVacationModal(false)} style={styles.closeBtn}>✕</button>
             </div>
 
@@ -423,7 +425,7 @@ export default function Analytics({ token, isActive, onExpired }) {
             </p>
 
             {/* Create Vacation Form */}
-            <form onSubmit={handleCreateVacation} style={{ marginBottom: "1.2rem", background: "#fbfaf8", padding: "0.8rem", borderRadius: "10px" }}>
+            <form onSubmit={handleCreateVacation} style={{ marginBottom: "1.2rem", background: "var(--card-subtle)", border: "1px solid var(--border-subtle)", padding: "0.85rem", borderRadius: "12px" }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
                 <div>
                   <label style={styles.inputLabel}>开始日期</label>
@@ -457,7 +459,7 @@ export default function Analytics({ token, isActive, onExpired }) {
                 />
               </div>
               {vacationError && (
-                <p style={{ color: "#c97070", fontSize: "0.8rem", marginBottom: "0.4rem" }}>{vacationError}</p>
+                <p style={{ color: "var(--danger)", fontSize: "0.8rem", marginBottom: "0.4rem" }}>{vacationError}</p>
               )}
               <button type="submit" style={styles.submitBtn}>
                 + 登记新休假
@@ -500,9 +502,10 @@ const styles = {
   card: {
     background: "var(--card)",
     borderRadius: "var(--radius)",
-    padding: "1rem",
+    padding: "1.1rem",
     marginBottom: "0.9rem",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+    border: "1px solid var(--border)",
+    boxShadow: "var(--shadow-card)",
   },
   cardTitle: {
     fontSize: "0.95rem",
@@ -511,32 +514,36 @@ const styles = {
   },
   vacationBtn: {
     padding: "0.35rem 0.75rem",
-    borderRadius: "999px",
+    borderRadius: "var(--radius-pill)",
     fontSize: "0.8rem",
     fontWeight: 650,
-    color: "#fff",
-    background: "#d97706",
+    color: "#FFFFFF",
+    background: "var(--flame)",
     border: "none",
     cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(194, 65, 12, 0.2)",
   },
   childTab: {
     padding: "0.3rem 0.8rem",
-    borderRadius: "999px",
+    borderRadius: "var(--radius-pill)",
     fontSize: "0.8rem",
     fontWeight: 600,
     color: "var(--muted)",
-    background: "#eee",
-    border: "none",
+    background: "var(--card-subtle)",
+    border: "1px solid var(--border-subtle)",
     cursor: "pointer",
     whiteSpace: "nowrap",
   },
   childTabActive: {
     background: "var(--accent)",
-    color: "#fff",
+    borderColor: "var(--accent)",
+    color: "#FFFFFF",
+    boxShadow: "0 2px 6px rgba(67, 106, 84, 0.2)",
   },
   toggleGroup: {
     display: "inline-flex",
-    background: "#e8e4df",
+    background: "var(--card-subtle)",
+    border: "1px solid var(--border-subtle)",
     borderRadius: "8px",
     padding: "2px",
   },
@@ -551,27 +558,29 @@ const styles = {
     cursor: "pointer",
   },
   toggleBtnActive: {
-    background: "#fff",
+    background: "var(--card)",
     color: "var(--text)",
-    boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+    boxShadow: "var(--shadow-sm)",
   },
   freezeChip: {
     fontSize: "0.75rem",
     padding: "4px 10px",
-    borderRadius: "999px",
-    background: "#ecfeff",
-    color: "#0891b2",
-    border: "1px solid #cffafe",
+    borderRadius: "var(--radius-pill)",
+    background: "var(--protect-bg)",
+    color: "var(--protect)",
+    border: "1px solid var(--protect-border)",
     fontWeight: 600,
   },
   heatmapWrapper: {
-    background: "#fafaf9",
+    background: "var(--card-subtle)",
+    border: "1px solid var(--border-subtle)",
     padding: "0.8rem",
     borderRadius: "10px",
     marginBottom: "0.7rem",
   },
   selectedDetail: {
-    background: "#f4f3f0",
+    background: "var(--card-subtle)",
+    border: "1px solid var(--border-subtle)",
     borderRadius: "8px",
     padding: "0.5rem 0.8rem",
     display: "flex",
@@ -601,7 +610,7 @@ const styles = {
   },
   progressTrack: {
     height: "8px",
-    background: "#edebe8",
+    background: "var(--card-subtle)",
     borderRadius: "999px",
     overflow: "hidden",
   },
@@ -611,13 +620,14 @@ const styles = {
     transition: "width 0.4s ease",
   },
   insightBox: {
-    background: "#f0fdf4",
-    border: "1px solid #bbf7d0",
+    background: "var(--accent-light)",
+    border: "1px solid var(--accent-pill)",
     borderRadius: "10px",
     padding: "0.7rem",
   },
   metricItem: {
-    background: "#f7f7f6",
+    background: "var(--card-subtle)",
+    border: "1px solid var(--border-subtle)",
     borderRadius: "8px",
     padding: "0.5rem 0.3rem",
     textAlign: "center",
@@ -634,8 +644,8 @@ const styles = {
   modalOverlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(0,0,0,0.5)",
-    backdropFilter: "blur(4px)",
+    background: "rgba(35, 45, 40, 0.45)",
+    backdropFilter: "blur(6px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -643,12 +653,13 @@ const styles = {
     padding: "16px",
   },
   modalContent: {
-    background: "#fff",
-    borderRadius: "16px",
-    padding: "1.2rem",
+    background: "var(--card)",
+    borderRadius: "var(--radius-lg)",
+    padding: "1.3rem",
     maxWidth: "420px",
     width: "100%",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+    boxShadow: "var(--shadow-hover)",
+    border: "1px solid var(--border)",
   },
   closeBtn: {
     background: "transparent",
@@ -666,51 +677,55 @@ const styles = {
   },
   modalInput: {
     width: "100%",
-    padding: "0.4rem 0.6rem",
+    padding: "0.45rem 0.65rem",
     fontSize: "0.85rem",
     border: "1px solid var(--border)",
     borderRadius: "8px",
     outline: "none",
+    background: "var(--card)",
+    color: "var(--text)",
   },
   submitBtn: {
     width: "100%",
-    padding: "0.5rem",
+    padding: "0.6rem",
     background: "var(--accent)",
-    color: "#fff",
+    color: "#FFFFFF",
     fontWeight: 650,
-    fontSize: "0.85rem",
-    borderRadius: "8px",
+    fontSize: "0.9rem",
+    borderRadius: "10px",
     border: "none",
     cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(67, 106, 84, 0.2)",
   },
   vacationItem: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "0.5rem 0.6rem",
-    background: "#f7f7f6",
-    borderRadius: "8px",
+    padding: "0.55rem 0.75rem",
+    background: "var(--card-subtle)",
+    border: "1px solid var(--border-subtle)",
+    borderRadius: "10px",
   },
   delBtn: {
     background: "transparent",
     border: "none",
-    color: "#c97070",
-    fontSize: "0.78rem",
-    fontWeight: 600,
+    color: "var(--danger)",
+    fontSize: "0.8rem",
+    fontWeight: 650,
     cursor: "pointer",
   },
   errorBanner: {
-    background: "#fef0f0",
-    border: "1px solid #f8d0d0",
+    background: "var(--danger-bg)",
+    border: "1px solid var(--danger-border)",
     borderRadius: "10px",
     padding: "0.8rem 1rem",
     marginBottom: "0.8rem",
     display: "flex",
     alignItems: "center",
     gap: "0.6rem",
-    color: "#c97070",
+    color: "var(--danger)",
     fontSize: "0.85rem",
   },
   errorIcon: { fontSize: "1.1rem", fontWeight: 600 },
-  errorClose: { marginLeft: "auto", fontSize: "0.9rem", color: "#c97070", background: "transparent", border: "none", cursor: "pointer", fontWeight: 600 },
+  errorClose: { marginLeft: "auto", fontSize: "0.9rem", color: "var(--danger)", background: "transparent", border: "none", cursor: "pointer", fontWeight: 600 },
 };

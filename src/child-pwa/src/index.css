@@ -1,21 +1,54 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg: #f7f7f6;
-  --card: #fff;
-  --text: #2d2b28;
-  --muted: #73706b;
-  --accent: #3d9e6b;
-  --accent-hover: #2f7d53;
-  --positive: #4b9c64;
-  --star: #c4912a;
-  --star-bg: #fdf6e3;
-  --danger: #c97070;
-  --danger-bg: #fdf0f0;
-  --border: #e8e4df;
+  /* 方案三【自然温润纸质手账风】设计系统 Tokens */
+  /* 画布底色：暖燕麦米色纸底，告别冷白刺眼感，高度护眼 */
+  --bg: #FAF8F5;
+  /* 卡片质感：卡片纯白或极浅乳白，配合温暖柔和纸质边线与低饱和漫反射投影 */
+  --card: #FFFFFF;
+  --card-subtle: #FAF7F2;
+  --border: #E8E2D5;
+  --border-subtle: #F0ECE4;
+
+  /* 墨水字阶：主文本深墨苔藓黑，次级文字鼠尾草灰（WCAG 2.2 AA 对比度 >= 4.5:1） */
+  --text: #2D3731;
+  --text-primary: #2D3731;
+  --muted: #67736C;
+  --muted-sage: #647069;
+
+  /* 品牌主色：森林苔藓绿 */
+  --accent: #436A54;
+  --accent-hover: #355442;
+  --accent-light: #EEF4F0;
+  --accent-pill: #DFEAE3;
+
+  /* 游戏化语义色 */
+  --star: #8F5E00;
+  --star-bg: #FCF4E4;
+  --star-border: #F6E2B3;
+  --flame: #C2410C;
+  --flame-bg: #FFF1EB;
+  --flame-border: #FED7AA;
+  --protect: #0E7490;
+  --protect-bg: #EDF9FA;
+  --protect-border: #BAE6FD;
+  --danger: #BA3A3A;
+  --danger-bg: #FDF2F2;
+  --danger-border: #FECACA;
+
+  /* 圆角与阴影：低饱和温润漫反射投影 */
+  --radius-sm: 8px;
   --radius: 18px;
-  --accent-light: #e8f5ec;
-  --accent-pill: #d4e8da;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 3px rgba(80, 70, 60, 0.05);
+  --shadow-card: 0 2px 8px rgba(80, 70, 60, 0.05), 0 1px 3px rgba(80, 70, 60, 0.03);
+  --shadow-hover: 0 4px 14px rgba(80, 70, 60, 0.08), 0 2px 4px rgba(80, 70, 60, 0.03);
+  --shadow-stamp: 0 3px 10px rgba(67, 106, 84, 0.16);
+
+  /* 排版黄金比例 */
+  --line-height-body: 1.75;
+  --line-height-display: 1.35;
 }
 
 *,
@@ -32,12 +65,21 @@ html {
 }
 
 body {
-  font-family: "Noto Sans SC", "PingFang SC", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-weight: 400;
+  line-height: 1.75;
   background: var(--bg);
   color: var(--text);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+
+h1, h2, h3, h4, .display-text {
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  font-weight: 700;
+  color: var(--text);
 }
 
 #root {
@@ -54,39 +96,88 @@ body {
 }
 
 .nav-tabs {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  display: flex; justify-content: center; gap: 8px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
   padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px));
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(250, 248, 245, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-top: 1px solid var(--border);
   z-index: 200;
 }
+
 .nav-tab {
-  flex: 1; max-width: 160px;
-  padding: 12px 18px; text-align: center; font-size: 0.95rem; font-weight: 650;
-  font-family: "Noto Sans SC", "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
+  flex: 1;
+  max-width: 160px;
+  padding: 12px 18px;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 650;
+  font-family: inherit;
   letter-spacing: -0.01em;
-  color: var(--muted); background: transparent;
-  border-radius: var(--radius); border: none; cursor: pointer;
+  color: var(--muted);
+  background: transparent;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
   transition: all 0.18s ease;
 }
-.nav-tab.on { background: var(--accent-light); color: var(--accent); }
+
+.nav-tab.on {
+  background: var(--accent-light);
+  color: var(--accent);
+}
 
 .brand-icon {
-  width: 64px; height: 64px; border-radius: 20px;
-  background: var(--accent); display: flex; align-items: center; justify-content: center;
-  font-size: 1.8rem; color: #fff; margin: 0 auto 14px;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  color: #FFFFFF;
+  margin: 0 auto 14px;
+  box-shadow: 0 4px 12px rgba(67, 106, 84, 0.22);
 }
 
 .stat-chip {
-  display: inline-flex; align-items: center; gap: 2px;
-  padding: 3px 12px; font-size: 0.8rem; font-weight: 650;
-  border-radius: 999px;
-  background: var(--star-bg); color: var(--star);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  background: var(--star-bg);
+  color: var(--star);
+  border: 1px solid var(--star-border);
+  font-variant-numeric: tabular-nums;
 }
-.stat-chip.green { background: var(--accent-light); color: var(--accent); }
+
+.stat-chip.green {
+  background: var(--accent-light);
+  color: var(--accent);
+  border-color: var(--accent-pill);
+}
+
+.stat-chip.flame {
+  background: var(--flame-bg);
+  color: var(--flame);
+  border-color: var(--flame-border);
+}
+
+.stat-chip.protect {
+  background: var(--protect-bg);
+  color: var(--protect);
+  border-color: var(--protect-border);
+}
 
 button {
   font: inherit;
@@ -95,26 +186,29 @@ button {
   background: none;
 }
 
-input {
+input,
+select,
+textarea {
   font: inherit;
+  font-variant-numeric: tabular-nums;
 }
 
-/* 72x72px 超大彩色复选圆钮 (Min Target >= 64px 符合儿童人体工学) */
+/* 72x72px 精致印章/素雅纸贴般触控复选圆钮 (符合儿童人体工学) */
 .task-check-btn {
   width: 72px;
   height: 72px;
   min-width: 72px;
   min-height: 72px;
   border-radius: 50%;
-  border: 3.5px solid #3d9e6b;
-  background: #f0f9f4;
-  color: #3d9e6b;
+  border: 3.5px solid var(--accent);
+  background: #FAF7F2;
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 3px 10px rgba(61, 158, 107, 0.16);
+  box-shadow: 0 3px 10px rgba(67, 106, 84, 0.14), inset 0 1px 2px rgba(255, 255, 255, 0.85);
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -125,23 +219,23 @@ input {
 }
 
 .task-check-btn:active:not(:disabled) {
-  transform: scale(0.88);
-  box-shadow: 0 1px 4px rgba(61, 158, 107, 0.2);
+  transform: scale(0.90);
+  box-shadow: 0 1px 4px rgba(67, 106, 84, 0.18), inset 0 2px 4px rgba(67, 106, 84, 0.08);
 }
 
 .task-check-btn.completed {
-  background: #3d9e6b;
-  border-color: #3d9e6b;
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(61, 158, 107, 0.32);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(67, 106, 84, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.35);
   cursor: default;
 }
 
 .task-check-btn.submitted {
-  background: #fef3c7;
-  border: 3.5px dashed #f59e0b;
-  color: #b45309;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+  background: var(--star-bg);
+  border: 3px dashed var(--star);
+  color: var(--star);
+  box-shadow: 0 3px 10px rgba(154, 103, 0, 0.18);
   cursor: default;
 }
 
@@ -150,22 +244,22 @@ input {
   align-items: center;
   gap: 4px;
   padding: 3px 10px;
-  border-radius: 999px;
-  background: #fef3c7;
-  border: 1px solid #fde68a;
-  color: #b45309;
+  border-radius: var(--radius-pill);
+  background: var(--star-bg);
+  border: 1px solid var(--star-border);
+  color: var(--star);
   font-size: 0.78rem;
   font-weight: 700;
 }
 
 .task-check-btn.spring-pop {
-  animation: springPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: stampSpringPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes springPop {
+@keyframes stampSpringPop {
   0% { transform: scale(0.85); }
-  50% { transform: scale(1.18); }
-  75% { transform: scale(0.96); }
+  50% { transform: scale(1.16); }
+  75% { transform: scale(0.97); }
   100% { transform: scale(1); }
 }
 
@@ -180,13 +274,13 @@ input {
 .task-focus-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   padding: 6px 14px;
   min-height: 40px;
-  border-radius: 999px;
-  background: #eef8f3;
-  border: 1.5px solid #3d9e6b;
-  color: #2e7d52;
+  border-radius: var(--radius-pill);
+  background: var(--accent-light);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
   font-size: 0.85rem;
   font-weight: 650;
   cursor: pointer;
@@ -195,10 +289,87 @@ input {
 }
 
 .task-focus-btn:hover {
-  background: #dff2e7;
+  background: #E1ECE5;
 }
 
 .task-focus-btn:active {
   transform: scale(0.95);
 }
 
+/* 按钮通用层级规范 (Primary, Secondary, Ghost, Outline) */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 14px;
+  background: var(--accent);
+  color: #FFFFFF;
+  font-weight: 650;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(67, 106, 84, 0.2);
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: 0 4px 12px rgba(67, 106, 84, 0.28);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 14px;
+  background: #F0ECE4;
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #E8E3DA;
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text);
+}

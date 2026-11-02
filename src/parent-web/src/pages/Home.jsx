@@ -7,7 +7,7 @@ import RewardSettings from "./RewardSettings.jsx";
 import TaskManage from "./TaskManage.jsx";
 import { formatStars } from "../utils/format.js";
 
-const AVATARS = ["#3d9e6b", "#c4912a", "#5b8fb9", "#c97070", "#8b6f9e", "#4b9c64"];
+const AVATARS = ["#436A54", "#9A6700", "#C2410C", "#0E7490", "#637A6D", "#507A65"];
 
 const GRADE_OPTIONS = {
   幼儿园: ["小班", "中班", "大班"],
@@ -108,16 +108,17 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
         </div>
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.2rem" }}>
-        <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>Family Plan</h1>
-        <button onClick={onLogout} style={{ color: "#73706b", fontSize: "0.85rem" }}>退出</button>
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "var(--accent)", letterSpacing: "-0.015em" }}>Family Plan</h1>
+        <button onClick={onLogout} style={{ color: "var(--muted)", fontSize: "0.85rem", cursor: "pointer" }}>退出</button>
       </div>
 
-      {loading && <p style={{ color: "#73706b", textAlign: "center", paddingTop: "2rem" }}>加载中…</p>}
+      {loading && <p style={{ color: "var(--muted)", textAlign: "center", paddingTop: "2rem" }}>加载中…</p>}
 
       {!loading && children.length === 0 && (
-        <div style={{ textAlign: "center", paddingTop: "3rem" }}>
-          <p style={{ color: "#73706b", marginBottom: "1rem" }}>还没有添加人员</p>
-          <button onClick={() => setView("create-child")} style={{ color: "#3d9e6b", fontSize: "1rem", fontWeight: 600 }}>+ 添加</button>
+        <div style={{ textAlign: "center", paddingTop: "3rem", paddingBottom: "2rem", background: "var(--card)", borderRadius: "var(--radius)", border: "1px dashed var(--border)" }}>
+          <span style={{ fontSize: "2.2rem", display: "block", marginBottom: "0.4rem" }}>🌱</span>
+          <p style={{ color: "var(--muted)", marginBottom: "1rem" }}>还没有添加人员</p>
+          <button onClick={() => setView("create-child")} className="btn-primary">+ 添加孩子</button>
         </div>
       )}
 
@@ -173,14 +174,14 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
                           height: "18px",
                           padding: "0 4px",
                           borderRadius: "999px",
-                          background: "#e11d48",
-                          color: "#fff",
+                          background: "var(--flame)",
+                          color: "#FFFFFF",
                           fontSize: "0.68rem",
                           fontWeight: 750,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          border: "2px solid #fff",
+                          border: "2px solid var(--card)",
                           boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
                         }}
                       >
@@ -190,21 +191,21 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
                   </div>
                   <div onClick={() => { setSelectedChild(c); setView("task-manage"); }} style={{ cursor: "pointer", flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", marginBottom: 2 }}>
-                      <span style={{ fontSize: "1rem", fontWeight: 700, fontFamily: "\"Noto Sans SC\", \"PingFang SC\", -apple-system, BlinkMacSystemFont, sans-serif" }}>{c.name}</span>
-                      {c.grade_label && <span style={{ fontSize: "0.78rem", color: "#73706b" }}>{c.grade_label}</span>}
+                      <span style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text)" }}>{c.name}</span>
+                      {c.grade_label && <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>{c.grade_label}</span>}
                       {submitted > 0 && (
                         <span
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "2px",
-                            padding: "1px 7px",
-                            fontSize: "0.7rem",
+                            padding: "2px 8px",
+                            fontSize: "0.72rem",
                             fontWeight: 700,
-                            borderRadius: "999px",
-                            background: "#fef3c7",
-                            color: "#b45309",
-                            border: "1px solid #fde68a",
+                            borderRadius: "var(--radius-pill)",
+                            background: "var(--star-bg)",
+                            color: "var(--star)",
+                            border: "1px solid var(--star-border)",
                           }}
                         >
                           ⏳ 待点赞 {submitted}
@@ -213,22 +214,22 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
                     </div>
                     <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
                       <span className="stat-chip">⭐ {formatStars(stars)}</span>
-                      <span className="stat-chip green">🔥 {streak}</span>
-                      <span style={{ fontSize: "0.72rem", color: "#9e948a" }}>达标线 {c.streak_threshold ?? 80}%</span>
+                      <span className="stat-chip flame">🔥 {streak}</span>
+                      <span style={{ fontSize: "0.72rem", color: "var(--muted)" }}>达标线 {c.streak_threshold ?? 80}%</span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: "0.2rem", alignItems: "center", flexShrink: 0 }}>
-                    <button onClick={() => startEdit(c)} style={styles.ib}>✎</button>
+                  <div style={{ display: "flex", gap: "0.3rem", alignItems: "center", flexShrink: 0 }}>
+                    <button onClick={() => startEdit(c)} style={styles.ib} title="编辑">✎</button>
                     <button onClick={() => { setSelectedChild(c); setView("reward-settings"); }} style={styles.settingsBtn}>奖励设置</button>
-                    <button onClick={() => handleDelete(c.id)} style={styles.ib}>✕</button>
+                    <button onClick={() => handleDelete(c.id)} style={styles.ib} title="删除">✕</button>
                   </div>
                 </div>
                 {rate !== null && (
-                  <div style={{ marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px solid #f0ece6", display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                  <div style={{ marginTop: "0.6rem", paddingTop: "0.6rem", borderTop: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", gap: "0.7rem" }}>
                     <ProgressRing percent={rate} />
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: "0.85rem", fontWeight: 650, letterSpacing: "-0.01em" }}>{completed}/{total} 项完成</p>
-                      <p style={{ fontSize: "0.72rem", color: "#73706b", marginTop: "0.05rem" }}>当日进度</p>
+                      <p style={{ fontSize: "0.85rem", fontWeight: 650, letterSpacing: "-0.01em", color: "var(--text)" }}>{completed}/{total} 项完成</p>
+                      <p style={{ fontSize: "0.72rem", color: "var(--muted)", marginTop: "0.05rem" }}>当日进度</p>
                     </div>
                   </div>
                 )}
@@ -239,7 +240,7 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
       })}
 
       {children.length > 0 && (
-        <button onClick={() => setView("create-child")} style={styles.ab}>+ 添加</button>
+        <button onClick={() => setView("create-child")} style={styles.ab}>+ 添加孩子</button>
       )}
     </div>
   );
@@ -252,38 +253,38 @@ function ProgressRing({ percent, size = 52 }) {
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} viewBox="0 0 52 52" style={{ transform: "rotate(-90deg)" }}>
-        <circle cx="26" cy="26" r={r} fill="none" stroke="#e8e4df" strokeWidth="4" />
-        <circle cx="26" cy="26" r={r} fill="none" stroke="#3d9e6b" strokeWidth="4"
+        <circle cx="26" cy="26" r={r} fill="none" stroke="var(--border)" strokeWidth="4" />
+        <circle cx="26" cy="26" r={r} fill="none" stroke="var(--accent)" strokeWidth="4"
           strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round"
           style={{ transition: "stroke-dashoffset 0.5s ease" }} />
       </svg>
       <div style={{
         position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "0.75rem", fontWeight: 700, fontFamily: "SF Mono, ui-monospace, Menlo, monospace", color: "#2d2b28"
+        fontSize: "0.75rem", fontWeight: 700, fontVariantNumeric: "tabular-nums", color: "var(--text)"
       }}>{percent}%</div>
     </div>
   );
 }
 
 const styles = {
-  card: { background: "#fff", borderRadius: "14px", padding: "0.9rem 1rem", marginBottom: "0.7rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
-  ib: { width: "1.6rem", height: "1.6rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 600, color: "#73706b", background: "transparent", border: "none", cursor: "pointer" },
-  settingsBtn: { padding: "0.24rem 0.55rem", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 700, color: "#fff", background: "#3d9e6b", border: "none", cursor: "pointer", whiteSpace: "nowrap" },
-  ei: { width: "100%", padding: "0.4rem 0.6rem", fontSize: "0.95rem", border: "1px solid #e8e4df", borderRadius: "8px", outline: "none", marginBottom: "0.3rem", display: "block" },
-  el: { display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#4a4540", marginBottom: "0.15rem", marginTop: "0.3rem" },
-  sb: { flex: 1, padding: "0.35rem", fontSize: "0.85rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "8px" },
-  cb: { flex: 1, padding: "0.35rem", fontSize: "0.85rem", fontWeight: 600, color: "#73706b", background: "#efece8", borderRadius: "8px" },
-  ab: { width: "100%", padding: "0.7rem", fontSize: "0.95rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "12px", marginTop: "0.6rem" },
+  card: { background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "1rem 1.15rem", marginBottom: "0.85rem", boxShadow: "var(--shadow-card)" },
+  ib: { width: "1.8rem", height: "1.8rem", borderRadius: "50%", fontSize: "0.8rem", fontWeight: 600, color: "var(--muted)", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
+  settingsBtn: { padding: "0.26rem 0.65rem", borderRadius: "var(--radius-pill)", fontSize: "0.74rem", fontWeight: 650, color: "var(--accent)", background: "var(--accent-light)", border: "1px solid var(--accent-pill)", cursor: "pointer", whiteSpace: "nowrap" },
+  ei: { width: "100%", padding: "0.45rem 0.65rem", fontSize: "0.95rem", border: "1px solid var(--border)", borderRadius: "8px", outline: "none", marginBottom: "0.35rem", display: "block", background: "var(--card)", color: "var(--text)", fontVariantNumeric: "tabular-nums" },
+  el: { display: "block", fontSize: "0.78rem", fontWeight: 650, color: "var(--muted)", marginBottom: "0.15rem", marginTop: "0.35rem" },
+  sb: { flex: 1, padding: "0.45rem", fontSize: "0.85rem", fontWeight: 650, color: "#FFFFFF", background: "var(--accent)", borderRadius: "8px", border: "none", cursor: "pointer", boxShadow: "0 2px 6px rgba(67, 106, 84, 0.2)" },
+  cb: { flex: 1, padding: "0.45rem", fontSize: "0.85rem", fontWeight: 600, color: "var(--muted)", background: "#F0ECE4", border: "1px solid var(--border)", borderRadius: "8px", cursor: "pointer" },
+  ab: { width: "100%", padding: "0.75rem", fontSize: "0.95rem", fontWeight: 650, color: "#FFFFFF", background: "var(--accent)", borderRadius: "12px", marginTop: "0.8rem", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(67, 106, 84, 0.2)" },
   errorBanner: {
-    background: "#fef0f0",
-    border: "1px solid #f8d0d0",
+    background: "var(--danger-bg)",
+    border: "1px solid var(--danger-border)",
     borderRadius: "10px",
     padding: "0.8rem 1rem",
     marginBottom: "0.8rem",
     display: "flex",
     alignItems: "center",
     gap: "0.6rem",
-    color: "#c97070",
+    color: "var(--danger)",
     fontSize: "0.85rem",
   },
   errorIcon: {
@@ -293,7 +294,7 @@ const styles = {
   errorClose: {
     marginLeft: "auto",
     fontSize: "0.9rem",
-    color: "#c97070",
+    color: "var(--danger)",
     background: "transparent",
     border: "none",
     cursor: "pointer",

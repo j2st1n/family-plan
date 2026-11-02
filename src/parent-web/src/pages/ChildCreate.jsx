@@ -32,9 +32,9 @@ export default function ChildCreate({ token, onDone, onCancel }) {
   return (
     <div>
       <div style={{ marginBottom: "1.2rem" }}>
-        <button onClick={onCancel} style={{ color: "#3d9e6b", fontSize: "0.95rem" }}>← 返回</button>
+        <button onClick={onCancel} style={{ color: "var(--accent)", fontSize: "0.95rem", fontWeight: 650, background: "none", border: "none", cursor: "pointer" }}>← 返回</button>
       </div>
-      <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "1rem" }}>添加孩子</h2>
+      <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text)", marginBottom: "1rem" }}>添加孩子</h2>
       <form onSubmit={handleSubmit}>
         <label style={styles.label}>名字</label>
         <input
@@ -82,8 +82,8 @@ const styles = {
   label: {
     display: "block",
     fontSize: "0.85rem",
-    fontWeight: 600,
-    color: "#4a4540",
+    fontWeight: 650,
+    color: "var(--muted)",
     marginBottom: "0.25rem",
     marginTop: "0.3rem",
   },
@@ -91,20 +91,25 @@ const styles = {
     width: "100%",
     padding: "0.7rem 0.8rem",
     fontSize: "1rem",
-    border: "1px solid #e8e4df",
+    border: "1px solid var(--border)",
     borderRadius: "10px",
+    background: "var(--card)",
+    color: "var(--text)",
     marginBottom: "0.6rem",
     outline: "none",
     display: "block",
   },
   btn: {
     width: "100%",
-    padding: "0.7rem",
+    padding: "0.75rem",
     fontSize: "1rem",
-    fontWeight: 600,
-    color: "#fff",
-    background: "#3d9e6b",
+    fontWeight: 650,
+    color: "#FFFFFF",
+    background: "var(--accent)",
+    border: "none",
     borderRadius: "12px",
-    marginTop: "0.4rem",
+    marginTop: "0.6rem",
+    cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(67, 106, 84, 0.2)",
   },
 };

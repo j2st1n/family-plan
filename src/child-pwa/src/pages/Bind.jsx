@@ -29,7 +29,7 @@ export default function Bind({ onBound }) {
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "20vh" }}>
       <div className="brand-icon">🌟</div>
       <h1 style={{ fontSize: "1.7rem", fontWeight: 700, fontFamily: "\"Noto Sans SC\", \"PingFang SC\", -apple-system, BlinkMacSystemFont, sans-serif", letterSpacing: "-0.02em", marginBottom: 6 }}>Family Plan</h1>
-      <p style={{ fontSize: "0.9rem", color: "#73706b", marginBottom: "2rem" }}>
+      <p style={{ fontSize: "0.9rem", color: "var(--muted)", marginBottom: "2rem" }}>
         输入家长给您的访问码
       </p>
       <div style={{ width: "100%", maxWidth: 380 }}>
@@ -48,15 +48,18 @@ export default function Bind({ onBound }) {
           letterSpacing: "0.3em",
           textAlign: "center",
           padding: "0.8rem 0.6rem",
-          border: "2px solid #d6d2cc",
+          border: "2px solid var(--border)",
           borderRadius: "16px",
-          background: "#fff",
+          background: "var(--card)",
+          color: "var(--text)",
           outline: "none",
           marginBottom: "1.2rem",
+          fontVariantNumeric: "tabular-nums",
+          boxShadow: "var(--shadow-sm)",
         }}
       />
       {error && (
-        <p style={{ color: "#c97070", marginBottom: "0.8rem", fontSize: "0.95rem" }}>
+        <p style={{ color: "var(--danger)", marginBottom: "0.8rem", fontSize: "0.95rem", textAlign: "center" }}>
           {error}
         </p>
       )}
@@ -67,11 +70,12 @@ export default function Bind({ onBound }) {
           width: "100%",
           padding: "0.9rem",
           fontSize: "1.15rem",
-          fontWeight: 600,
-          color: "#fff",
-          background: loading ? "#73706b" : "#3d9e6b",
-          borderRadius: "14px",
-          transition: "background 0.15s",
+          fontWeight: 650,
+          color: "#FFFFFF",
+          background: loading ? "var(--border)" : "var(--accent)",
+          borderRadius: "16px",
+          transition: "all 0.18s ease",
+          boxShadow: "0 2px 8px rgba(67, 106, 84, 0.2)",
         }}
       >
         {loading ? "绑定中…" : "绑定"}
