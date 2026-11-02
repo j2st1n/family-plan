@@ -288,7 +288,7 @@ export default function TodayDashboard({
   // Open edit task modal
   const openEditTaskModal = (task) => {
     setEditingTask(task.id);
-    const cat = inferCategory(task.title);
+    const cat = inferCategory(task.title, task.description);
     setTaskForm({
       title: task.title || "",
       minutes: String(task.expected_minutes || 20),
@@ -739,7 +739,7 @@ export default function TodayDashboard({
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           {/* 1. 待完成任务 */}
           {pendingTasks.map((t) => {
-            const cat = inferCategory(t.title);
+            const cat = inferCategory(t.title, t.description);
             return (
               <div
                 key={t.id}

@@ -100,6 +100,19 @@ test("IA Restructure: No duplicate logout in Header, App defaults to TodayDashbo
     settingsContent.includes("window.confirm"),
     "Logout in Settings.jsx must have confirmation prompt"
   );
+  assert.ok(
+    settingsContent.includes("res.code"),
+    "Settings.jsx must support reading 'code' from backend access-code endpoint response"
+  );
+});
+
+test("inferCategory handles category tag in description and custom titles", async () => {
+  const { inferCategory } = await import("../src/utils/category.js");
+
+  assert.equal(inferCategory("日常习惯", "[家务协助]"), "家务协助");
+  assert.equal(inferCategory("日常打卡", "[体育运动]"), "体育运动");
+  assert.equal(inferCategory("特别安排", "[生活自理]"), "生活自理");
+  assert.equal(inferCategory("自由探索", "[学习思考]"), "学习思考");
 });
 
 test("Responsive Navigation Discipline in index.css", () => {

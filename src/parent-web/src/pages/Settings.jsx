@@ -115,7 +115,7 @@ export default function Settings({
     setCopied(false);
     try {
       const res = await api.getAccessCode(token, selectedChildId);
-      setAccessCode(res.access_code);
+      setAccessCode(res.code || res.access_code);
     } catch (err) {
       alert(`生成访问码失败：${err.message}`);
     } finally {
