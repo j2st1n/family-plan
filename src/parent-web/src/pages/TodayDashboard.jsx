@@ -7,11 +7,15 @@ import { CATEGORIES, CATEGORY_ICONS, inferCategory } from "../utils/category.js"
 import TaskCopilotModal from "../components/TaskCopilotModal.jsx";
 
 function parseLocal(s) {
-  const [y, m, d] = s.split("-").map(Number);
+  if (!s || typeof s !== "string") return new Date();
+  const parts = s.split("-").map(Number);
+  if (parts.length < 3 || parts.some(isNaN)) return new Date();
+  const [y, m, d] = parts;
   return new Date(y, m - 1, d);
 }
 
 function fmtDate(d) {
+  if (!d || !(d instanceof Date) || isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
@@ -26,9 +30,10 @@ function addDays(s, n) {
 
 const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 function formatDateDisplay(dateStr) {
+  if (!dateStr) return "";
   const todayStr = fmtDate(new Date());
   const d = parseLocal(dateStr);
-  const weekDay = WEEKDAYS[d.getDay()];
+  const weekDay = WEEKDAYS[d.getDay()] || "";
   if (dateStr === todayStr) {
     return `${dateStr} ${weekDay} (今天)`;
   }
@@ -69,7 +74,7 @@ export default function TodayDashboard({
   const [date, setDate] = useState(() => fmtDate(new Date()));
   const [tasks, setTasks] = useState([]);
   const [plan, setPlan] = useState(null);
-  const [rewards, setRewards] = useState({ stars_total: 0, current_streak_days: 0 });
+  const [rewards, setRewards] = useState({ stars_total: 0, current_streak_days: 0, streak_freeze_count: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [actionInProgress, setActionInProgress] = useState(false);
@@ -141,7 +146,7 @@ export default function TodayDashboard({
       setPlan(targetPlan);
       const data = await api.fetchDailyTasks(token, targetPlan.id, date);
       setTasks(data.tasks || []);
-      setRewards(data.rewards || { stars_total: 0, current_streak_days: 0 });
+      setRewards(data.rewards || { stars_total: 0, current_streak_days: 0, streak_freeze_count: 0 });
     } catch (err) {
       setError(`加载数据失败：${err.message}`);
     } finally {

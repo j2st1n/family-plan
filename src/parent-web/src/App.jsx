@@ -9,8 +9,12 @@ import useSseRefresh from "./hooks/useSseRefresh.js";
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem("parent_token"));
-  const [tab, setTab] = useState(() => localStorage.getItem("parent_active_tab") || "today");
+  const [tab, setTab] = useState(() => {
+    const saved = localStorage.getItem("parent_active_tab");
+    return ["today", "analytics", "shop", "settings"].includes(saved) ? saved : "today";
+  });
   const [children, setChildren] = useState([]);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [activeChildId, setActiveChildId] = useState(() => localStorage.getItem("parent_active_child_id") || "");
   const [totalPending, setTotalPending] = useState(0);
 
@@ -23,12 +27,16 @@ export default function App() {
   useEffect(() => {
     if (!token) return;
     try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      if (payload.exp * 1000 < Date.now()) {
-        clearSession();
+      const parts = token.split(".");
+      if (parts.length >= 2) {
+        const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+        const payload = JSON.parse(decodeURIComponent(escape(atob(base64))));
+        if (payload?.exp && payload.exp * 1000 < Date.now()) {
+          clearSession();
+        }
       }
-    } catch {
-      clearSession();
+    } catch (e) {
+      console.warn("Token payload parse error", e);
     }
   }, [token, clearSession]);
 
@@ -78,6 +86,8 @@ export default function App() {
       setTotalPending(pendingCount);
     } catch (e) {
       console.warn("Refresh meta failed", e);
+    } finally {
+      setInitialLoading(false);
     }
   }, [token]);
 
@@ -144,7 +154,12 @@ export default function App() {
 
       {/* 4 大核心 Tab 主体内容区 */}
       <main style={{ minHeight: "calc(100vh - 160px)" }}>
-        {tab === "today" && (
+        {initialLoading ? (
+          <div style={{ textAlign: "center", padding: "60px 16px", color: "var(--muted)" }}>
+            <span style={{ fontSize: "2rem", display: "block", marginBottom: "8px" }}>🌱</span>
+            <p style={{ fontSize: "0.9rem", fontWeight: 600 }}>正在加载家庭计划…</p>
+          </div>
+        ) : tab === "today" ? (
           <TodayDashboard
             token={token}
             children={children}
@@ -154,28 +169,35 @@ export default function App() {
             onExpired={clearSession}
             onNavigateSettings={() => handleTabChange("settings")}
           />
-        )}
-        {tab === "analytics" && (
+        ) : tab === "analytics" ? (
           <Analytics
             token={token}
             isActive={tab === "analytics"}
             onExpired={clearSession}
           />
-        )}
-        {tab === "shop" && (
+        ) : tab === "shop" ? (
           <Shop
             token={token}
             isActive={tab === "shop"}
             onExpired={clearSession}
           />
-        )}
-        {tab === "settings" && (
+        ) : tab === "settings" ? (
           <Settings
             token={token}
             children={children}
             onRefreshChildren={refreshGlobalMeta}
             onLogout={clearSession}
             onExpired={clearSession}
+          />
+        ) : (
+          <TodayDashboard
+            token={token}
+            children={children}
+            activeChild={activeChild}
+            onSelectChild={handleChildChange}
+            onRefreshMeta={refreshGlobalMeta}
+            onExpired={clearSession}
+            onNavigateSettings={() => handleTabChange("settings")}
           />
         )}
       </main>
