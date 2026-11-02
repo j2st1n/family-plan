@@ -19,6 +19,7 @@ export default function Shop({ onExpired, active }) {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", desc: "" });
   const [freezeInfo, setFreezeInfo] = useState(null);
+  const [purchasingFreeze, setPurchasingFreeze] = useState(false);
 
 const load = useCallback(async () => {
   setLoading(true); setError("");
@@ -89,11 +90,13 @@ async function saveEdit() {
 }
 
 async function handlePurchaseFreeze() {
+  if (purchasingFreeze) return;
   if (!window.confirm("用 5⭐ 购买 1 张连击保护卡？")) return;
+  setPurchasingFreeze(true);
   try {
     const updated = await purchaseChildFreeze(onExpired);
     setFreezeInfo(updated);
-    load();
+    await load();
   } catch (err) {
     if (err.message === "token_expired") {
       setError("登录已过期，请重新绑定");
@@ -101,6 +104,8 @@ async function handlePurchaseFreeze() {
     } else {
       setError(err.message || "购买失败");
     }
+  } finally {
+    setPurchasingFreeze(false);
   }
 }
 
@@ -113,7 +118,7 @@ async function handlePurchaseFreeze() {
     <div>
       {error && (
         <div style={{ background: "#fef0f0", borderRadius: "12px", padding: "0.7rem 1rem", marginBottom: "0.8rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span style={{ flex: 1, fontSize: "0.85rem", color: "#c97070" }}>{error}</span>
+          <span style={{ flex: 1, fontSize: "#0.85rem", color: "#c97070" }}>{error}</span>
           <button onClick={() => setError("")} style={{ color: "#c97070", fontSize: "1rem", fontWeight: 700, padding: "0.1rem 0.3rem" }}>✕</button>
         </div>
       )}
@@ -131,8 +136,16 @@ async function handlePurchaseFreeze() {
               当前可用 {freezeInfo.available_count ?? 0} 张 · 遗漏任务自动保活
             </p>
           </div>
-          <button onClick={handlePurchaseFreeze} style={{ ...s.redeemBtn, background: "#0284c7" }}>
-            ⭐5 购买
+          <button
+            onClick={handlePurchaseFreeze}
+            disabled={purchasingFreeze || !freezeInfo.can_purchase || Number(stars) < 5}
+            style={{
+              ...s.redeemBtn,
+              background: (!freezeInfo.can_purchase || Number(stars) < 5 || purchasingFreeze) ? "#94a3b8" : "#0284c7",
+              cursor: (!freezeInfo.can_purchase || Number(stars) < 5 || purchasingFreeze) ? "not-allowed" : "pointer",
+            }}
+          >
+            {purchasingFreeze ? "购买中…" : "⭐5 购买"}
           </button>
         </div>
       )}

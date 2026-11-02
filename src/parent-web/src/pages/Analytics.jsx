@@ -122,6 +122,10 @@ export default function Analytics({ token, isActive, onExpired }) {
       setVacationError("请选择休假起始和结束日期");
       return;
     }
+    if (vacationForm.start_date > vacationForm.end_date) {
+      setVacationError("结束日期必须在开始日期之后或当天");
+      return;
+    }
     setVacationError("");
     try {
       await api.createVacation(token, selectedChildId, {

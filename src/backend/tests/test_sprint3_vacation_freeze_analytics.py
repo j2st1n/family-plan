@@ -431,3 +431,113 @@ class TestAnalyticsAPI:
         # Check insights
         assert data["insights"]["best_habit"] is not None
         assert data["insights"]["attention_needed"] is not None
+
+    def test_analytics_large_span_90_and_365_days(self, client):
+        token, _dtoken, cid, _plan_id = _create_user_and_child(client, "span")
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # 90-day analytics
+        res90 = client.get(f"/api/v1/plans/children/{cid}/analytics?days=90", headers=headers)
+        assert res90.status_code == 200
+        data90 = res90.json()
+        assert data90["days"] == 90
+        assert len(data90["heatmap"]) == 90
+
+        # 365-day analytics
+        res365 = client.get(f"/api/v1/plans/children/{cid}/analytics?days=365", headers=headers)
+        assert res365.status_code == 200
+        data365 = res365.json()
+        assert data365["days"] == 365
+        assert len(data365["heatmap"]) == 365
+
+
+class TestEdgeCasesAndConcurrencyHardening:
+    def test_vacation_cross_month_and_closed_boundaries(self, client, db_session):
+        token, _dtoken, cid, _plan_id = _create_user_and_child(client, "bnd")
+        headers = {"Authorization": f"Bearer {token}"}
+        child_id = UUID(cid)
+
+        # Cross-month vacation: 2026-10-25 to 2026-11-05
+        start_d = date(2026, 10, 25)
+        end_d = date(2026, 11, 5)
+        res = client.post(
+            f"/api/v1/plans/children/{cid}/vacations",
+            headers=headers,
+            json={
+                "start_date": start_d.isoformat(),
+                "end_date": end_d.isoformat(),
+                "reason": "Cross-month trip",
+            },
+        )
+        assert res.status_code == 201
+
+        # Closed boundary tests
+        assert is_child_on_vacation(db_session, child_id, start_d) is True
+        assert is_child_on_vacation(db_session, child_id, end_d) is True
+        assert is_child_on_vacation(db_session, child_id, date(2026, 10, 31)) is True
+        assert is_child_on_vacation(db_session, child_id, date(2026, 11, 1)) is True
+        assert is_child_on_vacation(db_session, child_id, date(2026, 10, 24)) is False
+        assert is_child_on_vacation(db_session, child_id, date(2026, 11, 6)) is False
+
+    def test_freeze_card_session_persistence_across_sessions(self, client):
+        token, _dtoken, cid, _plan_id = _create_user_and_child(client, "pers")
+        headers = {"Authorization": f"Bearer {token}"}
+        child_id = UUID(cid)
+
+        from app.db.session import SessionLocal
+
+        # 1. Query freeze via new DB session
+        db1 = SessionLocal()
+        freeze1 = get_or_create_streak_freeze(db1, child_id)
+        fid = freeze1.id
+        db1.close()
+
+        # 2. Open completely separate DB session: record MUST exist!
+        db2 = SessionLocal()
+        saved = db2.get(ChildStreakFreeze, fid)
+        assert saved is not None
+        assert saved.available_count == 0
+
+        # Simulate rollover to new month
+        saved.last_granted_month = "2026-10"
+        db2.commit()
+        db2.close()
+
+        # 3. Next session calling get_or_create_streak_freeze in current month (2026-11)
+        db3 = SessionLocal()
+        freeze3 = get_or_create_streak_freeze(db3, child_id)
+        assert freeze3.available_count == 1
+        db3.close()
+
+        # 4. Verify fourth session sees the committed grant!
+        db4 = SessionLocal()
+        persisted = db4.get(ChildStreakFreeze, fid)
+        assert persisted is not None
+        assert persisted.available_count == 1
+        db4.close()
+
+    def test_concurrent_freeze_deduct_race_protection(self, client, db_session):
+        token, _dtoken, cid, _plan_id = _create_user_and_child(client, "deduct")
+        child_id = UUID(cid)
+
+        # Grant 1 freeze card
+        freeze = get_or_create_streak_freeze(db_session, child_id)
+        freeze.available_count = 1
+        db_session.commit()
+
+        target_date = date(2026, 11, 1)
+
+        # First consumption succeeds
+        ok1 = consume_freeze_for_date(db_session, child_id, target_date)
+        assert ok1 is True
+
+        # Freeze count should now be 0
+        db_session.refresh(freeze)
+        assert freeze.available_count == 0
+
+        # Second consumption for same date: returns True without double-decrementing or raising IntegrityError
+        ok2 = consume_freeze_for_date(db_session, child_id, target_date)
+        assert ok2 is True
+        db_session.refresh(freeze)
+        assert freeze.available_count == 0  # Still 0, not negative!
+

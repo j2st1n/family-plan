@@ -6,6 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import api_error
+from app.models.child import Child
 from app.models.child_streak_freeze import ChildStreakFreeze
 from app.models.child_streak_freeze_usage import ChildStreakFreezeUsage
 from app.models.reward_ledger import RewardLedger
@@ -32,14 +33,24 @@ def get_or_create_streak_freeze(
             last_granted_month=current_month,
         )
         db.add(freeze)
-        db.flush()
-        db.refresh(freeze)
+        try:
+            db.commit()
+            db.refresh(freeze)
+        except Exception:
+            db.rollback()
+            stmt2 = select(ChildStreakFreeze).where(ChildStreakFreeze.child_id == child_id)
+            if for_update:
+                stmt2 = stmt2.with_for_update()
+            freeze = db.scalar(stmt2)
+            if freeze is None:
+                raise
         return freeze
 
     if freeze.last_granted_month != current_month:
         freeze.available_count += 1
         freeze.last_granted_month = current_month
-        db.flush()
+        db.commit()
+        db.refresh(freeze)
 
     return freeze
 
@@ -49,6 +60,10 @@ def purchase_streak_freeze(
     child_id: UUID,
     star_cost: Decimal = FREEZE_CARD_DEFAULT_STAR_COST,
 ) -> ChildStreakFreeze:
+    child = db.scalar(select(Child).where(Child.id == child_id).with_for_update())
+    if child is None:
+        raise api_error("not_found", "Child not found", 404)
+
     freeze = get_or_create_streak_freeze(db, child_id, for_update=True)
 
     total_stars = db.scalar(
@@ -100,6 +115,9 @@ def consume_freeze_for_date(db: Session, child_id: UUID, missed_date: date) -> b
         return True
 
     freeze = get_or_create_streak_freeze(db, child_id, for_update=True)
+    if is_date_frozen(db, child_id, missed_date):
+        return True
+
     if freeze.available_count <= 0:
         return False
 
@@ -110,5 +128,11 @@ def consume_freeze_for_date(db: Session, child_id: UUID, missed_date: date) -> b
         reason="auto_deduct_missed_day",
     )
     db.add(usage)
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        if is_date_frozen(db, child_id, missed_date):
+            return True
+        raise
     return True
