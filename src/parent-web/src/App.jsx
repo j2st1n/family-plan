@@ -14,10 +14,10 @@ export default function App() {
   const [activeChildId, setActiveChildId] = useState(() => localStorage.getItem("parent_active_child_id") || "");
   const [totalPending, setTotalPending] = useState(0);
 
-  function clearSession() {
+  const clearSession = useCallback(() => {
     localStorage.removeItem("parent_token");
     setToken(null);
-  }
+  }, []);
 
   // Token expiration check
   useEffect(() => {
@@ -30,27 +30,37 @@ export default function App() {
     } catch {
       clearSession();
     }
-  }, [token]);
+  }, [token, clearSession]);
 
-  const handleTabChange = (nextTab) => {
+  const handleTabChange = useCallback((nextTab) => {
     setTab(nextTab);
     localStorage.setItem("parent_active_tab", nextTab);
-  };
+  }, []);
 
-  const handleChildChange = (childId) => {
+  const handleChildChange = useCallback((childId) => {
     setActiveChildId(childId);
     localStorage.setItem("parent_active_child_id", childId);
-  };
+  }, []);
 
   // Refresh children list and aggregate pending review tasks count
   const refreshGlobalMeta = useCallback(async () => {
     if (!token) return;
     try {
       const list = await api.fetchChildren(token);
-      setChildren(list);
-      if (list.length > 0 && (!activeChildId || !list.find((c) => c.id === activeChildId))) {
-        setActiveChildId(list[0].id);
-        localStorage.setItem("parent_active_child_id", list[0].id);
+      setChildren((prev) => {
+        const prevJson = JSON.stringify(prev);
+        const nextJson = JSON.stringify(list);
+        return prevJson === nextJson ? prev : list;
+      });
+
+      if (list.length > 0) {
+        setActiveChildId((prevId) => {
+          if (!prevId || !list.find((c) => c.id === prevId)) {
+            localStorage.setItem("parent_active_child_id", list[0].id);
+            return list[0].id;
+          }
+          return prevId;
+        });
       }
 
       // Aggregate pending approvals across all children
@@ -69,7 +79,7 @@ export default function App() {
     } catch (e) {
       console.warn("Refresh meta failed", e);
     }
-  }, [token, activeChildId]);
+  }, [token]);
 
   useEffect(() => {
     refreshGlobalMeta();

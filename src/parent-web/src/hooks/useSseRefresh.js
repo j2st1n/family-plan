@@ -2,8 +2,12 @@ import { useEffect, useRef } from "react";
 
 export default function useSseRefresh({ token, enabled = true, topics = [], childId, onRefresh, onExpired }) {
   const refreshRef = useRef(onRefresh);
+  const expiredRef = useRef(onExpired);
   const timerRef = useRef(null);
   refreshRef.current = onRefresh;
+  expiredRef.current = onExpired;
+
+  const topicsKey = topics.slice().sort().join("|");
 
   useEffect(() => {
     if (!enabled || !token) return undefined;
@@ -26,16 +30,20 @@ export default function useSseRefresh({ token, enabled = true, topics = [], chil
       }
     }
 
-    readSseStream("/api/v1/events/parent", token, controller.signal, handlePayload, scheduleRefresh, onExpired);
+    function handleExpired() {
+      expiredRef.current?.();
+    }
+
+    readSseStream("/api/v1/events/parent", token, controller.signal, handlePayload, handleExpired);
 
     return () => {
       controller.abort();
       if (timerRef.current) window.clearTimeout(timerRef.current);
     };
-  }, [token, enabled, topics.join("|"), childId, onExpired]);
+  }, [token, enabled, topicsKey, childId]);
 }
 
-async function readSseStream(url, token, signal, onPayload, onOpen, onExpired) {
+async function readSseStream(url, token, signal, onPayload, onExpired) {
   let delay = 1000;
   while (!signal.aborted) {
     try {
@@ -46,7 +54,6 @@ async function readSseStream(url, token, signal, onPayload, onOpen, onExpired) {
         return;
       }
       if (!response.ok || !response.body) throw new Error(`SSE request failed: ${response.status}`);
-      onOpen();
       delay = 1000;
       const reader = response.body.getReader();
       const decoder = new TextDecoder();

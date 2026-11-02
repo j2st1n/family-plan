@@ -94,6 +94,9 @@ export default function TodayDashboard({
   // Per-child pending counts map { [childId]: count }
   const [childPendingMap, setChildPendingMap] = useState({});
 
+  const childrenKey = children.map((c) => c.id).join(",");
+  const activeChildId = activeChild?.id;
+
   // Load pending counts for child capsules
   const refreshPendingBadges = useCallback(async () => {
     if (!token || children.length === 0) return;
@@ -108,26 +111,30 @@ export default function TodayDashboard({
         }
       })
     );
-    setChildPendingMap(map);
-  }, [token, children]);
+    setChildPendingMap((prev) => {
+      const prevJson = JSON.stringify(prev);
+      const nextJson = JSON.stringify(map);
+      return prevJson === nextJson ? prev : map;
+    });
+  }, [token, childrenKey]);
 
   useEffect(() => {
     refreshPendingBadges();
   }, [refreshPendingBadges]);
 
   // Load active plan and tasks for active child
-  const loadChildData = useCallback(async () => {
-    if (!token || !activeChild) return;
-    setLoading(true);
+  const loadChildData = useCallback(async (showLoadingSpinner = true) => {
+    if (!token || !activeChildId) return;
+    if (showLoadingSpinner) setLoading(true);
     setError("");
     try {
-      const plans = await api.fetchPlans(token, activeChild.id);
+      const plans = await api.fetchPlans(token, activeChildId);
       let targetPlan = plans.find((p) => p.status === "active") || plans[0];
       if (!targetPlan) {
         // Create default plan
         targetPlan = await api.createPlan(token, {
-          child_id: activeChild.id,
-          title: `${activeChild.name}的每日计划`,
+          child_id: activeChildId,
+          title: `${activeChild?.name || "孩子"}的每日计划`,
           start_date: fmtDate(new Date()),
         });
       }
@@ -138,23 +145,23 @@ export default function TodayDashboard({
     } catch (err) {
       setError(`加载数据失败：${err.message}`);
     } finally {
-      setLoading(false);
+      if (showLoadingSpinner) setLoading(false);
     }
-  }, [token, activeChild, date]);
+  }, [token, activeChildId, date]);
 
   useEffect(() => {
-    loadChildData();
+    loadChildData(true);
   }, [loadChildData]);
 
-  // SSE and visibility refresh
+  // SSE and visibility refresh: silent background sync without showing "加载中…" spinner!
   useSseRefresh({
     token,
     enabled: !!token,
     topics: ["tasks", "settings", "children"],
+    childId: activeChildId,
     onRefresh: () => {
-      loadChildData();
+      loadChildData(false);
       refreshPendingBadges();
-      onRefreshMeta?.();
     },
     onExpired,
   });
@@ -162,7 +169,7 @@ export default function TodayDashboard({
   useVisibilityRefresh({
     enabled: !!token,
     onRefresh: () => {
-      loadChildData();
+      loadChildData(false);
       refreshPendingBadges();
     },
   });
