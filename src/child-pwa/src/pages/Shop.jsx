@@ -415,49 +415,82 @@ export default function Shop({ onExpired, active }) {
         <div className="ios-sheet-overlay" onClick={() => setShowWish(false)}>
           <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-handle-bar" />
+            
+            {/* Apple iOS Canonical Modal Header */}
             <div className="ios-sheet-header">
-              <span className="ios-sheet-header-title">向家长许愿</span>
               <button
                 type="button"
-                className="ios-sheet-close-btn"
+                className="ios-sheet-nav-btn"
                 onClick={() => setShowWish(false)}
               >
                 取消
               </button>
+              <span className="ios-sheet-header-title">向家长许愿</span>
+              <button
+                type="button"
+                className="ios-sheet-nav-action-btn"
+                onClick={handleWish}
+                disabled={!wishForm.title.trim()}
+              >
+                提交
+              </button>
             </div>
 
             <div className="ios-sheet-body">
-              <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                  想要什么愿望？ *
-                </label>
-                <input
-                  placeholder="如：乐高积木、看电影、去游乐园..."
-                  value={wishForm.title}
-                  onChange={(e) => setWishForm({ ...wishForm, title: e.target.value })}
-                  className="form-input-journal"
-                  autoFocus
-                />
+              <div className="ios-grouped-card" style={{ marginBottom: "20px" }}>
+                <div style={{ padding: "12px 16px" }}>
+                  <input
+                    placeholder="想要什么愿望？如：乐高积木、看电影..."
+                    value={wishForm.title}
+                    onChange={(e) => setWishForm({ ...wishForm, title: e.target.value })}
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      fontSize: "1.02rem",
+                      color: "var(--text)",
+                      fontFamily: "inherit",
+                    }}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="ios-separator" />
+
+                <div style={{ padding: "12px 16px" }}>
+                  <input
+                    placeholder="说明或理由 (选填，告诉爸爸妈妈为什么想要)"
+                    value={wishForm.desc}
+                    onChange={(e) => setWishForm({ ...wishForm, desc: e.target.value })}
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      fontSize: "0.92rem",
+                      color: "var(--text)",
+                      fontFamily: "inherit",
+                    }}
+                  />
+                </div>
               </div>
 
-              <div style={{ marginBottom: "20px" }}>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                  说明或理由 (选填)
-                </label>
-                <input
-                  placeholder="告诉爸爸妈妈为什么想要这个奖励"
-                  value={wishForm.desc}
-                  onChange={(e) => setWishForm({ ...wishForm, desc: e.target.value })}
-                  className="form-input-journal"
-                />
-              </div>
-
+              {/* 底部全宽辅助操作按钮 */}
               <button
                 type="button"
                 onClick={handleWish}
                 disabled={!wishForm.title.trim()}
                 className="btn-primary"
-                style={{ width: "100%", padding: "12px", borderRadius: "12px", fontSize: "1rem" }}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "12px",
+                  fontSize: "0.98rem",
+                  fontWeight: 650,
+                  opacity: wishForm.title.trim() ? 1 : 0.4,
+                  cursor: wishForm.title.trim() ? "pointer" : "not-allowed",
+                }}
               >
                 提交心愿
               </button>

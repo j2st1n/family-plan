@@ -886,15 +886,23 @@ export default function TodayDashboard({
           <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-handle-bar" />
             <div className="ios-sheet-header">
+              <button
+                type="button"
+                className="ios-sheet-nav-btn"
+                onClick={() => setShowTaskModal(false)}
+              >
+                取消
+              </button>
               <span className="ios-sheet-header-title">
                 {editingTask ? "编辑任务" : "添加日常任务"}
               </span>
               <button
                 type="button"
-                className="ios-sheet-close-btn"
-                onClick={() => setShowTaskModal(false)}
+                className="ios-sheet-nav-action-btn"
+                onClick={handleSaveRegularTask}
+                disabled={actionInProgress || !taskForm.title.trim()}
               >
-                取消
+                {editingTask ? "保存" : "添加"}
               </button>
             </div>
 

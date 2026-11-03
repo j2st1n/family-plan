@@ -136,16 +136,17 @@ export default function TaskCopilotModal({
         <div className="drawer-handle-bar" />
         {/* Header */}
         <div className="ios-sheet-header">
-          <span className="ios-sheet-header-title">
-            AI 建议建任务
-          </span>
           <button
             type="button"
-            className="ios-sheet-close-btn"
+            className="ios-sheet-nav-btn"
             onClick={onClose}
           >
             取消
           </button>
+          <span className="ios-sheet-header-title">
+            AI 建议建任务
+          </span>
+          <div style={{ width: 44 }} />
         </div>
 
         {/* Content body */}

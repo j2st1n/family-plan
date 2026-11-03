@@ -1019,6 +1019,7 @@ textarea {
 
 .drawer-header,
 .ios-sheet-header {
+  position: relative;
   height: 52px;
   display: flex;
   align-items: center;
@@ -1031,10 +1032,43 @@ textarea {
 
 .drawer-header-title,
 .ios-sheet-header-title {
-  font-size: 1rem;
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 1.05rem;
   font-weight: 600;
   color: var(--text);
   letter-spacing: -0.015em;
+  pointer-events: none;
+}
+
+.ios-sheet-nav-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 6px 4px;
+  z-index: 1;
+}
+
+.ios-sheet-nav-action-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 650;
+  cursor: pointer;
+  padding: 6px 4px;
+  z-index: 1;
+  transition: opacity 0.15s ease;
+}
+
+.ios-sheet-nav-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .ios-sheet-close-btn {
@@ -1045,6 +1079,7 @@ textarea {
   font-weight: 500;
   cursor: pointer;
   padding: 6px 4px;
+  z-index: 1;
 }
 
 .ios-sheet-close-btn:active {

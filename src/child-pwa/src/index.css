@@ -494,30 +494,65 @@ textarea {
 }
 
 .ios-sheet-header {
-  height: 48px;
+  position: relative;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  background: #FFFFFF;
+  background: #F2F2F7;
   border-bottom: 0.5px solid rgba(60, 60, 67, 0.2);
   flex-shrink: 0;
 }
 
 .ios-sheet-header-title {
-  font-size: 0.95rem;
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 1.05rem;
   font-weight: 600;
   color: var(--text);
+  pointer-events: none;
+}
+
+.ios-sheet-nav-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 6px 4px;
+  z-index: 1;
+}
+
+.ios-sheet-nav-action-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 650;
+  cursor: pointer;
+  padding: 6px 4px;
+  z-index: 1;
+  transition: opacity 0.15s ease;
+}
+
+.ios-sheet-nav-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .ios-sheet-close-btn {
   background: none;
   border: none;
   color: var(--accent);
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 400;
   cursor: pointer;
-  padding: 4px 6px;
+  padding: 6px 4px;
+  z-index: 1;
 }
 
 .ios-sheet-body {
@@ -525,6 +560,81 @@ textarea {
   overflow-y: auto;
   flex: 1;
   -webkit-overflow-scrolling: touch;
+  background: #F2F2F7;
+}
+
+.ios-separator {
+  height: 0.5px;
+  background-color: rgba(60, 60, 67, 0.15);
+  margin-left: 16px;
+}
+
+.ios-group-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0 0 6px 16px;
+}
+
+.ios-stepper-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(118, 118, 128, 0.12);
+  border: none;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.ios-stepper-btn:active {
+  background: rgba(118, 118, 128, 0.22);
+}
+
+.ios-segmented-control {
+  display: inline-flex;
+  background: rgba(118, 118, 128, 0.12);
+  padding: 2px;
+  border-radius: 8px;
+}
+
+.ios-segmented-item {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ios-segmented-item.active {
+  background: #FFFFFF;
+  color: var(--text);
+  font-weight: 650;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.ios-time-input {
+  border: none;
+  background: rgba(118, 118, 128, 0.12);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
 }
 
 /* iOS Standard Input */

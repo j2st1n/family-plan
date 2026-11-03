@@ -504,105 +504,149 @@ export default function Today({ child, onExpired, active }) {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: "#D2D2D7", margin: "10px auto 2px", flexShrink: 0 }} />
-              <div
-                style={{
-                  height: 48,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "0 16px",
-                  background: "#FFFFFF",
-                  borderBottom: "0.5px solid rgba(60, 60, 67, 0.2)",
-                  flexShrink: 0,
-                }}
-              >
-                <span style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text)" }}>添加任务</span>
+              <div className="drawer-handle-bar" />
+              <div className="ios-sheet-header">
                 <button
                   type="button"
+                  className="ios-sheet-nav-btn"
                   onClick={() => setShowAdd(false)}
-                  style={{ background: "none", border: "none", color: "var(--accent)", fontSize: "0.95rem", fontWeight: 500, cursor: "pointer" }}
                 >
                   取消
                 </button>
+                <span className="ios-sheet-header-title">添加任务</span>
+                <button
+                  type="button"
+                  className="ios-sheet-nav-action-btn"
+                  onClick={handleCreateTask}
+                  disabled={!newForm.title.trim()}
+                >
+                  添加
+                </button>
               </div>
 
-              <div style={{ padding: "16px 16px calc(24px + env(safe-area-inset-bottom, 16px))" }}>
-                <div style={{ marginBottom: "12px" }}>
-                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                    任务名称 *
-                  </label>
-                  <input
-                    placeholder="如：练琴20分钟、口算一页..."
-                    value={newForm.title}
-                    onChange={(e) => setNewForm({ ...newForm, title: e.target.value })}
-                    className="form-input-journal"
-                    style={{ background: "#FFFFFF", borderRadius: "10px", padding: "10px 12px", width: "100%", boxSizing: "border-box", border: "1px solid var(--border)", fontSize: "0.95rem" }}
-                    autoFocus
-                  />
-                </div>
-
-                <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                      预计时长 (分钟) *
-                    </label>
+              {/* iOS Inset Grouped Table Views */}
+              <div className="ios-sheet-body">
+                {/* Group 1: 任务核心信息 */}
+                <div className="ios-grouped-card" style={{ marginBottom: "18px" }}>
+                  {/* Row 1: 标题 (Borderless direct input) */}
+                  <div style={{ padding: "12px 16px" }}>
                     <input
-                      type="number"
-                      placeholder="20"
-                      value={newForm.minutes}
-                      onChange={(e) => setNewForm({ ...newForm, minutes: e.target.value })}
-                      style={{ background: "#FFFFFF", borderRadius: "10px", padding: "10px 12px", width: "100%", boxSizing: "border-box", border: "1px solid var(--border)", fontSize: "0.95rem" }}
+                      placeholder="任务名称，如：练琴、口算一页..."
+                      value={newForm.title}
+                      onChange={(e) => setNewForm({ ...newForm, title: e.target.value })}
+                      style={{
+                        width: "100%",
+                        border: "none",
+                        outline: "none",
+                        background: "transparent",
+                        fontSize: "1.02rem",
+                        color: "var(--text)",
+                        fontFamily: "inherit",
+                      }}
+                      autoFocus
                     />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+
+                  <div className="ios-separator" />
+
+                  {/* Row 2: 预计时长 (iOS Stepper) */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                      预计时长
+                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <button
+                        type="button"
+                        onClick={() => setNewForm((f) => ({ ...f, minutes: Math.max(5, (parseInt(f.minutes) || 20) - 5) }))}
+                        className="ios-stepper-btn"
+                        aria-label="减少 5 分钟"
+                      >
+                        −
+                      </button>
+                      <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)", minWidth: "48px", textAlign: "center" }}>
+                        {newForm.minutes || 20} 分钟
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setNewForm((f) => ({ ...f, minutes: Math.min(180, (parseInt(f.minutes) || 20) + 5) }))}
+                        className="ios-stepper-btn"
+                        aria-label="增加 5 分钟"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="ios-separator" />
+
+                  {/* Row 3: 奖励星星 (iOS Segmented Control) */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
                       奖励星星
-                    </label>
-                    <select
-                      value={newForm.stars}
-                      onChange={(e) => setNewForm({ ...newForm, stars: parseInt(e.target.value) })}
-                      style={{ background: "#FFFFFF", borderRadius: "10px", padding: "10px 12px", width: "100%", boxSizing: "border-box", border: "1px solid var(--border)", fontSize: "0.95rem" }}
-                    >
-                      {[0, 1, 2, 3, 4, 5].map((n) => (
-                        <option key={n} value={n}>
-                          {n === 0 ? "0 星" : `⭐ ${n} 星`}
-                        </option>
-                      ))}
-                    </select>
+                    </span>
+                    <div className="ios-segmented-control">
+                      {[1, 2, 3, 5].map((starVal) => {
+                        const active = (newForm.stars ?? 1) === starVal;
+                        return (
+                          <button
+                            key={starVal}
+                            type="button"
+                            onClick={() => setNewForm((f) => ({ ...f, stars: starVal }))}
+                            className={`ios-segmented-item ${active ? "active" : ""}`}
+                          >
+                            ⭐ {starVal}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                      计划开始 (选填)
-                    </label>
+                {/* Group 2: 时间规划 (可选) */}
+                <div className="ios-group-label">时间安排 (可选)</div>
+                <div className="ios-grouped-card" style={{ marginBottom: "20px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                      开始时间
+                    </span>
                     <input
                       type="time"
-                      value={newForm.start}
+                      value={newForm.start || ""}
                       onChange={(e) => setNewForm({ ...newForm, start: e.target.value })}
-                      style={{ background: "#FFFFFF", borderRadius: "10px", padding: "10px 12px", width: "100%", boxSizing: "border-box", border: "1px solid var(--border)", fontSize: "0.95rem" }}
+                      className="ios-time-input"
                     />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                      计划结束 (选填)
-                    </label>
+
+                  <div className="ios-separator" />
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                      结束时间
+                    </span>
                     <input
                       type="time"
-                      value={newForm.end}
+                      value={newForm.end || ""}
                       onChange={(e) => setNewForm({ ...newForm, end: e.target.value })}
-                      style={{ background: "#FFFFFF", borderRadius: "10px", padding: "10px 12px", width: "100%", boxSizing: "border-box", border: "1px solid var(--border)", fontSize: "0.95rem" }}
+                      className="ios-time-input"
                     />
                   </div>
                 </div>
 
+                {/* 底部全宽辅助操作按钮 */}
                 <button
                   type="button"
                   onClick={handleCreateTask}
+                  disabled={!newForm.title.trim()}
                   className="btn-primary"
-                  style={{ width: "100%", padding: "12px", borderRadius: "12px", fontSize: "1rem" }}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: "12px",
+                    fontSize: "0.98rem",
+                    fontWeight: 650,
+                    opacity: newForm.title.trim() ? 1 : 0.4,
+                    cursor: newForm.title.trim() ? "pointer" : "not-allowed",
+                  }}
                 >
                   确认添加
                 </button>
