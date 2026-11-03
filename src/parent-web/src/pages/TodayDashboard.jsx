@@ -822,7 +822,72 @@ export default function TodayDashboard({
               );
             })}
 
-            {/* 2. 已完成任务 */}
+            {/* 2. 待点赞审核任务 (孩子已打卡提交，等待家长审核) */}
+            {submittedTasks.map((t) => (
+              <div key={t.id} className="reminders-task-row">
+                <div
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: "50%",
+                    background: "var(--star-bg)",
+                    border: "1px solid var(--star-border)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                  title="等待家长点赞发星"
+                >
+                  <span style={{ fontSize: "0.75rem", lineHeight: 1 }}>⏳</span>
+                </div>
+                <div style={{ flex: 1, minWidth: 0, marginRight: "10px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px", flexWrap: "wrap" }}>
+                    <span style={{ fontWeight: 600, fontSize: "0.92rem", color: "var(--text)" }}>
+                      {t.title}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "0.68rem",
+                        color: "var(--star)",
+                        backgroundColor: "var(--star-bg)",
+                        border: "1px solid var(--star-border)",
+                        padding: "1px 6px",
+                        borderRadius: "999px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      等待点赞
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                    {t.expected_minutes || 20} 分钟 · ⭐+{t.reward_stars} · 孩子已提交
+                  </p>
+                </div>
+                <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    className="capsule-btn capsule-accent"
+                    onClick={() => handleApprove(t.id)}
+                    disabled={actionInProgress}
+                    style={{ padding: "4px 10px", fontSize: "0.74rem" }}
+                  >
+                    ⭐ 点赞发星
+                  </button>
+                  <button
+                    type="button"
+                    className="capsule-btn capsule-muted"
+                    onClick={() => handleReject(t.id)}
+                    disabled={actionInProgress}
+                    style={{ padding: "4px 8px", fontSize: "0.74rem" }}
+                  >
+                    退回
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* 3. 已完成任务 */}
             {completedTasks.map((t) => (
               <div key={t.id} className="reminders-task-row">
                 <button
@@ -834,16 +899,32 @@ export default function TodayDashboard({
                   <CheckCircleIcon checked={true} color="#34C759" />
                 </button>
                 <div style={{ flex: 1, minWidth: 0, marginRight: "10px" }}>
-                  <span
-                    style={{
-                      fontWeight: 500,
-                      fontSize: "0.92rem",
-                      color: "var(--muted)",
-                      textDecoration: "line-through",
-                    }}
-                  >
-                    {t.title}
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                    <span
+                      style={{
+                        fontWeight: 500,
+                        fontSize: "0.92rem",
+                        color: "var(--muted)",
+                        textDecoration: "line-through",
+                      }}
+                    >
+                      {t.title}
+                    </span>
+                    {t.require_approval && (
+                      <span
+                        style={{
+                          fontSize: "0.68rem",
+                          color: "#34C759",
+                          backgroundColor: "rgba(52, 199, 89, 0.12)",
+                          padding: "1px 6px",
+                          borderRadius: "999px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        已点赞发星
+                      </span>
+                    )}
+                  </div>
                   <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>
                     已赚得 ⭐+{t.reward_stars}
                   </p>
