@@ -94,6 +94,10 @@ export default function App() {
 
   // VisualViewport keyboard dynamic adaptation for iOS Safari
   useEffect(() => {
+    refreshGlobalMeta();
+  }, [refreshGlobalMeta]);
+
+  useEffect(() => {
     if (typeof window === "undefined" || !window.visualViewport) return;
 
     const handleViewportChange = () => {
