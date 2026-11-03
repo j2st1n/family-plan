@@ -100,15 +100,15 @@ export function ChildFeedbackProvider({ children }) {
         </div>
       )}
 
-      {/* Child Picture-Book Style Confirm Dialog */}
+      {/* Child iOS Standard Alert Modal */}
       {confirmDialog && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(45, 55, 49, 0.45)",
-            backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)",
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            backdropFilter: "saturate(180%) blur(16px)",
+            WebkitBackdropFilter: "saturate(180%) blur(16px)",
             zIndex: 10000,
             display: "flex",
             alignItems: "center",
@@ -119,53 +119,65 @@ export function ChildFeedbackProvider({ children }) {
         >
           <div
             style={{
-              backgroundColor: "var(--card, #FFFFFF)",
-              borderRadius: "var(--radius-lg, 24px)",
-              border: "1px solid var(--border, #E5E5EA)",
-              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.08)",
-              padding: "24px 20px",
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              borderRadius: "16px",
+              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)",
               width: "100%",
-              maxWidth: "340px",
+              maxWidth: "290px",
               textAlign: "center",
+              overflow: "hidden",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ fontSize: "2.4rem", marginBottom: "8px" }}>
-              {confirmDialog.icon}
+            <div style={{ padding: "20px 18px 16px" }}>
+              {confirmDialog.icon && (
+                <div style={{ fontSize: "2rem", marginBottom: "6px" }}>
+                  {confirmDialog.icon}
+                </div>
+              )}
+              <h3
+                style={{
+                  fontSize: "1.05rem",
+                  fontWeight: 650,
+                  color: "var(--text)",
+                  marginBottom: "6px",
+                  letterSpacing: "-0.015em",
+                }}
+              >
+                {confirmDialog.title}
+              </h3>
+              <p
+                style={{
+                  fontSize: "0.85rem",
+                  color: "var(--text)",
+                  lineHeight: 1.4,
+                  opacity: 0.85,
+                  margin: 0,
+                }}
+              >
+                {confirmDialog.message}
+              </p>
             </div>
-            <h3
+            <div
               style={{
-                fontSize: "1.15rem",
-                fontWeight: 700,
-                color: "var(--text)",
-                marginBottom: "8px",
+                display: "flex",
+                borderTop: "0.5px solid rgba(60, 60, 67, 0.25)",
               }}
             >
-              {confirmDialog.title}
-            </h3>
-            <p
-              style={{
-                fontSize: "0.95rem",
-                color: "var(--muted)",
-                lineHeight: 1.6,
-                marginBottom: "22px",
-              }}
-            >
-              {confirmDialog.message}
-            </p>
-            <div style={{ display: "flex", gap: "10px" }}>
               <button
                 type="button"
                 onClick={() => confirmDialog.resolve(false)}
                 style={{
                   flex: 1,
-                  padding: "10px 0",
-                  borderRadius: "var(--radius, 18px)",
-                  backgroundColor: "var(--card-subtle)",
-                  border: "1.5px solid var(--border)",
-                  color: "var(--muted)",
+                  padding: "12px 0",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderRight: "0.5px solid rgba(60, 60, 67, 0.25)",
+                  color: "var(--accent)",
                   fontSize: "0.95rem",
-                  fontWeight: 700,
+                  fontWeight: 400,
                   cursor: "pointer",
                 }}
               >
@@ -176,15 +188,13 @@ export function ChildFeedbackProvider({ children }) {
                 onClick={() => confirmDialog.resolve(true)}
                 style={{
                   flex: 1,
-                  padding: "10px 0",
-                  borderRadius: "var(--radius, 18px)",
-                  backgroundColor: "var(--accent)",
-                  color: "#FFFFFF",
+                  padding: "12px 0",
+                  backgroundColor: "transparent",
                   border: "none",
+                  color: "var(--accent)",
                   fontSize: "0.95rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
                   cursor: "pointer",
-                  boxShadow: "0 3px 10px rgba(67, 106, 84, 0.25)",
                 }}
               >
                 {confirmDialog.confirmText}

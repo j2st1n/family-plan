@@ -239,31 +239,83 @@ export default function FocusTimer({ task, onClose, onComplete }) {
         )}
       </div>
 
-      {/* 退出防误触确认弹窗 */}
-      {showConfirmQuit && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalCard}>
-            <h3 style={styles.modalTitle}>提前结束专注？</h3>
-            <p style={styles.modalText}>
-              坚持就是胜利！现在离开将不会获得本次专注奖励哦。
-            </p>
-            <div style={styles.modalActions}>
-              <button
+            {/* 退出防误触确认弹窗 (iOS Alert 规范) */}
+            {showConfirmQuit && (
+              <div
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  backgroundColor: "rgba(0, 0, 0, 0.4)",
+                  backdropFilter: "saturate(180%) blur(16px)",
+                  WebkitBackdropFilter: "saturate(180%) blur(16px)",
+                  zIndex: 10000,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "20px",
+                }}
                 onClick={() => setShowConfirmQuit(false)}
-                style={styles.modalStayBtn}
               >
-                继续坚持
-              </button>
-              <button
-                onClick={handleConfirmQuit}
-                style={styles.modalQuitBtn}
-              >
-                确认结束
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                <div
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.95)",
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
+                    borderRadius: "16px",
+                    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.2)",
+                    width: "100%",
+                    maxWidth: "280px",
+                    textAlign: "center",
+                    overflow: "hidden",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div style={{ padding: "20px 16px 16px" }}>
+                    <h3 style={{ fontSize: "1.05rem", fontWeight: 650, color: "var(--text)", marginBottom: "4px" }}>
+                      提前结束专注？
+                    </h3>
+                    <p style={{ fontSize: "0.82rem", color: "var(--muted)", margin: 0, lineHeight: 1.4 }}>
+                      坚持就是胜利！现在离开将不会获得本次专注奖励哦。
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", borderTop: "0.5px solid rgba(60, 60, 67, 0.2)" }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmQuit(false)}
+                      style={{
+                        flex: 1,
+                        padding: "12px 0",
+                        backgroundColor: "transparent",
+                        border: "none",
+                        borderRight: "0.5px solid rgba(60, 60, 67, 0.2)",
+                        color: "var(--accent)",
+                        fontSize: "0.95rem",
+                        fontWeight: 400,
+                        cursor: "pointer",
+                      }}
+                    >
+                      继续坚持
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleConfirmQuit}
+                      style={{
+                        flex: 1,
+                        padding: "12px 0",
+                        backgroundColor: "transparent",
+                        border: "none",
+                        color: "var(--danger)",
+                        fontSize: "0.95rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      确认结束
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
     </div>
   );
 }
