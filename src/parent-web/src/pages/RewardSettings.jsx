@@ -129,7 +129,12 @@ export default function RewardSettings({ token, child, onBack }) {
             <h3 style={s.sectionTitle}>连续打卡商城折扣</h3>
             <p style={s.hint}>每一档的支付比例由家长设置，可按每 7 天添加新档位。</p>
           </div>
-          <button onClick={() => setForm({ ...form, enabled: !form.enabled })} style={{ ...s.switch, background: form.enabled ? "var(--accent)" : "#d8d2cb" }}>{form.enabled ? "开" : "关"}</button>
+          <div
+            className={`ios-switch ${form.enabled ? "on" : ""}`}
+            onClick={() => setForm({ ...form, enabled: !form.enabled })}
+          >
+            <div className="ios-switch-thumb" />
+          </div>
         </div>
         {form.tiers.map((tier, i) => {
           return (
@@ -162,7 +167,7 @@ function toForm(settings) {
 
 const s = {
   back: { color: "var(--muted)", fontSize: "0.9rem", marginBottom: "0.8rem", background: "none", border: "none", cursor: "pointer", fontWeight: 650 },
-  hero: { background: "linear-gradient(135deg, var(--accent-light), var(--star-bg))", borderRadius: "18px", padding: "1rem", marginBottom: "0.85rem", border: "1px solid var(--border)" },
+  hero: { background: "var(--card-subtle)", borderRadius: "18px", padding: "1.2rem", marginBottom: "0.85rem", border: "1px solid var(--border-subtle)" },
   kicker: { color: "var(--accent)", fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.08em" },
   title: { fontSize: "1.35rem", fontWeight: 750, marginTop: "0.15rem", color: "var(--text)" },
   desc: { color: "var(--muted)", fontSize: "0.88rem", marginTop: "0.3rem", lineHeight: 1.5 },
@@ -180,7 +185,7 @@ const s = {
   tierText: { color: "var(--muted)", fontSize: "0.82rem" },
   tierInput: { padding: "0.35rem", border: "1px solid var(--border)", borderRadius: "8px", textAlign: "center", fontWeight: 700, background: "var(--card)", color: "var(--text)", fontVariantNumeric: "tabular-nums" },
   removeBtn: { background: "none", border: "none", color: "var(--danger)", fontSize: "0.9rem", cursor: "pointer", padding: "0.2rem 0.3rem", lineHeight: 1 },
-  addBtn: { display: "block", width: "100%", marginTop: "0.6rem", padding: "0.55rem", border: "1.5px dashed var(--accent)", borderRadius: "10px", background: "var(--accent-light)", color: "var(--accent)", fontSize: "0.85rem", fontWeight: 650, cursor: "pointer", textAlign: "center" },
+  addBtn: { display: "block", width: "100%", marginTop: "0.6rem", padding: "0.65rem", border: "1px solid var(--border)", borderRadius: "10px", background: "var(--card-subtle)", color: "var(--accent)", fontSize: "0.85rem", fontWeight: 650, cursor: "pointer", textAlign: "center" },
   example: { marginTop: "0.6rem", color: "var(--star)", fontSize: "0.78rem", fontWeight: 600 },
   save: { width: "100%", padding: "0.75rem", borderRadius: "12px", background: "var(--accent)", color: "#FFFFFF", fontWeight: 700, fontSize: "0.95rem", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(67, 106, 84, 0.2)" },
   error: { background: "var(--danger-bg)", color: "var(--danger)", borderRadius: "12px", padding: "0.7rem 0.9rem", marginBottom: "0.7rem", fontSize: "0.84rem", border: "1px solid var(--danger-border)" },

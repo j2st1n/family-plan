@@ -631,25 +631,6 @@ export default function Today({ child, onExpired, active }) {
                     />
                   </div>
                 </div>
-
-                {/* 底部全宽辅助操作按钮 */}
-                <button
-                  type="button"
-                  onClick={handleCreateTask}
-                  disabled={!newForm.title.trim()}
-                  className="btn-primary"
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    borderRadius: "12px",
-                    fontSize: "0.98rem",
-                    fontWeight: 650,
-                    opacity: newForm.title.trim() ? 1 : 0.4,
-                    cursor: newForm.title.trim() ? "pointer" : "not-allowed",
-                  }}
-                >
-                  确认添加
-                </button>
               </div>
             </div>
           </div>
@@ -760,19 +741,20 @@ function TaskCard({
               onChange={(value) => setEditForm({ ...editForm, stars: value })}
             />
           </div>
-          <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+          <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
             <input
               type="time"
               value={editForm.start}
               onChange={(e) => setEditForm({ ...editForm, start: e.target.value })}
-              className="form-input-journal"
+              className="ios-time-input"
               style={{ flex: 1, marginBottom: 0 }}
             />
+            <span style={{ color: "var(--muted)", fontSize: "0.85rem" }}>至</span>
             <input
               type="time"
               value={editForm.end}
               onChange={(e) => setEditForm({ ...editForm, end: e.target.value })}
-              className="form-input-journal"
+              className="ios-time-input"
               style={{ flex: 1, marginBottom: 0 }}
             />
           </div>
@@ -787,19 +769,20 @@ function TaskCard({
         </div>
       ) : schedulingId === task.id ? (
         <div style={{ width: "100%" }}>
-          <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+          <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
             <input
               type="time"
               value={scheduleForm.start}
               onChange={(e) => setScheduleForm({ ...scheduleForm, start: e.target.value })}
-              className="form-input-journal"
+              className="ios-time-input"
               style={{ flex: 1, marginBottom: 0 }}
             />
+            <span style={{ color: "var(--muted)", fontSize: "0.85rem" }}>至</span>
             <input
               type="time"
               value={scheduleForm.end}
               onChange={(e) => setScheduleForm({ ...scheduleForm, end: e.target.value })}
-              className="form-input-journal"
+              className="ios-time-input"
               style={{ flex: 1, marginBottom: 0 }}
             />
           </div>
@@ -976,7 +959,7 @@ function TaskCard({
                   width: 36,
                   height: 36,
                   borderRadius: "50%",
-                  border: "1.5px dashed var(--danger)",
+                  border: "1px solid var(--danger-border)",
                   background: "var(--danger-bg)",
                   display: "flex",
                   alignItems: "center",
@@ -995,17 +978,19 @@ function TaskCard({
 
 function RewardSelect({ value, onChange }) {
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(parseInt(e.target.value))}
-      style={{ ...st.fi, flex: 1 }}
-    >
-      {[0, 1, 2, 3, 4, 5].map((n) => (
-        <option key={n} value={n}>
-          {n === 0 ? "0⭐" : "⭐".repeat(n)}
-        </option>
+    <div className="ios-segmented-control" style={{ flex: 1, display: "flex", alignItems: "center" }}>
+      {[0, 1, 2, 3, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          className={`ios-segmented-item ${value === n ? "active" : ""}`}
+          style={{ padding: "4px 6px", fontSize: "0.78rem" }}
+        >
+          {n === 0 ? "0星" : `⭐${n}`}
+        </button>
       ))}
-    </select>
+    </div>
   );
 }
 

@@ -355,10 +355,20 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
                 <div>
                   <input placeholder="任务名 *" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} style={s.fi} autoFocus />
                   <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={editForm.minutes} onChange={value => setEditForm({ ...editForm, minutes: value })} /><RewardSelect value={editForm.stars} onChange={value => setEditForm({ ...editForm, stars: value })} /></div>
-                  <div style={{ display: "flex", gap: "0.4rem" }}><input type="time" value={editForm.start} onChange={e => { const st = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, st, f.end), start: st })); }} style={{ ...s.fi, flex: 1 }} /><input type="time" value={editForm.end} onChange={e => { const en = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, f.start, en), end: en })); }} style={{ ...s.fi, flex: 1 }} /></div>
-                  <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.82rem", color: "var(--muted)", marginBottom: "0.4rem", cursor: "pointer" }}>
-                    <input type="checkbox" checked={editForm.require_approval} onChange={e => setEditForm(f => ({ ...f, require_approval: e.target.checked }))} style={{ width: "16px", height: "16px", accentColor: "var(--accent)", cursor: "pointer" }} />
-                    <span>需要家长确认（完成需点赞才发星星）</span>
+                  <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", marginBottom: "0.4rem" }}>
+                    <input type="time" value={editForm.start} onChange={e => { const st = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, st, f.end), start: st })); }} className="ios-time-input" style={{ flex: 1, marginBottom: 0 }} />
+                    <span style={{ color: "var(--muted)", fontSize: "0.85rem" }}>至</span>
+                    <input type="time" value={editForm.end} onChange={e => { const en = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, f.start, en), end: en })); }} className="ios-time-input" style={{ flex: 1, marginBottom: 0 }} />
+                  </div>
+                  <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.82rem", color: "var(--muted)", marginBottom: "0.4rem", cursor: "pointer" }}>
+                    <span>需家长确认（打卡后发星）</span>
+                    <div
+                      className={`ios-switch ${editForm.require_approval ? "on" : ""}`}
+                      onClick={() => setEditForm(f => ({ ...f, require_approval: !f.require_approval }))}
+                      style={{ transform: "scale(0.75)", transformOrigin: "right center" }}
+                    >
+                      <div className="ios-switch-thumb" />
+                    </div>
                   </label>
                   <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleSaveEdit} style={s.fsb}>保存</button><button onClick={() => setEditingTask(null)} style={s.fcb}>取消</button></div>
                 </div>
@@ -403,7 +413,11 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
                 <div>
                   <input placeholder="任务名 *" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} style={s.fi} autoFocus />
                   <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={editForm.minutes} onChange={value => setEditForm({ ...editForm, minutes: value })} /><RewardSelect value={editForm.stars} onChange={value => setEditForm({ ...editForm, stars: value })} /></div>
-                  <div style={{ display: "flex", gap: "0.4rem" }}><input type="time" value={editForm.start} onChange={e => { const st = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, st, f.end), start: st })); }} style={{ ...s.fi, flex: 1 }} /><input type="time" value={editForm.end} onChange={e => { const en = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, f.start, en), end: en })); }} style={{ ...s.fi, flex: 1 }} /></div>
+                  <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", marginBottom: "0.4rem" }}>
+                    <input type="time" value={editForm.start} onChange={e => { const st = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, st, f.end), start: st })); }} className="ios-time-input" style={{ flex: 1, marginBottom: 0 }} />
+                    <span style={{ color: "var(--muted)", fontSize: "0.85rem" }}>至</span>
+                    <input type="time" value={editForm.end} onChange={e => { const en = e.target.value; setEditForm(f => ({ ...f, ...autoFillTime(f.minutes, f.start, en), end: en })); }} className="ios-time-input" style={{ flex: 1, marginBottom: 0 }} />
+                  </div>
                   <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleSaveEdit} style={s.fsb}>保存</button><button onClick={() => setEditingTask(null)} style={s.fcb}>取消</button></div>
                 </div>
               ) : (
@@ -451,10 +465,20 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
             <div style={s.fb}>
               <input placeholder="任务名 *" value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} style={s.fi} autoFocus />
               <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={newTask.minutes} onChange={value => setNewTask({ ...newTask, minutes: value })} /><RewardSelect value={newTask.stars} onChange={value => setNewTask({ ...newTask, stars: value })} /></div>
-              <div style={{ display: "flex", gap: "0.4rem" }}><input type="time" value={newTask.start} onChange={e => { const s = e.target.value; setNewTask(f => ({ ...f, ...autoFillTime(f.minutes, s, f.end), start: s })); }} style={{ ...s.fi, flex: 1 }} /><input type="time" value={newTask.end} onChange={e => { const en = e.target.value; setNewTask(f => ({ ...f, ...autoFillTime(f.minutes, f.start, en), end: en })); }} style={{ ...s.fi, flex: 1 }} /></div>
-              <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.82rem", color: "var(--muted)", marginBottom: "0.4rem", cursor: "pointer" }}>
-                <input type="checkbox" checked={newTask.require_approval} onChange={e => setNewTask(f => ({ ...f, require_approval: e.target.checked }))} style={{ width: "16px", height: "16px", accentColor: "var(--accent)", cursor: "pointer" }} />
-                <span>需要家长确认（完成需点赞才发星星）</span>
+              <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", marginBottom: "0.4rem" }}>
+                <input type="time" value={newTask.start} onChange={e => { const s = e.target.value; setNewTask(f => ({ ...f, ...autoFillTime(f.minutes, s, f.end), start: s })); }} className="ios-time-input" style={{ flex: 1, marginBottom: 0 }} />
+                <span style={{ color: "var(--muted)", fontSize: "0.85rem" }}>至</span>
+                <input type="time" value={newTask.end} onChange={e => { const en = e.target.value; setNewTask(f => ({ ...f, ...autoFillTime(f.minutes, f.start, en), end: en })); }} className="ios-time-input" style={{ flex: 1, marginBottom: 0 }} />
+              </div>
+              <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.82rem", color: "var(--muted)", marginBottom: "0.4rem", cursor: "pointer" }}>
+                <span>需家长确认（打卡后发星）</span>
+                <div
+                  className={`ios-switch ${newTask.require_approval ? "on" : ""}`}
+                  onClick={() => setNewTask(f => ({ ...f, require_approval: !f.require_approval }))}
+                  style={{ transform: "scale(0.75)", transformOrigin: "right center" }}
+                >
+                  <div className="ios-switch-thumb" />
+                </div>
               </label>
               <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleAddTask} style={s.fsb}>添加</button><button onClick={() => setShowAddTask(false)} style={s.fcb}>取消</button></div>
             </div>
@@ -470,9 +494,15 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
                   <input placeholder="任务名 *" value={routineEditForm.title} onChange={e => setRoutineEditForm({ ...routineEditForm, title: e.target.value })} style={s.fi} autoFocus />
                   <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={routineEditForm.minutes} onChange={value => setRoutineEditForm({ ...routineEditForm, minutes: value })} /><RewardSelect value={routineEditForm.stars} onChange={value => setRoutineEditForm({ ...routineEditForm, stars: value })} /></div>
                   <div style={{ display: "flex", gap: "0.25rem", marginBottom: "0.4rem" }}>{WEEKDAYS.map((lbl, idx) => { const d = idx === 0 ? 7 : idx; const a = routineEditForm.weekdays.includes(d); return <button type="button" key={lbl} onClick={() => { const wd = a ? routineEditForm.weekdays.filter(w => w !== d) : [...routineEditForm.weekdays, d].sort(); setRoutineEditForm({ ...routineEditForm, weekdays: wd }); }} style={{ width: "2rem", height: "2rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 650, background: a ? "var(--accent)" : "#F0ECE4", color: a ? "#FFFFFF" : "var(--muted)", border: a ? "none" : "1px solid var(--border)", cursor: "pointer" }}>{lbl}</button>; })}</div>
-                  <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.82rem", color: "var(--muted)", marginBottom: "0.4rem", cursor: "pointer" }}>
-                    <input type="checkbox" checked={routineEditForm.require_approval} onChange={e => setRoutineEditForm(f => ({ ...f, require_approval: e.target.checked }))} style={{ width: "16px", height: "16px", accentColor: "var(--accent)", cursor: "pointer" }} />
-                    <span>需要家长确认（完成需点赞才发星星）</span>
+                  <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.82rem", color: "var(--muted)", marginBottom: "0.4rem", cursor: "pointer" }}>
+                    <span>需家长确认（打卡后发星）</span>
+                    <div
+                      className={`ios-switch ${routineEditForm.require_approval ? "on" : ""}`}
+                      onClick={() => setRoutineEditForm(f => ({ ...f, require_approval: !f.require_approval }))}
+                      style={{ transform: "scale(0.75)", transformOrigin: "right center" }}
+                    >
+                      <div className="ios-switch-thumb" />
+                    </div>
                   </label>
                   <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleSaveRoutine} style={s.fsb}>保存</button><button onClick={() => setEditingRoutine(null)} style={s.fcb}>取消</button></div>
                 </div>
@@ -486,9 +516,15 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
               <input placeholder="任务名 *" value={routineForm.title} onChange={e => setRoutineForm({ ...routineForm, title: e.target.value })} style={s.fi} autoFocus />
               <div style={{ display: "flex", gap: "0.4rem" }}><DurationInput value={routineForm.minutes} onChange={value => setRoutineForm({ ...routineForm, minutes: value })} /><RewardSelect value={routineForm.stars} onChange={value => setRoutineForm({ ...routineForm, stars: value })} /></div>
               <div style={{ display: "flex", gap: "0.25rem", marginBottom: "0.4rem" }}>{WEEKDAYS.map((lbl, idx) => { const d = idx === 0 ? 7 : idx; const a = routineForm.weekdays.includes(d); return <button type="button" key={lbl} onClick={() => { const wd = a ? routineForm.weekdays.filter(w => w !== d) : [...routineForm.weekdays, d].sort(); setRoutineForm({ ...routineForm, weekdays: wd }); }} style={{ width: "2rem", height: "2rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 650, background: a ? "var(--accent)" : "#F0ECE4", color: a ? "#FFFFFF" : "var(--muted)", border: a ? "none" : "1px solid var(--border)", cursor: "pointer" }}>{lbl}</button>; })}</div>
-              <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.82rem", color: "var(--muted)", marginBottom: "0.4rem", cursor: "pointer" }}>
-                <input type="checkbox" checked={routineForm.require_approval} onChange={e => setRoutineForm(f => ({ ...f, require_approval: e.target.checked }))} style={{ width: "16px", height: "16px", accentColor: "var(--accent)", cursor: "pointer" }} />
-                <span>需要家长确认（完成需点赞才发星星）</span>
+              <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.82rem", color: "var(--muted)", marginBottom: "0.4rem", cursor: "pointer" }}>
+                <span>需家长确认（打卡后发星）</span>
+                <div
+                  className={`ios-switch ${routineForm.require_approval ? "on" : ""}`}
+                  onClick={() => setRoutineForm(f => ({ ...f, require_approval: !f.require_approval }))}
+                  style={{ transform: "scale(0.75)", transformOrigin: "right center" }}
+                >
+                  <div className="ios-switch-thumb" />
+                </div>
               </label>
               <div style={{ display: "flex", gap: "0.4rem" }}><button onClick={handleAddRoutine} disabled={savingRoutine} style={s.fsb}>{savingRoutine ? "保存…" : "保存"}</button><button onClick={() => setShowAddRoutine(false)} style={s.fcb}>取消</button></div>
             </div>
@@ -517,9 +553,19 @@ function RewardSelect({ value, onChange }) {
   return (
     <label style={s.field}>
       <span style={s.fieldLabel}>奖励星星</span>
-      <select value={value} onChange={e => onChange(parseInt(e.target.value))} style={s.fi}>
-        {[0, 1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n === 0 ? "0⭐" : "⭐".repeat(n)}</option>)}
-      </select>
+      <div className="ios-segmented-control" style={{ display: "flex", width: "100%" }}>
+        {[0, 1, 2, 3, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange(n)}
+            className={`ios-segmented-item ${value === n ? "active" : ""}`}
+            style={{ padding: "4px 6px", fontSize: "0.78rem" }}
+          >
+            {n === 0 ? "0星" : `⭐${n}`}
+          </button>
+        ))}
+      </div>
     </label>
   );
 }
@@ -534,7 +580,7 @@ const s = {
   tc: { background: "var(--card-subtle)", border: "1px solid var(--border)", borderRadius: "12px", padding: "0.65rem 0.85rem", marginBottom: "0.45rem" },
   rc: { background: "var(--card-subtle)", border: "1px solid var(--border)", borderRadius: "12px", padding: "0.65rem 0.85rem", marginBottom: "0.45rem" },
   btn: { width: "100%", padding: "0.65rem", fontSize: "0.95rem", fontWeight: 650, color: "#FFFFFF", background: "var(--accent)", borderRadius: "12px", border: "none", cursor: "pointer", boxShadow: "0 2px 6px rgba(67, 106, 84, 0.2)" },
-  addBtn: { width: "100%", padding: "0.55rem", fontSize: "0.9rem", fontWeight: 650, color: "var(--accent)", border: "1.5px dashed var(--accent)", borderRadius: "10px", background: "var(--accent-light)", cursor: "pointer" },
+  addBtn: { width: "100%", padding: "0.55rem", fontSize: "0.9rem", fontWeight: 650, color: "var(--accent)", border: "1px solid var(--border)", borderRadius: "10px", background: "var(--card-subtle)", cursor: "pointer" },
   fb: { background: "var(--card-subtle)", border: "1px solid var(--border)", borderRadius: "12px", padding: "0.75rem" },
   fi: { padding: "0.45rem 0.6rem", fontSize: "0.85rem", border: "1px solid var(--border)", borderRadius: "8px", outline: "none", marginBottom: "0.4rem", display: "block", width: "100%", background: "var(--card)", color: "var(--text)", fontVariantNumeric: "tabular-nums" },
   fsb: { flex: 1, padding: "0.45rem", fontSize: "0.85rem", fontWeight: 650, color: "#FFFFFF", background: "var(--accent)", borderRadius: "8px", border: "none", cursor: "pointer", boxShadow: "0 2px 6px rgba(67, 106, 84, 0.2)" },

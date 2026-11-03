@@ -95,7 +95,7 @@ export default function StreakFreezeModal({
     setError("");
     setActionSuccess("");
     try {
-      const defaultReason = delta > 0 ? "发烧生病特许免死金牌" : "家长手动纠偏扣除";
+      const defaultReason = delta > 0 ? "生病特许免打卡" : "家长手动调减";
       const reasonText = adjustReason.trim() || defaultReason;
       const updated = await api.adjustChildFreeze(token, childId, delta, reasonText);
       setData(updated);
@@ -120,9 +120,10 @@ export default function StreakFreezeModal({
         <div className="drawer-handle-bar" />
         {/* Header */}
         <div className="ios-sheet-header">
-          <span className="ios-sheet-header-title">连击保护卡管理 · {childName || "孩子"}</span>
-          <button type="button" onClick={onClose} className="ios-sheet-close-btn" title="关闭">
-            关闭
+          <div style={{ width: 44 }} />
+          <span className="ios-sheet-header-title">连击保护卡 · {childName || "孩子"}</span>
+          <button type="button" onClick={onClose} className="ios-sheet-nav-action-btn">
+            完成
           </button>
         </div>
 
@@ -144,10 +145,10 @@ export default function StreakFreezeModal({
           <p style={{ textAlign: "center", color: "var(--muted)", padding: "2rem 0" }}>加载保护卡数据中…</p>
         ) : (
           <div className="ios-sheet-body">
-            {/* Section 1: 当前库存与手动奖惩 */}
+            {/* Section 1: 当前持有与手动奖惩 */}
             <div style={styles.sectionCard}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                <span style={styles.sectionHeaderTitle}>📦 当前保护卡库存</span>
+                <span style={styles.sectionHeaderTitle}>📦 孩子当前拥有</span>
                 <span
                   style={{
                     fontSize: "0.72rem",
@@ -159,7 +160,7 @@ export default function StreakFreezeModal({
                     border: `1px solid ${isFull ? "var(--protect-border)" : availableCount > 0 ? "var(--accent-pill)" : "var(--danger-border)"}`,
                   }}
                 >
-                  {isFull ? "● 库存已满" : availableCount > 0 ? "● 库存充足" : "● 无可用卡"}
+                  {isFull ? "● 已达持有上限" : availableCount > 0 ? "● 余量充足" : "● 无可用卡"}
                 </span>
               </div>
 
@@ -197,7 +198,7 @@ export default function StreakFreezeModal({
                     cursor: availableCount <= 0 ? "not-allowed" : "pointer",
                   }}
                 >
-                  - 扣除 1 张 (纠偏)
+                  - 扣除 1 张 (手动调减)
                 </button>
                 <button
                   type="button"
@@ -213,7 +214,7 @@ export default function StreakFreezeModal({
                     borderColor: "var(--protect-border)",
                   }}
                 >
-                  + 奖励 1 张 (生病/激励)
+                  + 奖励 1 张 (生病/特别表现)
                 </button>
               </div>
 
@@ -221,7 +222,7 @@ export default function StreakFreezeModal({
               {showAdjustDialog && (
                 <div style={styles.adjustBox}>
                   <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text)", marginBottom: "6px" }}>
-                    {showAdjustDialog === "grant" ? "🎁 确认奖励 1 张保护卡" : "⚠️ 确认扣除 1 张保护卡"}
+                    {showAdjustDialog === "grant" ? "🎁 确认奖励 1 张保护卡" : "⚠️ 确认调减 1 张保护卡"}
                   </p>
                   {showAdjustDialog === "grant" && isFull && (
                     <p style={{ fontSize: "0.75rem", color: "var(--flame)", marginBottom: "6px" }}>
@@ -232,7 +233,7 @@ export default function StreakFreezeModal({
                     type="text"
                     value={adjustReason}
                     onChange={(e) => setAdjustReason(e.target.value)}
-                    placeholder={showAdjustDialog === "grant" ? "请输入奖励理由，如：发烧生病特许免死金牌" : "请输入扣除理由，如：错记纠偏回收"}
+                    placeholder={showAdjustDialog === "grant" ? "请输入奖励理由，如：发烧生病特许免打卡" : "请输入调减理由，如：误发撤回"}
                     style={styles.input}
                     maxLength={100}
                   />
@@ -254,7 +255,7 @@ export default function StreakFreezeModal({
                         background: showAdjustDialog === "grant" ? "var(--protect)" : "var(--danger)",
                       }}
                     >
-                      {adjusting ? "处理中…" : "确认提交"}
+                      {adjusting ? "处理中…" : "确认"}
                     </button>
                   </div>
                 </div>
@@ -372,7 +373,7 @@ export default function StreakFreezeModal({
             {/* Section 3: 抵扣与流转历史明细 */}
             <div style={styles.sectionCard}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                <span style={styles.sectionHeaderTitle}>📜 抵扣与流转历史流水</span>
+                <span style={styles.sectionHeaderTitle}>📜 卡片变动记录</span>
                 <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>
                   共 {data?.history?.length ?? data?.usages?.length ?? 0} 条明细
                 </span>
@@ -380,7 +381,7 @@ export default function StreakFreezeModal({
 
               {(!data?.history || data.history.length === 0) && (!data?.usages || data.usages.length === 0) ? (
                 <p style={{ fontSize: "0.78rem", color: "var(--muted)", textAlign: "center", padding: "1.2rem 0" }}>
-                  暂无连击保护卡使用与流转记录
+                  暂无连击保护卡使用与变动记录
                 </p>
               ) : (
                 <div style={styles.historyList}>
@@ -554,7 +555,7 @@ const styles = {
     marginTop: "10px",
     padding: "10px",
     backgroundColor: "var(--card)",
-    border: "1px dashed var(--border)",
+    border: "1px solid var(--border-subtle)",
     borderRadius: "8px",
   },
   label: {

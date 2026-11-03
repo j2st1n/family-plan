@@ -251,7 +251,7 @@ textarea {
 
 .task-check-btn.submitted {
   background: var(--star-bg);
-  border: 2.5px dashed var(--star);
+  border: 2px solid var(--star);
   color: var(--star);
   box-shadow: 0 3px 10px rgba(255, 149, 0, 0.2);
   cursor: default;

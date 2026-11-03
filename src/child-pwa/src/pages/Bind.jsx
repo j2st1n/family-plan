@@ -29,8 +29,8 @@ export default function Bind({ onBound }) {
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "20vh" }}>
       <div className="brand-icon">🌟</div>
       <h1 style={{ fontSize: "1.7rem", fontWeight: 700, fontFamily: "\"Noto Sans SC\", \"PingFang SC\", -apple-system, BlinkMacSystemFont, sans-serif", letterSpacing: "-0.02em", marginBottom: 6 }}>Family Plan</h1>
-      <p style={{ fontSize: "0.9rem", color: "var(--muted)", marginBottom: "2rem" }}>
-        输入家长给您的访问码
+      <p style={{ fontSize: "0.92rem", color: "var(--muted)", marginBottom: "2rem" }}>
+        输入爸爸妈妈给你的 6 位绑定码
       </p>
       <div style={{ width: "100%", maxWidth: 380 }}>
       <input
@@ -39,18 +39,18 @@ export default function Bind({ onBound }) {
         maxLength={6}
         value={code}
         onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-        placeholder="6 位访问码"
+        placeholder="6 位绑定码"
         autoFocus
         style={{
           width: "100%",
           fontSize: "2.2rem",
           fontWeight: 700,
-          letterSpacing: "0.3em",
+          letterSpacing: "0.25em",
           textAlign: "center",
-          padding: "0.8rem 0.6rem",
-          border: "2px solid var(--border)",
+          padding: "1rem 0.6rem",
+          border: "1px solid var(--border-subtle)",
           borderRadius: "16px",
-          background: "var(--card)",
+          background: "var(--card-subtle)",
           color: "var(--text)",
           outline: "none",
           marginBottom: "1.2rem",

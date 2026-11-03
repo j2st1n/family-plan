@@ -144,9 +144,20 @@ export default function TaskCopilotModal({
             取消
           </button>
           <span className="ios-sheet-header-title">
-            AI 建议建任务
+            AI 智能建任务
           </span>
-          <div style={{ width: 44 }} />
+          {result?.tasks?.length > 0 ? (
+            <button
+              type="button"
+              className="ios-sheet-nav-action-btn"
+              disabled={publishing}
+              onClick={handlePublish}
+            >
+              {publishing ? "发布中…" : "发布"}
+            </button>
+          ) : (
+            <div style={{ width: 44 }} />
+          )}
         </div>
 
         {/* Content body */}
@@ -220,7 +231,7 @@ export default function TaskCopilotModal({
 
           {/* Parse Results Preview */}
           {result && (
-            <div style={{ borderTop: "1px dashed var(--border)", paddingTop: "14px" }}>
+            <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "14px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
                 <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--accent)" }}>
                   💡 {result.raw_summary}
@@ -261,16 +272,7 @@ export default function TaskCopilotModal({
                   type="date"
                   value={taskDate}
                   onChange={(e) => setTaskDate(e.target.value)}
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    border: "1px solid var(--border)",
-                    backgroundColor: "var(--card)",
-                    color: "var(--text)",
-                    fontSize: "0.85rem",
-                    outline: "none",
-                    fontWeight: 600,
-                  }}
+                  className="ios-time-input"
                 />
               </div>
 
@@ -376,80 +378,59 @@ export default function TaskCopilotModal({
                         <span style={{ color: "var(--muted)" }}>分</span>
                       </label>
 
-                      <label style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                        <span style={{ color: "var(--star)" }}>⭐</span>
-                        <select
-                          value={task.reward_stars}
-                          onChange={(e) => handleUpdateTask(idx, "reward_stars", parseInt(e.target.value))}
-                          style={{
-                            padding: "3px 4px",
-                            border: "1px solid var(--border)",
-                            borderRadius: "4px",
-                            backgroundColor: "var(--card)",
-                          }}
-                        >
-                          {[0, 1, 2, 3, 4, 5].map((n) => (
-                            <option key={n} value={n}>
-                              {n} 星
-                            </option>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        <div className="ios-segmented-control" style={{ display: "inline-flex" }}>
+                          {[0, 1, 2, 3, 5].map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => handleUpdateTask(idx, "reward_stars", n)}
+                              className={`ios-segmented-item ${task.reward_stars === n ? "active" : ""}`}
+                              style={{ padding: "2px 6px", fontSize: "0.74rem" }}
+                            >
+                              {n === 0 ? "0星" : `⭐${n}`}
+                            </button>
                           ))}
-                        </select>
-                      </label>
+                        </div>
+                      </div>
 
-                      <label style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                        <span style={{ color: "var(--muted)" }}>🕒</span>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
                         <input
-                          type="text"
-                          placeholder="开始"
+                          type="time"
                           value={task.start || ""}
                           onChange={(e) => handleUpdateTask(idx, "start", e.target.value)}
-                          style={{
-                            width: "52px",
-                            padding: "3px 4px",
-                            border: "1px solid var(--border)",
-                            borderRadius: "4px",
-                            textAlign: "center",
-                            backgroundColor: "var(--card)",
-                          }}
+                          className="ios-time-input"
+                          style={{ padding: "2px 6px", fontSize: "0.8rem" }}
                         />
-                        <span>-</span>
+                        <span style={{ color: "var(--muted)" }}>-</span>
                         <input
-                          type="text"
-                          placeholder="结束"
+                          type="time"
                           value={task.end || ""}
                           onChange={(e) => handleUpdateTask(idx, "end", e.target.value)}
-                          style={{
-                            width: "52px",
-                            padding: "3px 4px",
-                            border: "1px solid var(--border)",
-                            borderRadius: "4px",
-                            textAlign: "center",
-                            backgroundColor: "var(--card)",
-                          }}
+                          className="ios-time-input"
+                          style={{ padding: "2px 6px", fontSize: "0.8rem" }}
                         />
-                      </label>
+                      </div>
 
                       <label
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
-                          gap: "4px",
+                          gap: "6px",
                           cursor: "pointer",
                           marginLeft: "auto",
-                          padding: "3px 6px",
-                          borderRadius: "4px",
-                          backgroundColor: task.require_approval ? "var(--star-bg)" : "transparent",
-                          border: task.require_approval ? "1px solid var(--star-border)" : "1px solid transparent",
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={!!task.require_approval}
-                          onChange={(e) => handleUpdateTask(idx, "require_approval", e.target.checked)}
-                        />
-                        <span style={{ color: task.require_approval ? "var(--star)" : "var(--muted)", fontWeight: 600 }}>
-                          需家长审核
+                        <span style={{ color: task.require_approval ? "var(--accent)" : "var(--muted)", fontWeight: 600, fontSize: "0.78rem" }}>
+                          需审核
                         </span>
+                        <div
+                          className={`ios-switch ${task.require_approval ? "on" : ""}`}
+                          onClick={() => handleUpdateTask(idx, "require_approval", !task.require_approval)}
+                          style={{ transform: "scale(0.7)", transformOrigin: "right center" }}
+                        >
+                          <div className="ios-switch-thumb" />
+                        </div>
                       </label>
                     </div>
                   </div>
@@ -464,8 +445,8 @@ export default function TaskCopilotModal({
                   padding: "8px",
                   marginTop: "10px",
                   borderRadius: "var(--radius-sm)",
-                  border: "1px dashed var(--border)",
-                  backgroundColor: "transparent",
+                  border: "1px solid var(--border)",
+                  backgroundColor: "var(--card-subtle)",
                   color: "var(--muted)",
                   fontSize: "0.85rem",
                   cursor: "pointer",

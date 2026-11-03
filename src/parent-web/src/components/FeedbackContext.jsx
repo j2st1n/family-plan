@@ -57,7 +57,7 @@ export function FeedbackProvider({ children }) {
     const opts = typeof options === "string" ? { message: options } : options || {};
     return new Promise((resolve) => {
       setConfirmDialog({
-        title: opts.title || "确认提示",
+        title: opts.title || "操作确认",
         message: opts.message || "确定继续此操作吗？",
         confirmText: opts.confirmText || "确定",
         cancelText: opts.cancelText || "取消",
@@ -74,7 +74,7 @@ export function FeedbackProvider({ children }) {
     const opts = typeof options === "string" ? { message: options } : options || {};
     return new Promise((resolve) => {
       setAlertDialog({
-        title: opts.title || "系统提示",
+        title: opts.title || "温馨提示",
         message: opts.message || "",
         buttonText: opts.buttonText || "我知道了",
         resolve: () => {
@@ -160,54 +160,66 @@ export function FeedbackProvider({ children }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "16px",
+            padding: "20px",
           }}
           onClick={() => confirmDialog.resolve(false)}
         >
           <div
             style={{
-              backgroundColor: "var(--card, #FFFFFF)",
-              borderRadius: "var(--radius-lg, 20px)",
-              border: "1px solid var(--border, #E5E5EA)",
-              boxShadow: "var(--shadow-hover)",
-              padding: "20px 22px",
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              borderRadius: "16px",
+              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)",
               width: "100%",
-              maxWidth: "380px",
+              maxWidth: "290px",
+              textAlign: "center",
+              overflow: "hidden",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3
+            <div style={{ padding: "20px 18px 16px" }}>
+              <h3
+                style={{
+                  fontSize: "1.05rem",
+                  fontWeight: 650,
+                  color: "var(--text, #1D1D1F)",
+                  marginBottom: "6px",
+                  letterSpacing: "-0.015em",
+                }}
+              >
+                {confirmDialog.title}
+              </h3>
+              <p
+                style={{
+                  fontSize: "0.85rem",
+                  color: "var(--text, #1D1D1F)",
+                  lineHeight: 1.4,
+                  opacity: 0.85,
+                  margin: 0,
+                }}
+              >
+                {confirmDialog.message}
+              </p>
+            </div>
+            <div
               style={{
-                fontSize: "1.05rem",
-                fontWeight: 700,
-                color: "var(--text, #1D1D1F)",
-                marginBottom: "8px",
+                display: "flex",
+                borderTop: "0.5px solid rgba(60, 60, 67, 0.25)",
               }}
             >
-              {confirmDialog.title}
-            </h3>
-            <p
-              style={{
-                fontSize: "0.88rem",
-                color: "var(--muted, #86868B)",
-                lineHeight: 1.6,
-                marginBottom: "20px",
-              }}
-            >
-              {confirmDialog.message}
-            </p>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
               <button
                 type="button"
                 onClick={() => confirmDialog.resolve(false)}
                 style={{
-                  padding: "7px 16px",
-                  borderRadius: "var(--radius-sm, 8px)",
-                  backgroundColor: "var(--card-subtle, #F5F5F7)",
-                  border: "1px solid var(--border, #E5E5EA)",
-                  color: "var(--muted, #86868B)",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
+                  flex: 1,
+                  padding: "12px 0",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderRight: "0.5px solid rgba(60, 60, 67, 0.25)",
+                  color: "var(--accent, #0071E3)",
+                  fontSize: "0.95rem",
+                  fontWeight: 400,
                   cursor: "pointer",
                 }}
               >
@@ -217,15 +229,14 @@ export function FeedbackProvider({ children }) {
                 type="button"
                 onClick={() => confirmDialog.resolve(true)}
                 style={{
-                  padding: "7px 18px",
-                  borderRadius: "var(--radius-sm, 8px)",
-                  backgroundColor: confirmDialog.isDestructive ? "var(--danger, #FF3B30)" : "var(--accent, #0071E3)",
-                  color: "#FFFFFF",
+                  flex: 1,
+                  padding: "12px 0",
+                  backgroundColor: "transparent",
                   border: "none",
-                  fontSize: "0.85rem",
-                  fontWeight: 650,
+                  color: confirmDialog.isDestructive ? "var(--danger, #FF3B30)" : "var(--accent, #0071E3)",
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
                   cursor: "pointer",
-                  boxShadow: confirmDialog.isDestructive ? "0 2px 6px rgba(255, 59, 48, 0.25)" : "0 2px 6px rgba(0, 113, 227, 0.25)",
                 }}
               >
                 {confirmDialog.confirmText}
@@ -248,54 +259,64 @@ export function FeedbackProvider({ children }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "16px",
+            padding: "20px",
           }}
           onClick={() => alertDialog.resolve()}
         >
           <div
             style={{
-              backgroundColor: "var(--card, #FFFFFF)",
-              borderRadius: "var(--radius-lg, 20px)",
-              border: "1px solid var(--border, #E5E5EA)",
-              boxShadow: "var(--shadow-hover)",
-              padding: "20px 22px",
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              borderRadius: "16px",
+              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)",
               width: "100%",
-              maxWidth: "360px",
+              maxWidth: "290px",
+              textAlign: "center",
+              overflow: "hidden",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3
+            <div style={{ padding: "20px 18px 16px" }}>
+              <h3
+                style={{
+                  fontSize: "1.05rem",
+                  fontWeight: 650,
+                  color: "var(--text, #1D1D1F)",
+                  marginBottom: "6px",
+                  letterSpacing: "-0.015em",
+                }}
+              >
+                {alertDialog.title}
+              </h3>
+              <p
+                style={{
+                  fontSize: "0.85rem",
+                  color: "var(--text, #1D1D1F)",
+                  lineHeight: 1.4,
+                  opacity: 0.85,
+                  margin: 0,
+                }}
+              >
+                {alertDialog.message}
+              </p>
+            </div>
+            <div
               style={{
-                fontSize: "1.02rem",
-                fontWeight: 700,
-                color: "var(--text, #1D1D1F)",
-                marginBottom: "8px",
+                borderTop: "0.5px solid rgba(60, 60, 67, 0.25)",
               }}
             >
-              {alertDialog.title}
-            </h3>
-            <p
-              style={{
-                fontSize: "0.88rem",
-                color: "var(--muted, #86868B)",
-                lineHeight: 1.6,
-                marginBottom: "18px",
-              }}
-            >
-              {alertDialog.message}
-            </p>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <button
                 type="button"
                 onClick={() => alertDialog.resolve()}
                 style={{
-                  padding: "7px 18px",
-                  borderRadius: "var(--radius-sm, 8px)",
-                  backgroundColor: "var(--accent, #0071E3)",
-                  color: "#FFFFFF",
+                  width: "100%",
+                  padding: "12px 0",
+                  backgroundColor: "transparent",
                   border: "none",
-                  fontSize: "0.85rem",
-                  fontWeight: 650,
+                  color: "var(--accent, #0071E3)",
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
                   cursor: "pointer",
                 }}
               >

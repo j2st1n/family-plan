@@ -125,7 +125,7 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
       {loading && <p style={{ color: "var(--muted)", textAlign: "center", paddingTop: "2rem" }}>加载中…</p>}
 
       {!loading && children.length === 0 && (
-        <div style={{ textAlign: "center", paddingTop: "3rem", paddingBottom: "2rem", background: "var(--card)", borderRadius: "var(--radius)", border: "1px dashed var(--border)" }}>
+        <div style={{ textAlign: "center", paddingTop: "3rem", paddingBottom: "2rem", background: "var(--card)", borderRadius: "var(--radius)", border: "1px solid var(--border-subtle)" }}>
           <span style={{ fontSize: "2.2rem", display: "block", marginBottom: "0.4rem" }}>🌱</span>
           <p style={{ color: "var(--muted)", marginBottom: "1rem" }}>还没有添加人员</p>
           <button onClick={() => setView("create-child")} className="btn-primary">+ 添加孩子</button>
@@ -144,26 +144,65 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
         return (
           <div key={c.id} style={styles.card}>
             {editingChild === c.id ? (
-              <div>
-                <label style={styles.el}>名字</label>
-                <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} style={styles.ei} autoFocus />
-                <label style={styles.el}>学段</label>
-                <select value={editForm.stage} onChange={e => setEditForm({ ...editForm, stage: e.target.value, grade: "" })} style={styles.ei}>
-                  <option value="">不填</option>
-                  {Object.keys(GRADE_OPTIONS).map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+              <div className="ios-grouped-card" style={{ padding: "12px", margin: "6px 0" }}>
+                <input
+                  placeholder="孩子姓名"
+                  value={editForm.name}
+                  onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                  style={{ width: "100%", border: "none", outline: "none", fontSize: "1rem", color: "var(--text)", marginBottom: "8px" }}
+                  autoFocus
+                />
+                <div className="ios-separator" />
+                <div style={{ padding: "8px 0" }}>
+                  <div style={{ fontSize: "0.82rem", color: "var(--muted)", marginBottom: "6px" }}>学段</div>
+                  <div className="ios-segmented-control">
+                    {Object.keys(GRADE_OPTIONS).map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        className={`ios-segmented-item ${editForm.stage === s ? "active" : ""}`}
+                        onClick={() => setEditForm({ ...editForm, stage: s, grade: (GRADE_OPTIONS[s] || [])[0] || "" })}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {editForm.stage && (
                   <>
-                    <label style={styles.el}>年级</label>
-                    <select value={editForm.grade} onChange={e => setEditForm({ ...editForm, grade: e.target.value })} style={styles.ei}>
-                      <option value="">请选择</option>
-                      {GRADE_OPTIONS[editForm.stage].map(g => <option key={g} value={g}>{g}</option>)}
-                    </select>
+                    <div className="ios-separator" />
+                    <div style={{ padding: "8px 0" }}>
+                      <div style={{ fontSize: "0.82rem", color: "var(--muted)", marginBottom: "6px" }}>年级</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                        {(GRADE_OPTIONS[editForm.stage] || []).map(g => (
+                          <button
+                            key={g}
+                            type="button"
+                            className={`pill-segment-btn ${editForm.grade === g ? "active" : ""}`}
+                            onClick={() => setEditForm({ ...editForm, grade: g })}
+                            style={{ padding: "4px 10px", fontSize: "0.8rem", borderRadius: "8px" }}
+                          >
+                            {g}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </>
                 )}
-                <label style={styles.el}>完成当日 X% 的任务 → 打卡次数 +1</label>
-                <input value={editForm.threshold} onChange={e => setEditForm({ ...editForm, threshold: e.target.value })} type="number" min="0" max="100" style={styles.ei} />
-                <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.4rem" }}>
+                <div className="ios-separator" />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0" }}>
+                  <span style={{ fontSize: "0.85rem", color: "var(--text)" }}>每日连胜达标标准 (%)</span>
+                  <input
+                    value={editForm.threshold}
+                    onChange={e => setEditForm({ ...editForm, threshold: e.target.value })}
+                    type="number"
+                    min="50"
+                    max="100"
+                    className="ios-time-input"
+                    style={{ width: "64px", textAlign: "right" }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: "0.6rem", marginTop: "10px" }}>
                   <button onClick={saveEdit} style={styles.sb}>保存</button>
                   <button onClick={() => setEditingChild(null)} style={styles.cb}>取消</button>
                 </div>

@@ -24,7 +24,7 @@ export default function WarmEmptyState({
           height: "68px",
           borderRadius: "50%",
           backgroundColor: "var(--accent-light, #F0F6FD)",
-          border: "1.5px dashed var(--accent-pill, #E1EFFF)",
+          border: "none",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

@@ -1145,33 +1145,14 @@ export default function TodayDashboard({
                       孩子打卡后不立即加星，需家长审核后发放
                     </p>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={taskForm.require_approval}
-                    onChange={(e) => setTaskForm({ ...taskForm, require_approval: e.target.checked })}
-                    style={{ width: 18, height: 18, accentColor: "var(--accent)" }}
-                  />
+                  <div
+                    className={`ios-switch ${taskForm.require_approval ? "on" : ""}`}
+                    onClick={() => setTaskForm({ ...taskForm, require_approval: !taskForm.require_approval })}
+                  >
+                    <div className="ios-switch-thumb" />
+                  </div>
                 </label>
               </div>
-
-              {/* Save Button */}
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleSaveRegularTask}
-                disabled={actionInProgress || !taskForm.title.trim()}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "12px",
-                  fontSize: "0.98rem",
-                  fontWeight: 650,
-                  opacity: taskForm.title.trim() ? 1 : 0.4,
-                  cursor: taskForm.title.trim() ? "pointer" : "not-allowed",
-                }}
-              >
-                {actionInProgress ? "保存中..." : editingTask ? "保存修改" : "确认添加"}
-              </button>
             </div>
           </div>
         </div>

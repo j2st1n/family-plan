@@ -199,7 +199,7 @@ export default function Shop({ token, isActive, onExpired }) {
             星星商城
           </h2>
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: "2px" }}>
-            商品货架管理、孩子心愿审核与星星兑换记录
+            心愿奖励设置、孩子心愿审核与星星兑换记录
           </p>
         </div>
         <button
@@ -208,23 +208,23 @@ export default function Shop({ token, isActive, onExpired }) {
           onClick={openAddModal}
           style={{ padding: "6px 14px", fontSize: "0.82rem" }}
         >
-          + 上架商品
+          + 添加奖励
         </button>
       </div>
 
-      {/* Section 1: 货架商品 (整洁稳固，弹窗增改) */}
+      {/* Section 1: 心愿与奖励 (整洁稳固，弹窗增改) */}
       <div style={s.section}>
         <div style={s.sectionHd}>
-          <h3 style={s.sh}>货架商品</h3>
-          <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{active.length} 件在售</span>
+          <h3 style={s.sh}>奖励清单</h3>
+          <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{active.length} 项可选</span>
         </div>
 
         {active.length === 0 ? (
           <WarmEmptyState
             icon="box"
-            title="货架空空如也"
-            description="上架孩子心仪的奖励物品或体验，激发好习惯坚持动力！"
-            actionText="+ 上架第一件商品"
+            title="暂无奖励清单"
+            description="添加孩子心仪的奖励物品或体验，激发好习惯坚持动力！"
+            actionText="+ 添加第一件奖励"
             onAction={openAddModal}
           />
         ) : (
@@ -235,7 +235,7 @@ export default function Shop({ token, isActive, onExpired }) {
                   <p style={{ fontWeight: 650, fontSize: "0.92rem", color: "var(--text)" }}>{item.title}</p>
                   {item.stock != null && (
                     <p style={{ fontSize: "0.74rem", color: "var(--danger)", marginTop: 2 }}>
-                      库存剩余 {item.stock} 件
+                      提供余量 {item.stock} 份
                     </p>
                   )}
                 </div>
@@ -382,7 +382,7 @@ export default function Shop({ token, isActive, onExpired }) {
       )}
 
       {/* =========================================================================
-          iOS 标准底部抽屉 Sheet：上架与编辑商品
+          iOS 标准底部抽屉 Sheet：添加与编辑心愿奖励
           ========================================================================= */}
       {itemModal.isOpen && (
         <div className="ios-sheet-overlay" onClick={closeItemModal}>
@@ -397,7 +397,7 @@ export default function Shop({ token, isActive, onExpired }) {
                 取消
               </button>
               <span className="ios-sheet-header-title">
-                {itemModal.mode === "create" ? "上架新商品" : "编辑商品"}
+                {itemModal.mode === "create" ? "添加心愿奖励" : "编辑奖励"}
               </span>
               <button
                 type="button"
@@ -405,17 +405,17 @@ export default function Shop({ token, isActive, onExpired }) {
                 disabled={savingItem || !modalForm.title.trim()}
                 onClick={handleSaveModal}
               >
-                {itemModal.mode === "create" ? "上架" : "保存"}
+                {itemModal.mode === "create" ? "添加" : "保存"}
               </button>
             </div>
 
             <div className="ios-sheet-body">
               <div className="ios-grouped-card" style={{ marginBottom: "20px" }}>
-                {/* Row 1: 商品名称 (Borderless input) */}
+                {/* Row 1: 奖励名称 (Borderless input) */}
                 <div style={{ padding: "12px 16px" }}>
                   <input
                     type="text"
-                    placeholder="商品名称，如：看动画片30分钟、乐高积木..."
+                    placeholder="奖励名称，如：看动画片30分钟、乐高积木..."
                     value={modalForm.title}
                     onChange={(e) => setModalForm({ ...modalForm, title: e.target.value })}
                     style={{
@@ -455,10 +455,10 @@ export default function Shop({ token, isActive, onExpired }) {
 
                 <div className="ios-separator" />
 
-                {/* Row 3: 库存件数 */}
+                {/* Row 3: 提供数量 (选填) */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
                   <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                    库存数量 (选填)
+                    提供数量 (选填)
                   </span>
                   <input
                     type="number"
@@ -471,24 +471,6 @@ export default function Shop({ token, isActive, onExpired }) {
                   />
                 </div>
               </div>
-
-              <button
-                type="button"
-                className="btn-primary"
-                disabled={savingItem || !modalForm.title.trim()}
-                onClick={handleSaveModal}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "12px",
-                  fontSize: "0.98rem",
-                  fontWeight: 650,
-                  opacity: modalForm.title.trim() ? 1 : 0.4,
-                  cursor: modalForm.title.trim() ? "pointer" : "not-allowed",
-                }}
-              >
-                {savingItem ? "保存中…" : itemModal.mode === "create" ? "确认上架" : "保存修改"}
-              </button>
             </div>
           </div>
         </div>
@@ -536,7 +518,7 @@ const s = {
     padding: "0.45rem",
     fontSize: "0.82rem",
     color: "var(--muted)",
-    border: "1px dashed var(--border)",
+    border: "1px solid var(--border-subtle)",
     borderRadius: "10px",
     background: "transparent",
     cursor: "pointer",

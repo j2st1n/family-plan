@@ -94,9 +94,9 @@ export async function fetchShop(onExpired) {
 }
 
 const ERROR_CN = {
-  "Out of stock": "库存不足",
+  "Out of stock": "已兑完，暂无余量",
   "Not enough stars": "星星不够",
-  "Item not found": "商品不存在",
+  "Item not found": "奖励不存在",
   "Child not found": "用户不存在",
   "Wish not found or not pending": "许愿不存在或已审核",
   "Already fulfilled": "已兑现",

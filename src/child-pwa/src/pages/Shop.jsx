@@ -302,7 +302,7 @@ export default function Shop({ onExpired, active }) {
         )}
       </div>
 
-      {/* 我的兑换流水 */}
+      {/* 我的兑换记录 */}
       {redeemed.length > 0 && (
         <div style={{ marginBottom: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px", padding: "0 4px" }}>
@@ -316,7 +316,7 @@ export default function Shop({ onExpired, active }) {
               <div key={r.id} className="reminders-task-row">
                 <div style={{ flex: 1 }}>
                   <span style={{ fontWeight: 600, fontSize: "0.92rem", color: "var(--text)" }}>{r.title}</span>
-                  <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>
+                  <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px", whiteSpace: "nowrap" }}>
                     {redemptionPrice(r)} · 申请时间 {fmtDate(r.created_at)}
                   </p>
                 </div>
@@ -329,7 +329,7 @@ export default function Shop({ onExpired, active }) {
               <div key={r.id} className="reminders-task-row">
                 <div style={{ flex: 1 }}>
                   <span style={{ fontWeight: 600, fontSize: "0.92rem", color: "var(--text)" }}>{r.title}</span>
-                  <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>
+                  <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px", whiteSpace: "nowrap" }}>
                     {redemptionPrice(r)} · 已收到 {fmtDate(r.fulfilled_at)}
                   </p>
                 </div>
@@ -432,7 +432,7 @@ export default function Shop({ onExpired, active }) {
                 onClick={handleWish}
                 disabled={!wishForm.title.trim()}
               >
-                提交
+                许愿
               </button>
             </div>
 
@@ -440,7 +440,7 @@ export default function Shop({ onExpired, active }) {
               <div className="ios-grouped-card" style={{ marginBottom: "20px" }}>
                 <div style={{ padding: "12px 16px" }}>
                   <input
-                    placeholder="想要什么愿望？如：乐高积木、看电影..."
+                    placeholder="想要什么愿望？告诉爸爸妈妈吧"
                     value={wishForm.title}
                     onChange={(e) => setWishForm({ ...wishForm, title: e.target.value })}
                     style={{
@@ -475,25 +475,6 @@ export default function Shop({ onExpired, active }) {
                   />
                 </div>
               </div>
-
-              {/* 底部全宽辅助操作按钮 */}
-              <button
-                type="button"
-                onClick={handleWish}
-                disabled={!wishForm.title.trim()}
-                className="btn-primary"
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "12px",
-                  fontSize: "0.98rem",
-                  fontWeight: 650,
-                  opacity: wishForm.title.trim() ? 1 : 0.4,
-                  cursor: wishForm.title.trim() ? "pointer" : "not-allowed",
-                }}
-              >
-                提交心愿
-              </button>
             </div>
           </div>
         </div>
