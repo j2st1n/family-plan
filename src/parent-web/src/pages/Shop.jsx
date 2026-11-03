@@ -27,18 +27,21 @@ export default function Shop({ token, isActive, onExpired }) {
     setLoading(true);
     setError(null);
     try {
-      const list = await api.fetchShop(token);
-      setItems(list);
-    } catch (err) {
-      setError("加载商品列表失败: " + (err.message || "未知错误"));
+      const [list, reds] = await Promise.all([
+        api.fetchShop(token).catch((err) => {
+          setError("加载商品列表失败: " + (err.message || "未知错误"));
+          return null;
+        }),
+        api.fetchRedemptions(token).catch((err) => {
+          setError("加载兑换记录失败: " + (err.message || "未知错误"));
+          return null;
+        }),
+      ]);
+      if (list) setItems(list);
+      if (reds) setRedemptions(reds);
+    } finally {
+      setLoading(false);
     }
-    try {
-      const reds = await api.fetchRedemptions(token);
-      setRedemptions(reds);
-    } catch (err) {
-      setError("加载兑换记录失败: " + (err.message || "未知错误"));
-    }
-    setLoading(false);
   }, [token]);
 
   useEffect(() => {

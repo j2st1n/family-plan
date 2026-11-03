@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchShop, fetchToday, fetchChildFreeze, purchaseChildFreeze, redeemItem, makeWish, editWish } from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
@@ -21,16 +21,31 @@ export default function Shop({ onExpired, active }) {
   const [editForm, setEditForm] = useState({ title: "", desc: "" });
   const [freezeInfo, setFreezeInfo] = useState(null);
   const [purchasingFreeze, setPurchasingFreeze] = useState(false);
+  const hasLoadedRef = useRef(false);
 
-const load = useCallback(async () => {
-  setLoading(true); setError("");
+const load = useCallback(async (forceLoading = false) => {
+  if (forceLoading || !hasLoadedRef.current) {
+    setLoading(true);
+  }
+  setError("");
   try {
-    const all = await fetchShop(onExpired);
-    setItems(all.filter(i => i.status === "active" && !i.redeemed_by_child));
-    setWishes(all.filter(i => i.status === "pending"));
-    setRedeemed(all.filter(i => i.redeemed_by_child));
-    try { const today = await fetchToday(onExpired); setStars(today.rewards?.stars_total ?? 0); } catch (error) { console.warn("Failed to load rewards", error); }
-    try { const freeze = await fetchChildFreeze(onExpired); setFreezeInfo(freeze); } catch (error) { console.warn("Failed to load freeze", error); }
+    const [all, today, freeze] = await Promise.all([
+      fetchShop(onExpired),
+      fetchToday(onExpired).catch((err) => { console.warn("Failed to load rewards", err); return null; }),
+      fetchChildFreeze(onExpired).catch((err) => { console.warn("Failed to load freeze", err); return null; }),
+    ]);
+    if (all) {
+      setItems(all.filter(i => i.status === "active" && !i.redeemed_by_child));
+      setWishes(all.filter(i => i.status === "pending"));
+      setRedeemed(all.filter(i => i.redeemed_by_child));
+    }
+    if (today?.rewards) {
+      setStars(today.rewards.stars_total ?? 0);
+    }
+    if (freeze) {
+      setFreezeInfo(freeze);
+    }
+    hasLoadedRef.current = true;
   } catch (err) {
     if (err.message === "token_expired") {
       setError("登录已过期，请重新绑定");
@@ -125,7 +140,7 @@ async function handlePurchaseFreeze() {
   }
 }
 
-  if (loading) return <p style={{ color: "var(--muted)", textAlign: "center", paddingTop: "3rem" }}>加载中…</p>;
+  if (loading && !hasLoadedRef.current) return <p style={{ color: "var(--muted)", textAlign: "center", paddingTop: "3rem" }}>加载中…</p>;
 
   const pendingRedemptions = redeemed.filter(r => r.redemption_status === "pending");
   const fulfilledRedemptions = redeemed.filter(r => r.redemption_status === "fulfilled");
