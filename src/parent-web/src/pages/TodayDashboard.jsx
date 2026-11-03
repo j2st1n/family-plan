@@ -438,36 +438,38 @@ export default function TodayDashboard({
       )}
 
       {/* 顶部平铺多孩切换 (iOS Segmented Control) */}
-      <div className="ios-segmented-control" style={{ marginBottom: "14px" }}>
-        {children.map((c) => {
-          const isActive = c.id === activeChild?.id;
-          const pCount = childPendingMap[c.id] || 0;
-          return (
-            <button
-              key={c.id}
-              onClick={() => onSelectChild(c.id)}
-              className={`ios-segment-item ${isActive ? "active" : ""}`}
-            >
-              <span>{c.name}</span>
-              {pCount > 0 && (
-                <span
-                  style={{
-                    backgroundColor: "var(--flame)",
-                    color: "#FFFFFF",
-                    fontSize: "0.65rem",
-                    fontWeight: 700,
-                    padding: "0 5px",
-                    borderRadius: "999px",
-                    lineHeight: "1.2",
-                  }}
-                >
-                  {pCount}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {children.length > 1 && (
+        <div className="ios-segmented-control" style={{ marginBottom: "14px" }}>
+          {children.map((c) => {
+            const isActive = c.id === activeChild?.id;
+            const pCount = childPendingMap[c.id] || 0;
+            return (
+              <button
+                key={c.id}
+                onClick={() => onSelectChild(c.id)}
+                className={`ios-segment-item ${isActive ? "active" : ""}`}
+              >
+                <span>{c.name}</span>
+                {pCount > 0 && (
+                  <span
+                    style={{
+                      backgroundColor: "var(--flame)",
+                      color: "#FFFFFF",
+                      fontSize: "0.65rem",
+                      fontWeight: 700,
+                      padding: "0 5px",
+                      borderRadius: "999px",
+                      lineHeight: "1.2",
+                    }}
+                  >
+                    {pCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* 日期选择与导航条 (iOS 极简胶囊切换) */}
       <div
@@ -651,38 +653,38 @@ export default function TodayDashboard({
         </div>
 
         {/* Apple Fitness Activity Ring */}
-        <div style={{ position: "relative", width: "64px", height: "64px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width="64" height="64" viewBox="0 0 64 64" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
+        <div style={{ position: "relative", width: "76px", height: "76px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="76" height="76" viewBox="0 0 76 76" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
             <circle
-              cx="32"
-              cy="32"
-              r="26"
+              cx="38"
+              cy="38"
+              r="31"
               fill="none"
               stroke="#E5E5EA"
-              strokeWidth="6"
+              strokeWidth="5.5"
             />
             <circle
-              cx="32"
-              cy="32"
-              r="26"
+              cx="38"
+              cy="38"
+              r="31"
               fill="none"
               stroke="#34C759"
-              strokeWidth="6"
+              strokeWidth="5.5"
               strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 26}
-              strokeDashoffset={2 * Math.PI * 26 * (1 - Math.min(100, Math.max(0, completionRate)) / 100)}
+              strokeDasharray={2 * Math.PI * 31}
+              strokeDashoffset={2 * Math.PI * 31 * (1 - Math.min(100, Math.max(0, completionRate)) / 100)}
               style={{
                 transition: "stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
-                filter: completionRate > 0 ? "drop-shadow(0 0 4px rgba(52, 199, 89, 0.4))" : "none",
+                filter: completionRate > 0 ? "drop-shadow(0 0 4px rgba(52, 199, 89, 0.3))" : "none",
               }}
             />
           </svg>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
-            <span style={{ fontSize: "0.95rem", fontWeight: 750, color: "var(--text)", lineHeight: 1, letterSpacing: "-0.02em" }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+            <span style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text)", lineHeight: "1.1", letterSpacing: "-0.03em" }}>
               {completionRate}%
             </span>
-            <span style={{ fontSize: "0.58rem", color: "var(--muted)", marginTop: "2px", fontWeight: 500 }}>
-              完成
+            <span style={{ fontSize: "0.62rem", color: "var(--muted)", fontWeight: 500, lineHeight: "1", marginTop: "2px" }}>
+              达成
             </span>
           </div>
         </div>
