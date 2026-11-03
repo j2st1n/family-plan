@@ -103,47 +103,48 @@ h1, h2, h3, h4, .display-text {
   }
 }
 
-/* 底部磨砂高斯模糊导航栏 (Safari 移动端原生优化) */
 .nav-tabs {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
+  height: 49px;
   display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px));
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-top: 1px solid var(--border);
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: rgba(249, 249, 249, 0.88);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 0.5px solid rgba(60, 60, 67, 0.2);
   z-index: 200;
 }
 
 .nav-tab {
   flex: 1;
-  max-width: 160px;
-  padding: 8px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  font-size: 0.78rem;
-  font-weight: 500;
-  font-family: inherit;
-  letter-spacing: -0.01em;
+  height: 100%;
   color: var(--muted);
-  background: transparent;
-  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 500;
+  text-decoration: none;
   border: none;
+  background: transparent;
   cursor: pointer;
-  transition: all 0.15s ease;
+  position: relative;
+  padding-top: 2px;
+}
+
+.nav-tab:active {
+  opacity: 0.65;
 }
 
 .nav-tab.on {
   color: var(--accent);
-  background: rgba(0, 113, 227, 0.08);
+  background: transparent;
   font-weight: 600;
 }
 

@@ -313,54 +313,52 @@ export default function Today({ child, onExpired, active }) {
         </div>
       )}
 
-      <div style={{ display: "flex", gap: "0.6rem", marginBottom: "1.4rem" }}>
+      {/* 顶部三项状态统计胶囊 (iOS Standard Metric Pods) */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "1.4rem" }}>
         <div
           style={{
             flex: 1,
-            background: "var(--card)",
-            border: "1px solid var(--border)",
-            borderRadius: "18px",
-            padding: "0.9rem 0.4rem",
+            background: "#FFFFFF",
+            borderRadius: "14px",
+            padding: "12px 8px",
             textAlign: "center",
-            boxShadow: "var(--shadow-card)",
+            boxShadow: "var(--shadow-sm)",
           }}
         >
-          <p style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--star)", fontVariantNumeric: "tabular-nums" }}>
+          <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>
             ⭐ {formatStars(data?.rewards?.stars_total ?? 0)}
-          </p>
-          <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>星星</p>
+          </div>
+          <div style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, marginTop: "2px" }}>星星余额</div>
         </div>
         <div
           style={{
             flex: 1,
-            background: "var(--card)",
-            border: "1px solid var(--border)",
-            borderRadius: "18px",
-            padding: "0.9rem 0.4rem",
+            background: "#FFFFFF",
+            borderRadius: "14px",
+            padding: "12px 8px",
             textAlign: "center",
-            boxShadow: "var(--shadow-card)",
+            boxShadow: "var(--shadow-sm)",
           }}
         >
-          <p style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--flame)", fontVariantNumeric: "tabular-nums" }}>
+          <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>
             🔥 {data?.rewards?.current_streak_days ?? 0}
-          </p>
-          <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>连续天数</p>
+          </div>
+          <div style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, marginTop: "2px" }}>连续天数</div>
         </div>
         <div
           style={{
             flex: 1,
-            background: "var(--card)",
-            border: "1px solid var(--border)",
-            borderRadius: "18px",
-            padding: "0.9rem 0.4rem",
+            background: "#FFFFFF",
+            borderRadius: "14px",
+            padding: "12px 8px",
             textAlign: "center",
-            boxShadow: "var(--shadow-card)",
+            boxShadow: "var(--shadow-sm)",
           }}
         >
-          <p style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--protect)", fontVariantNumeric: "tabular-nums" }}>
+          <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>
             ❄️ {data?.rewards?.streak_freeze_count ?? 0}
-          </p>
-          <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>保护卡</p>
+          </div>
+          <div style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, marginTop: "2px" }}>保护卡</div>
         </div>
       </div>
 
@@ -514,76 +512,162 @@ export default function Today({ child, onExpired, active }) {
         </div>
       )}
 
+      {/* 新建任务入口 (统一 iOS Sheet 底部滑出模式) */}
       <div style={{ marginTop: "1rem" }}>
-        {!showAdd ? (
-          <button
-            onClick={() => setShowAdd(true)}
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              fontSize: "0.95rem",
-              fontWeight: 650,
-              color: "var(--accent)",
-              border: "1.5px dashed var(--accent)",
-              borderRadius: "16px",
-              background: "var(--accent-light)",
-              boxShadow: "var(--shadow-sm)",
-              cursor: "pointer",
-            }}
-          >
-            + 添加任务
-          </button>
-        ) : (
+        <button
+          onClick={() => setShowAdd(true)}
+          style={{
+            width: "100%",
+            padding: "12px",
+            fontSize: "0.95rem",
+            fontWeight: 600,
+            color: "var(--accent)",
+            borderRadius: "14px",
+            background: "#FFFFFF",
+            boxShadow: "var(--shadow-sm)",
+            cursor: "pointer",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+          }}
+        >
+          <span>+ 添加日常任务</span>
+        </button>
+
+        {showAdd && (
           <div
+            className="ios-sheet-overlay"
             style={{
-              background: "var(--card)",
-              border: "1px solid var(--border)",
-              borderRadius: "18px",
-              padding: "1.1rem",
-              boxShadow: "var(--shadow-card)",
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.4)",
+              backdropFilter: "saturate(180%) blur(16px)",
+              WebkitBackdropFilter: "saturate(180%) blur(16px)",
+              zIndex: 1000,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "flex-end",
             }}
+            onClick={() => setShowAdd(false)}
           >
-            <input
-              placeholder="任务名 *"
-              value={newForm.title}
-              onChange={(e) => setNewForm({ ...newForm, title: e.target.value })}
-              style={st.fi}
-              autoFocus
-            />
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <input
-                type="number"
-                placeholder="分钟 *"
-                value={newForm.minutes}
-                onChange={(e) => setNewForm({ ...newForm, minutes: e.target.value })}
-                style={{ ...st.fi, flex: 1 }}
-              />
-              <RewardSelect
-                value={newForm.stars}
-                onChange={(value) => setNewForm({ ...newForm, stars: value })}
-              />
-            </div>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <input
-                type="time"
-                value={newForm.start}
-                onChange={(e) => setNewForm({ ...newForm, start: e.target.value })}
-                style={{ ...st.fi, flex: 1 }}
-              />
-              <input
-                type="time"
-                value={newForm.end}
-                onChange={(e) => setNewForm({ ...newForm, end: e.target.value })}
-                style={{ ...st.fi, flex: 1 }}
-              />
-            </div>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <button onClick={handleCreateTask} style={st.fsb}>
-                添加
-              </button>
-              <button onClick={() => setShowAdd(false)} style={st.fcb}>
-                取消
-              </button>
+            <div
+              style={{
+                width: "100%",
+                maxWidth: "540px",
+                backgroundColor: "#F2F2F7",
+                borderRadius: "16px 16px 0 0",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                boxShadow: "0 -4px 24px rgba(0, 0, 0, 0.15)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: "#D2D2D7", margin: "10px auto 2px", flexShrink: 0 }} />
+              <div
+                style={{
+                  height: 48,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "0 16px",
+                  background: "#FFFFFF",
+                  borderBottom: "0.5px solid rgba(60, 60, 67, 0.2)",
+                  flexShrink: 0,
+                }}
+              >
+                <span style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text)" }}>添加任务</span>
+                <button
+                  type="button"
+                  onClick={() => setShowAdd(false)}
+                  style={{ background: "none", border: "none", color: "var(--accent)", fontSize: "0.95rem", fontWeight: 500, cursor: "pointer" }}
+                >
+                  取消
+                </button>
+              </div>
+
+              <div style={{ padding: "16px 16px calc(24px + env(safe-area-inset-bottom, 16px))" }}>
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                    任务名称 *
+                  </label>
+                  <input
+                    placeholder="如：练琴20分钟、口算一页..."
+                    value={newForm.title}
+                    onChange={(e) => setNewForm({ ...newForm, title: e.target.value })}
+                    className="form-input-journal"
+                    style={{ background: "#FFFFFF", borderRadius: "10px", padding: "10px 12px", width: "100%", boxSizing: "border-box", border: "1px solid var(--border)", fontSize: "0.95rem" }}
+                    autoFocus
+                  />
+                </div>
+
+                <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                      预计时长 (分钟) *
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="20"
+                      value={newForm.minutes}
+                      onChange={(e) => setNewForm({ ...newForm, minutes: e.target.value })}
+                      style={{ background: "#FFFFFF", borderRadius: "10px", padding: "10px 12px", width: "100%", boxSizing: "border-box", border: "1px solid var(--border)", fontSize: "0.95rem" }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                      奖励星星
+                    </label>
+                    <select
+                      value={newForm.stars}
+                      onChange={(e) => setNewForm({ ...newForm, stars: parseInt(e.target.value) })}
+                      style={{ background: "#FFFFFF", borderRadius: "10px", padding: "10px 12px", width: "100%", boxSizing: "border-box", border: "1px solid var(--border)", fontSize: "0.95rem" }}
+                    >
+                      {[0, 1, 2, 3, 4, 5].map((n) => (
+                        <option key={n} value={n}>
+                          {n === 0 ? "0 星" : `⭐ ${n} 星`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                      计划开始 (选填)
+                    </label>
+                    <input
+                      type="time"
+                      value={newForm.start}
+                      onChange={(e) => setNewForm({ ...newForm, start: e.target.value })}
+                      style={{ background: "#FFFFFF", borderRadius: "10px", padding: "10px 12px", width: "100%", boxSizing: "border-box", border: "1px solid var(--border)", fontSize: "0.95rem" }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                      计划结束 (选填)
+                    </label>
+                    <input
+                      type="time"
+                      value={newForm.end}
+                      onChange={(e) => setNewForm({ ...newForm, end: e.target.value })}
+                      style={{ background: "#FFFFFF", borderRadius: "10px", padding: "10px 12px", width: "100%", boxSizing: "border-box", border: "1px solid var(--border)", fontSize: "0.95rem" }}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCreateTask}
+                  className="btn-primary"
+                  style={{ width: "100%", padding: "12px", borderRadius: "12px", fontSize: "1rem" }}
+                >
+                  确认添加
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -741,26 +825,24 @@ function TaskCard({
         </div>
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          {/* 72x72px 精致印章/素雅纸贴般触控复选圆钮 (Min Target >= 64px 符合儿童人体工学) */}
+          {/* 左侧状态/打卡圆钮 (Apple 极简圆环与待审核状态) */}
           {isSubmitted ? (
-            <button
-              type="button"
-              disabled={true}
-              className="task-check-btn submitted"
-              aria-label="等待家长点赞"
+            <div
               style={{
-                flexShrink: 0,
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                background: "var(--star-bg)",
+                border: "1.5px solid var(--star-border)",
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
+                flexShrink: 0,
               }}
+              title="等待家长点赞发星"
             >
-              <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>⏳</span>
-              <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--star)", marginTop: 2 }}>
-                待点赞
-              </span>
-            </button>
+              <span style={{ fontSize: "1.2rem", lineHeight: 1 }}>⏳</span>
+            </div>
           ) : !isUnapproved ? (
             <button
               type="button"
@@ -771,18 +853,18 @@ function TaskCard({
               style={{ flexShrink: 0 }}
             >
               {isCompleted ? (
-                <span style={{ fontSize: "2rem", fontWeight: 800, color: "#FFFFFF", lineHeight: 1 }}>
+                <span style={{ fontSize: "1.6rem", fontWeight: 700, color: "#FFFFFF", lineHeight: 1 }}>
                   ✓
                 </span>
               ) : isCompleting ? (
-                <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--accent)" }}>…</span>
+                <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>…</span>
               ) : (
                 <span
                   style={{
-                    fontSize: "1.9rem",
-                    fontWeight: 800,
+                    fontSize: "1.6rem",
+                    fontWeight: 700,
                     color: "var(--accent)",
-                    opacity: 0.45,
+                    opacity: 0.35,
                     lineHeight: 1,
                   }}
                 >
@@ -793,15 +875,12 @@ function TaskCard({
           ) : (
             <div
               style={{
-                width: 72,
-                height: 72,
-                minWidth: 72,
-                minHeight: 72,
+                width: 48,
+                height: 48,
                 borderRadius: "50%",
-                border: "2.5px dashed var(--danger)",
+                border: "1.5px dashed var(--danger)",
                 background: "var(--danger-bg)",
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
@@ -811,63 +890,55 @@ function TaskCard({
             </div>
           )}
 
-          {/* 任务详情区域 */}
+          {/* 任务详情区域 (去重、克制排版) */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
               <p
                 style={{
-                  fontSize: "1.15rem",
+                  fontSize: "1.05rem",
                   fontWeight: 650,
-                  color: isCompleted ? "var(--muted)" : isSubmitted ? "var(--star)" : "var(--text)",
+                  color: isCompleted ? "var(--muted)" : "var(--text)",
                   textDecoration: isCompleted ? "line-through" : "none",
                   wordBreak: "break-word",
-                  letterSpacing: "-0.01em",
+                  letterSpacing: "-0.015em",
                 }}
               >
                 {task.title}
               </p>
               {isSubmitted && (
-                <span className="task-submitted-badge">
-                  ⏳ 等待家长点赞
+                <span
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: "999px",
+                    backgroundColor: "var(--star-bg)",
+                    border: "1px solid var(--star-border)",
+                    color: "var(--star)",
+                    fontSize: "0.72rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  等待家长点赞
                 </span>
               )}
               {task.require_approval && !isSubmitted && !isCompleted && (
                 <span
                   style={{
-                    padding: "0.15rem 0.55rem",
-                    borderRadius: "var(--radius-pill)",
-                    background: "var(--star-bg)",
-                    color: "var(--star)",
-                    border: "1px solid var(--star-border)",
+                    padding: "2px 8px",
+                    borderRadius: "999px",
+                    background: "rgba(118, 118, 128, 0.12)",
+                    color: "var(--text)",
                     fontSize: "0.72rem",
-                    fontWeight: 700,
-                    whiteSpace: "nowrap",
+                    fontWeight: 600,
                   }}
                 >
                   需家长确认
                 </span>
               )}
-              {isScheduled && !isCompleted && (
-                <span
-                  style={{
-                    padding: "0.2rem 0.6rem",
-                    borderRadius: "var(--radius-pill)",
-                    background: "var(--accent-light)",
-                    color: "var(--accent)",
-                    border: "1px solid var(--accent-pill)",
-                    fontSize: "0.75rem",
-                    fontWeight: 650,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {task.scheduled_start}
-                </span>
-              )}
             </div>
 
-            <p style={{ fontSize: "0.82rem", color: "var(--muted)", marginTop: "0.25rem" }}>
-              {task.expected_minutes ? `${task.expected_minutes}分钟 · ` : ""}⭐{task.reward_stars}
-              {isScheduled ? ` · ${scheduleLabel(task)}${src ? ` (${src})` : ""}` : " · 自由安排"}
+            <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: "4px" }}>
+              {task.expected_minutes ? `${task.expected_minutes} 分钟 · ` : ""}⭐+{task.reward_stars}
+              {isScheduled ? ` · ${task.scheduled_start}${task.scheduled_end ? `-${task.scheduled_end}` : ""}` : " · 自由安排"}
             </p>
 
             {/* 操作入口行 */}
@@ -936,12 +1007,11 @@ function RewardSelect({ value, onChange }) {
 
 const st = {
   tc: {
-    background: "var(--card)",
-    border: "1px solid var(--border)",
-    borderRadius: "20px",
-    padding: "1rem 1.15rem",
-    marginBottom: "0.85rem",
-    boxShadow: "var(--shadow-card)",
+    background: "#FFFFFF",
+    borderRadius: "14px",
+    padding: "14px 16px",
+    marginBottom: "10px",
+    boxShadow: "var(--shadow-sm)",
     transition: "box-shadow 0.2s ease, border-color 0.2s ease",
   },
   fi: {
