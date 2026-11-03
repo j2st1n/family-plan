@@ -536,7 +536,7 @@ export default function Settings({
                 className="ios-sheet-nav-action-btn"
                 onClick={() => setShowAddChild(true)}
               >
-                + 添加
+                添加孩子
               </button>
             </div>
 
@@ -590,11 +590,13 @@ export default function Settings({
                                 <span
                                   style={{
                                     fontSize: "0.72rem",
-                                    padding: "1px 6px",
+                                    padding: "2px 8px",
                                     borderRadius: "var(--radius-pill)",
-                                    backgroundColor: "var(--card)",
-                                    border: "1px solid var(--border)",
+                                    backgroundColor: "var(--card-hover, rgba(0,0,0,0.04))",
                                     color: "var(--muted)",
+                                    whiteSpace: "nowrap",
+                                    flexShrink: 0,
+                                    lineHeight: 1.2,
                                   }}
                                 >
                                   {child.grade_label}
@@ -607,27 +609,38 @@ export default function Settings({
                           </div>
                         </div>
 
-                        <div style={{ display: "flex", gap: "6px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <button
                             type="button"
                             className="capsule-btn capsule-muted"
                             onClick={() => startEditChild(child)}
+                            style={{ padding: "5px 12px", fontSize: "0.82rem" }}
                           >
                             编辑
                           </button>
                           <button
                             type="button"
-                            className="capsule-btn capsule-muted"
-                            onClick={() => openRewardSettings(child)}
-                          >
-                            达标线
-                          </button>
-                          <button
-                            type="button"
-                            className="capsule-btn capsule-danger"
                             onClick={() => handleDeleteChild(child.id, child.name)}
+                            title="删除档案"
+                            style={{
+                              background: "none",
+                              border: "none",
+                              padding: "6px",
+                              cursor: "pointer",
+                              color: "var(--muted)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              borderRadius: "8px",
+                              transition: "color 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--danger)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--muted)")}
                           >
-                            删除
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
                           </button>
                         </div>
                       </div>
@@ -792,7 +805,7 @@ export default function Settings({
                 className="ios-sheet-nav-action-btn"
                 onClick={() => setShowAddRoutine(true)}
               >
-                + 添加
+                新建例行
               </button>
             </div>
 
