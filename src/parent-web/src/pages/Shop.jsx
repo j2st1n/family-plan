@@ -379,100 +379,77 @@ export default function Shop({ token, isActive, onExpired }) {
       )}
 
       {/* =========================================================================
-          手账风模态弹窗：上架与编辑商品
+          iOS 标准底部抽屉 Sheet：上架与编辑商品
           ========================================================================= */}
       {itemModal.isOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(45, 55, 49, 0.45)",
-            backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)",
-            zIndex: 1000,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "16px",
-          }}
-          onClick={closeItemModal}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "420px",
-              backgroundColor: "var(--card)",
-              borderRadius: "var(--radius-lg)",
-              border: "1px solid var(--border)",
-              boxShadow: "var(--shadow-hover)",
-              padding: "22px",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ fontSize: "1.08rem", fontWeight: 700, marginBottom: "16px", color: "var(--text)" }}>
-              {itemModal.mode === "create" ? "上架新商品" : "编辑商品"}
-            </h3>
-
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                商品名称 *
-              </label>
-              <input
-                type="text"
-                className="form-input-journal"
-                placeholder="如：游乐园门票、看动画片30分钟、乐高积木..."
-                value={modalForm.title}
-                onChange={(e) => setModalForm({ ...modalForm, title: e.target.value })}
-                autoFocus
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: "10px", marginBottom: "18px" }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                  所需星星 (⭐) *
-                </label>
-                <input
-                  type="number"
-                  min="0.1"
-                  step="0.5"
-                  className="form-input-journal"
-                  placeholder="如：10"
-                  value={modalForm.stars}
-                  onChange={(e) => setModalForm({ ...modalForm, stars: e.target.value })}
-                />
-              </div>
-
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                  库存数量 (选填)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  className="form-input-journal"
-                  placeholder="留空为不限"
-                  value={modalForm.stock}
-                  onChange={(e) => setModalForm({ ...modalForm, stock: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+        <div className="ios-sheet-overlay" onClick={closeItemModal}>
+          <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-handle-bar" />
+            <div className="ios-sheet-header">
+              <span className="ios-sheet-header-title">
+                {itemModal.mode === "create" ? "上架新商品" : "编辑商品"}
+              </span>
               <button
                 type="button"
-                className="capsule-btn capsule-muted"
+                className="ios-sheet-close-btn"
                 onClick={closeItemModal}
-                style={{ padding: "8px 18px" }}
               >
                 取消
               </button>
+            </div>
+
+            <div className="ios-sheet-body">
+              <div style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                  商品名称 *
+                </label>
+                <input
+                  type="text"
+                  className="form-input-journal"
+                  placeholder="如：游乐园门票、看动画片30分钟、乐高积木..."
+                  value={modalForm.title}
+                  onChange={(e) => setModalForm({ ...modalForm, title: e.target.value })}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", marginBottom: "18px" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                    所需星星 (⭐) *
+                  </label>
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.5"
+                    className="form-input-journal"
+                    placeholder="如：10"
+                    value={modalForm.stars}
+                    onChange={(e) => setModalForm({ ...modalForm, stars: e.target.value })}
+                  />
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                    库存数量 (选填)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="form-input-journal"
+                    placeholder="留空为不限"
+                    value={modalForm.stock}
+                    onChange={(e) => setModalForm({ ...modalForm, stock: e.target.value })}
+                  />
+                </div>
+              </div>
+
               <button
                 type="button"
-                className="capsule-btn capsule-accent"
+                className="ios-btn-primary"
                 disabled={savingItem || !modalForm.title.trim()}
                 onClick={handleSaveModal}
-                style={{ padding: "8px 22px" }}
+                style={{ width: "100%", padding: "12px", fontSize: "0.95rem" }}
               >
                 {savingItem ? "保存中…" : itemModal.mode === "create" ? "确认上架" : "保存修改"}
               </button>

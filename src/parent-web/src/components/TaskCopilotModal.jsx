@@ -131,69 +131,25 @@ export default function TaskCopilotModal({
   }
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "rgba(45, 55, 49, 0.45)",
-        backdropFilter: "blur(4px)",
-        WebkitBackdropFilter: "blur(4px)",
-        zIndex: 1000,
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "600px",
-          maxHeight: "90vh",
-          backgroundColor: "var(--card)",
-          borderTopLeftRadius: "var(--radius-lg)",
-          borderTopRightRadius: "var(--radius-lg)",
-          border: "1px solid var(--border)",
-          boxShadow: "var(--shadow-hover)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="ios-sheet-overlay" onClick={onClose}>
+      <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
+        <div className="drawer-handle-bar" />
         {/* Header */}
-        <div
-          style={{
-            padding: "16px 20px",
-            borderBottom: "1px solid var(--border)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "1.2rem" }}>✨</span>
-            <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>
-              AI 一句话建任务 (Copilot)
-            </h2>
-          </div>
+        <div className="ios-sheet-header">
+          <span className="ios-sheet-header-title">
+            AI 建议建任务
+          </span>
           <button
+            type="button"
+            className="ios-sheet-close-btn"
             onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              fontSize: "1.2rem",
-              color: "var(--muted)",
-              cursor: "pointer",
-              padding: "4px 8px",
-            }}
           >
-            ✕
+            取消
           </button>
         </div>
 
         {/* Content body */}
-        <div style={{ padding: "16px 20px", overflowY: "auto", flex: 1 }}>
+        <div className="ios-sheet-body">
           {error && (
             <div
               style={{

@@ -115,21 +115,14 @@ export default function StreakFreezeModal({
   const isFull = availableCount >= currentMaxLimit;
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div className="ios-sheet-overlay" onClick={onClose}>
+      <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
+        <div className="drawer-handle-bar" />
         {/* Header */}
-        <div style={styles.header}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "1.3rem" }}>❄️</span>
-              <h2 style={styles.title}>连击保护卡管理 · {childName || "孩子"}</h2>
-            </div>
-            <p style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: "2px" }}>
-              防止意外断签 · 护航习惯成长与自律坚持
-            </p>
-          </div>
-          <button type="button" onClick={onClose} style={styles.closeBtn} title="关闭">
-            ✕
+        <div className="ios-sheet-header">
+          <span className="ios-sheet-header-title">连击保护卡管理 · {childName || "孩子"}</span>
+          <button type="button" onClick={onClose} className="ios-sheet-close-btn" title="关闭">
+            关闭
           </button>
         </div>
 
@@ -150,7 +143,7 @@ export default function StreakFreezeModal({
         {loading && !data ? (
           <p style={{ textAlign: "center", color: "var(--muted)", padding: "2rem 0" }}>加载保护卡数据中…</p>
         ) : (
-          <div style={styles.content}>
+          <div className="ios-sheet-body">
             {/* Section 1: 当前库存与手动奖惩 */}
             <div style={styles.sectionCard}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>

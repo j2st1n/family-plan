@@ -1204,124 +1204,99 @@ export default function Settings({
           Sub-Modals: Edit Child, Add Child, Reward Settings, Add Routine
           ========================================================================= */}
 
-      {/* Edit Child Modal */}
+      {/* Edit Child Modal (iOS 底部抽屉 Sheet) */}
       {editingChild && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.4)",
-            backdropFilter: "saturate(180%) blur(16px)",
-            WebkitBackdropFilter: "saturate(180%) blur(16px)",
-            zIndex: 1100,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "16px",
-          }}
-          onClick={() => setEditingChild(null)}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "400px",
-              backgroundColor: "var(--card)",
-              borderRadius: "var(--radius-lg)",
-              border: "1px solid var(--border)",
-              boxShadow: "var(--shadow-hover)",
-              padding: "20px",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "14px" }}>
-              编辑孩子档案
-            </h3>
-
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                孩子姓名 *
-              </label>
-              <input
-                type="text"
-                className="form-input-journal"
-                value={editForm.name}
-                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                placeholder="如：乐乐"
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                  学段
-                </label>
-                <select
-                  className="form-input-journal"
-                  value={editForm.stage}
-                  onChange={(e) => {
-                    const st = e.target.value;
-                    const defaultGrades = GRADE_OPTIONS[st] || [];
-                    setEditForm({ ...editForm, stage: st, grade: defaultGrades[0] || "" });
-                  }}
-                >
-                  {Object.keys(GRADE_OPTIONS).map((st) => (
-                    <option key={st} value={st}>
-                      {st}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                  年级
-                </label>
-                <select
-                  className="form-input-journal"
-                  value={editForm.grade}
-                  onChange={(e) => setEditForm({ ...editForm, grade: e.target.value })}
-                >
-                  {(GRADE_OPTIONS[editForm.stage] || []).map((gr) => (
-                    <option key={gr} value={gr}>
-                      {gr}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: "16px" }}>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                每日习惯连胜达标线 (%)
-              </label>
-              <input
-                type="number"
-                min={50}
-                max={100}
-                className="form-input-journal"
-                value={editForm.threshold}
-                onChange={(e) => setEditForm({ ...editForm, threshold: e.target.value })}
-              />
-              <span style={{ fontSize: "0.72rem", color: "var(--muted)", marginTop: "2px", display: "block" }}>
-                建议设置为 80%：完成当天 80% 任务即视为连胜达标
-              </span>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+        <div className="ios-sheet-overlay" style={{ zIndex: 1100 }} onClick={() => setEditingChild(null)}>
+          <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-handle-bar" />
+            <div className="ios-sheet-header">
+              <span className="ios-sheet-header-title">编辑孩子档案</span>
               <button
                 type="button"
-                className="capsule-btn capsule-muted"
+                className="ios-sheet-close-btn"
                 onClick={() => setEditingChild(null)}
-                style={{ padding: "7px 16px" }}
               >
                 取消
               </button>
+            </div>
+
+            <div className="ios-sheet-body">
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                  孩子姓名 *
+                </label>
+                <input
+                  type="text"
+                  className="form-input-journal"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  placeholder="如：乐乐"
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", marginBottom: "14px" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                    学段
+                  </label>
+                  <select
+                    className="form-input-journal"
+                    value={editForm.stage}
+                    onChange={(e) => {
+                      const st = e.target.value;
+                      const defaultGrades = GRADE_OPTIONS[st] || [];
+                      setEditForm({ ...editForm, stage: st, grade: defaultGrades[0] || "" });
+                    }}
+                  >
+                    {Object.keys(GRADE_OPTIONS).map((st) => (
+                      <option key={st} value={st}>
+                        {st}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                    年级
+                  </label>
+                  <select
+                    className="form-input-journal"
+                    value={editForm.grade}
+                    onChange={(e) => setEditForm({ ...editForm, grade: e.target.value })}
+                  >
+                    {(GRADE_OPTIONS[editForm.stage] || []).map((gr) => (
+                      <option key={gr} value={gr}>
+                        {gr}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                  每日习惯连胜达标线 (%)
+                </label>
+                <input
+                  type="number"
+                  min={50}
+                  max={100}
+                  className="form-input-journal"
+                  value={editForm.threshold}
+                  onChange={(e) => setEditForm({ ...editForm, threshold: e.target.value })}
+                />
+                <span style={{ fontSize: "0.72rem", color: "var(--muted)", marginTop: "2px", display: "block" }}>
+                  建议设置为 80%：完成当天 80% 任务即视为连胜达标
+                </span>
+              </div>
+
               <button
                 type="button"
-                className="capsule-btn capsule-accent"
+                className="ios-btn-primary"
                 disabled={saving || !editForm.name.trim()}
                 onClick={saveEditChild}
-                style={{ padding: "7px 20px" }}
+                style={{ width: "100%", padding: "12px", fontSize: "0.95rem" }}
               >
                 {saving ? "保存中…" : "保存修改"}
               </button>
@@ -1330,108 +1305,83 @@ export default function Settings({
         </div>
       )}
 
-      {/* Add Child Modal */}
+      {/* Add Child Modal (iOS 底部抽屉 Sheet) */}
       {showAddChild && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.4)",
-            backdropFilter: "saturate(180%) blur(16px)",
-            WebkitBackdropFilter: "saturate(180%) blur(16px)",
-            zIndex: 1100,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "16px",
-          }}
-          onClick={() => setShowAddChild(false)}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "380px",
-              backgroundColor: "var(--card)",
-              borderRadius: "var(--radius-lg)",
-              border: "1px solid var(--border)",
-              boxShadow: "var(--shadow-hover)",
-              padding: "20px",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "14px" }}>
-              添加孩子档案
-            </h3>
-
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                孩子姓名 *
-              </label>
-              <input
-                type="text"
-                className="form-input-journal"
-                value={newChildForm.name}
-                onChange={(e) => setNewChildForm({ ...newChildForm, name: e.target.value })}
-                placeholder="如：乐乐"
-                autoFocus
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                  学段
-                </label>
-                <select
-                  className="form-input-journal"
-                  value={newChildForm.stage}
-                  onChange={(e) => {
-                    const st = e.target.value;
-                    const defaultGrades = GRADE_OPTIONS[st] || [];
-                    setNewChildForm({ ...newChildForm, stage: st, grade: defaultGrades[0] || "" });
-                  }}
-                >
-                  {Object.keys(GRADE_OPTIONS).map((st) => (
-                    <option key={st} value={st}>
-                      {st}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                  年级
-                </label>
-                <select
-                  className="form-input-journal"
-                  value={newChildForm.grade}
-                  onChange={(e) => setNewChildForm({ ...newChildForm, grade: e.target.value })}
-                >
-                  {(GRADE_OPTIONS[newChildForm.stage] || []).map((gr) => (
-                    <option key={gr} value={gr}>
-                      {gr}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+        <div className="ios-sheet-overlay" style={{ zIndex: 1100 }} onClick={() => setShowAddChild(false)}>
+          <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-handle-bar" />
+            <div className="ios-sheet-header">
+              <span className="ios-sheet-header-title">添加孩子档案</span>
               <button
                 type="button"
-                className="capsule-btn capsule-muted"
+                className="ios-sheet-close-btn"
                 onClick={() => setShowAddChild(false)}
-                style={{ padding: "7px 16px" }}
               >
                 取消
               </button>
+            </div>
+
+            <div className="ios-sheet-body">
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                  孩子姓名 *
+                </label>
+                <input
+                  type="text"
+                  className="form-input-journal"
+                  value={newChildForm.name}
+                  onChange={(e) => setNewChildForm({ ...newChildForm, name: e.target.value })}
+                  placeholder="如：乐乐"
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                    学段
+                  </label>
+                  <select
+                    className="form-input-journal"
+                    value={newChildForm.stage}
+                    onChange={(e) => {
+                      const st = e.target.value;
+                      const defaultGrades = GRADE_OPTIONS[st] || [];
+                      setNewChildForm({ ...newChildForm, stage: st, grade: defaultGrades[0] || "" });
+                    }}
+                  >
+                    {Object.keys(GRADE_OPTIONS).map((st) => (
+                      <option key={st} value={st}>
+                        {st}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                    年级
+                  </label>
+                  <select
+                    className="form-input-journal"
+                    value={newChildForm.grade}
+                    onChange={(e) => setNewChildForm({ ...newChildForm, grade: e.target.value })}
+                  >
+                    {(GRADE_OPTIONS[newChildForm.stage] || []).map((gr) => (
+                      <option key={gr} value={gr}>
+                        {gr}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <button
                 type="button"
-                className="capsule-btn capsule-accent"
+                className="ios-btn-primary"
                 disabled={saving || !newChildForm.name.trim()}
                 onClick={handleAddChild}
-                style={{ padding: "7px 20px" }}
+                style={{ width: "100%", padding: "12px", fontSize: "0.95rem" }}
               >
                 {saving ? "添加中…" : "确认添加"}
               </button>
@@ -1440,74 +1390,49 @@ export default function Settings({
         </div>
       )}
 
-      {/* Reward Settings Modal */}
+      {/* Reward Settings Modal (iOS 底部抽屉 Sheet) */}
       {rewardChild && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.4)",
-            backdropFilter: "saturate(180%) blur(16px)",
-            WebkitBackdropFilter: "saturate(180%) blur(16px)",
-            zIndex: 1100,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "16px",
-          }}
-          onClick={() => setRewardChild(null)}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "400px",
-              backgroundColor: "var(--card)",
-              borderRadius: "var(--radius-lg)",
-              border: "1px solid var(--border)",
-              boxShadow: "var(--shadow-hover)",
-              padding: "20px",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "14px" }}>
-              {rewardChild.name} 的连胜奖励达标线
-            </h3>
-
-            <div style={{ marginBottom: "16px" }}>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                每日完成率达标阈值 (%)
-              </label>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <input
-                  type="number"
-                  min={50}
-                  max={100}
-                  className="form-input-journal"
-                  style={{ width: "90px" }}
-                  value={rewardThreshold}
-                  onChange={(e) => setRewardThreshold(e.target.value)}
-                />
-                <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
-                  当天完成率 ≥ 此数值算作坚持成功
-                </span>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+        <div className="ios-sheet-overlay" style={{ zIndex: 1100 }} onClick={() => setRewardChild(null)}>
+          <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-handle-bar" />
+            <div className="ios-sheet-header">
+              <span className="ios-sheet-header-title">{rewardChild.name} 的连胜奖励达标线</span>
               <button
                 type="button"
-                className="capsule-btn capsule-muted"
+                className="ios-sheet-close-btn"
                 onClick={() => setRewardChild(null)}
-                style={{ padding: "7px 16px" }}
               >
                 取消
               </button>
+            </div>
+
+            <div className="ios-sheet-body">
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                  每日完成率达标阈值 (%)
+                </label>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <input
+                    type="number"
+                    min={50}
+                    max={100}
+                    className="form-input-journal"
+                    style={{ width: "90px" }}
+                    value={rewardThreshold}
+                    onChange={(e) => setRewardThreshold(e.target.value)}
+                  />
+                  <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
+                    当天完成率 ≥ 此数值算作坚持成功
+                  </span>
+                </div>
+              </div>
+
               <button
                 type="button"
-                className="capsule-btn capsule-accent"
+                className="ios-btn-primary"
                 disabled={saving}
                 onClick={saveRewardSettings}
-                style={{ padding: "7px 20px" }}
+                style={{ width: "100%", padding: "12px", fontSize: "0.95rem" }}
               >
                 {saving ? "保存中…" : "保存设定"}
               </button>
@@ -1516,139 +1441,114 @@ export default function Settings({
         </div>
       )}
 
-      {/* Add Routine Task Modal */}
+      {/* Add Routine Task Modal (iOS 底部抽屉 Sheet) */}
       {showAddRoutine && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.4)",
-            backdropFilter: "saturate(180%) blur(16px)",
-            WebkitBackdropFilter: "saturate(180%) blur(16px)",
-            zIndex: 1100,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "16px",
-          }}
-          onClick={() => setShowAddRoutine(false)}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "440px",
-              backgroundColor: "var(--card)",
-              borderRadius: "var(--radius-lg)",
-              border: "1px solid var(--border)",
-              boxShadow: "var(--shadow-hover)",
-              padding: "20px",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "14px" }}>
-              为 {routineChild?.name} 添加每周循环例行任务
-            </h3>
-
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                任务名称 *
-              </label>
-              <input
-                type="text"
-                placeholder="如：练琴20分钟、晨读15分钟..."
-                className="form-input-journal"
-                value={routineForm.title}
-                onChange={(e) => setRoutineForm({ ...routineForm, title: e.target.value })}
-                autoFocus
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                  预计时长 (分钟)
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={240}
-                  className="form-input-journal"
-                  value={routineForm.minutes}
-                  onChange={(e) => setRoutineForm({ ...routineForm, minutes: e.target.value })}
-                />
-              </div>
-
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                  奖励星星
-                </label>
-                <select
-                  className="form-input-journal"
-                  value={routineForm.stars}
-                  onChange={(e) => setRoutineForm({ ...routineForm, stars: parseInt(e.target.value) })}
-                >
-                  {[0, 1, 2, 3, 4, 5].map((n) => (
-                    <option key={n} value={n}>
-                      {n === 0 ? "0 星" : `⭐ ${n} 星`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: "14px" }}>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "6px" }}>
-                每周循环日 (点击切换)
-              </label>
-              <div style={{ display: "flex", gap: "6px" }}>
-                {WEEKDAYS.map((w) => {
-                  const isChecked = routineForm.weekdays.includes(w.id);
-                  return (
-                    <button
-                      key={w.id}
-                      type="button"
-                      onClick={() => toggleWeekday(w.id)}
-                      className={`pill-segment-btn ${isChecked ? "active" : ""}`}
-                      style={{
-                        flex: 1,
-                        padding: "6px 0",
-                        textAlign: "center",
-                        border: "1px solid var(--border)",
-                      }}
-                    >
-                      {w.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: "16px" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.84rem" }}>
-                <input
-                  type="checkbox"
-                  checked={routineForm.require_approval}
-                  onChange={(e) => setRoutineForm({ ...routineForm, require_approval: e.target.checked })}
-                />
-                <span>需要家长审核确认</span>
-              </label>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+        <div className="ios-sheet-overlay" style={{ zIndex: 1100 }} onClick={() => setShowAddRoutine(false)}>
+          <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-handle-bar" />
+            <div className="ios-sheet-header">
+              <span className="ios-sheet-header-title">添加每周循环例行任务</span>
               <button
                 type="button"
-                className="capsule-btn capsule-muted"
+                className="ios-sheet-close-btn"
                 onClick={() => setShowAddRoutine(false)}
-                style={{ padding: "7px 16px" }}
               >
                 取消
               </button>
+            </div>
+
+            <div className="ios-sheet-body">
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                  任务名称 *
+                </label>
+                <input
+                  type="text"
+                  placeholder="如：练琴20分钟、晨读15分钟..."
+                  className="form-input-journal"
+                  value={routineForm.title}
+                  onChange={(e) => setRoutineForm({ ...routineForm, title: e.target.value })}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", marginBottom: "14px" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                    预计时长 (分钟)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={240}
+                    className="form-input-journal"
+                    value={routineForm.minutes}
+                    onChange={(e) => setRoutineForm({ ...routineForm, minutes: e.target.value })}
+                  />
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                    奖励星星
+                  </label>
+                  <select
+                    className="form-input-journal"
+                    value={routineForm.stars}
+                    onChange={(e) => setRoutineForm({ ...routineForm, stars: parseInt(e.target.value) })}
+                  >
+                    {[0, 1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        {n === 0 ? "0 星" : `⭐ ${n} 星`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 650, color: "var(--muted)", marginBottom: "6px" }}>
+                  每周循环日
+                </label>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {WEEKDAYS.map((w) => {
+                    const isChecked = routineForm.weekdays.includes(w.id);
+                    return (
+                      <button
+                        key={w.id}
+                        type="button"
+                        onClick={() => toggleWeekday(w.id)}
+                        className={`pill-segment-btn ${isChecked ? "active" : ""}`}
+                        style={{
+                          flex: 1,
+                          padding: "6px 0",
+                          textAlign: "center",
+                          border: "1px solid var(--border)",
+                        }}
+                      >
+                        {w.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.84rem" }}>
+                  <input
+                    type="checkbox"
+                    checked={routineForm.require_approval}
+                    onChange={(e) => setRoutineForm({ ...routineForm, require_approval: e.target.checked })}
+                  />
+                  <span>需要家长审核确认</span>
+                </label>
+              </div>
+
               <button
                 type="button"
-                className="capsule-btn capsule-accent"
+                className="ios-btn-primary"
                 disabled={saving || !routineForm.title.trim() || routineForm.weekdays.length === 0}
                 onClick={handleSaveRoutine}
-                style={{ padding: "7px 20px" }}
+                style={{ width: "100%", padding: "12px", fontSize: "0.95rem" }}
               >
                 {saving ? "保存中…" : "确认添加"}
               </button>

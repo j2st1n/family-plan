@@ -441,72 +441,74 @@ export default function Analytics({ token, isActive, onExpired }) {
         </>
       )}
 
-      {/* Vacation Management Modal */}
+      {/* Vacation Management Modal (iOS 底部抽屉 Sheet) */}
       {showVacationModal && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>🌴 休假模式管理</h3>
-              <button onClick={() => setShowVacationModal(false)} style={styles.closeBtn}>✕</button>
+        <div className="ios-sheet-overlay" onClick={() => setShowVacationModal(false)}>
+          <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-handle-bar" />
+            <div className="ios-sheet-header">
+              <span className="ios-sheet-header-title">休假模式管理</span>
+              <button type="button" onClick={() => setShowVacationModal(false)} className="ios-sheet-close-btn">取消</button>
             </div>
 
-            <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginBottom: "1rem" }}>
-              休假模式开启后，所设区间内每天自动豁免，任务未完成不扣减连击天数。
-            </p>
-
-            {/* Create Vacation Form */}
-            <form onSubmit={handleCreateVacation} style={{ marginBottom: "1.2rem", background: "var(--card-subtle)", border: "1px solid var(--border-subtle)", padding: "0.85rem", borderRadius: "12px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                <div>
-                  <label style={styles.inputLabel}>开始日期</label>
-                  <input
-                    type="date"
-                    required
-                    value={vacationForm.start_date}
-                    onChange={(e) => setVacationForm({ ...vacationForm, start_date: e.target.value })}
-                    style={styles.modalInput}
-                  />
-                </div>
-                <div>
-                  <label style={styles.inputLabel}>结束日期</label>
-                  <input
-                    type="date"
-                    required
-                    value={vacationForm.end_date}
-                    onChange={(e) => setVacationForm({ ...vacationForm, end_date: e.target.value })}
-                    style={styles.modalInput}
-                  />
-                </div>
-              </div>
-              <div style={{ marginBottom: "0.6rem" }}>
-                <label style={styles.inputLabel}>休假原因 (选填)</label>
-                <input
-                  type="text"
-                  placeholder="例如：期末出游、生病休养"
-                  value={vacationForm.reason}
-                  onChange={(e) => setVacationForm({ ...vacationForm, reason: e.target.value })}
-                  style={styles.modalInput}
-                />
-              </div>
-              {vacationError && (
-                <p style={{ color: "var(--danger)", fontSize: "0.8rem", marginBottom: "0.4rem" }}>{vacationError}</p>
-              )}
-              <button type="submit" style={styles.submitBtn}>
-                + 登记新休假
-              </button>
-            </form>
-
-            {/* Vacations List */}
-            <h4 style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.5rem" }}>已设置的休假</h4>
-            {vacationLoading ? (
-              <p style={{ textAlign: "center", color: "var(--muted)", fontSize: "0.85rem" }}>加载中…</p>
-            ) : vacations.length === 0 ? (
-              <p style={{ color: "var(--muted)", fontSize: "0.8rem", textAlign: "center", padding: "1rem 0" }}>
-                暂无休假记录
+            <div className="ios-sheet-body">
+              <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginBottom: "1rem" }}>
+                休假模式开启后，所设区间内每天自动豁免，任务未完成不扣减连击天数。
               </p>
-            ) : (
-              <div style={{ maxHeight: "200px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                {vacations.map((v) => (
+
+              {/* Create Vacation Form */}
+              <form onSubmit={handleCreateVacation} style={{ marginBottom: "1.2rem", background: "#FFFFFF", border: "1px solid var(--border)", padding: "14px", borderRadius: "12px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                  <div>
+                    <label style={styles.inputLabel}>开始日期</label>
+                    <input
+                      type="date"
+                      required
+                      value={vacationForm.start_date}
+                      onChange={(e) => setVacationForm({ ...vacationForm, start_date: e.target.value })}
+                      style={styles.modalInput}
+                    />
+                  </div>
+                  <div>
+                    <label style={styles.inputLabel}>结束日期</label>
+                    <input
+                      type="date"
+                      required
+                      value={vacationForm.end_date}
+                      onChange={(e) => setVacationForm({ ...vacationForm, end_date: e.target.value })}
+                      style={styles.modalInput}
+                    />
+                  </div>
+                </div>
+                <div style={{ marginBottom: "0.8rem" }}>
+                  <label style={styles.inputLabel}>休假原因 (选填)</label>
+                  <input
+                    type="text"
+                    placeholder="例如：期末出游、生病休养"
+                    value={vacationForm.reason}
+                    onChange={(e) => setVacationForm({ ...vacationForm, reason: e.target.value })}
+                    style={styles.modalInput}
+                  />
+                </div>
+                {vacationError && (
+                  <p style={{ color: "var(--danger)", fontSize: "0.8rem", marginBottom: "0.4rem" }}>{vacationError}</p>
+                )}
+                <button type="submit" className="ios-btn-primary" style={{ width: "100%", padding: "10px" }}>
+                  + 登记新休假
+                </button>
+              </form>
+
+              {/* Vacations List */}
+              <h4 style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.5rem" }}>已设置的休假</h4>
+              {vacationLoading ? (
+                <p style={{ textAlign: "center", color: "var(--muted)", fontSize: "0.85rem" }}>加载中…</p>
+              ) : vacations.length === 0 ? (
+                <p style={{ color: "var(--muted)", fontSize: "0.8rem", textAlign: "center", padding: "1rem 0" }}>
+                  暂无休假记录
+                </p>
+              ) : (
+                <div style={{ maxHeight: "200px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  {vacations.map((v) => (
                   <div key={v.id} style={styles.vacationItem}>
                     <div>
                       <div style={{ fontSize: "0.85rem", fontWeight: 650 }}>
@@ -521,6 +523,7 @@ export default function Analytics({ token, isActive, onExpired }) {
                 ))}
               </div>
             )}
+            </div>
           </div>
         </div>
       )}
