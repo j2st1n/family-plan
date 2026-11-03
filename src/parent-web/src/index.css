@@ -603,6 +603,9 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
+  margin-right: 12px;
 }
 
 .ios-row-title {
@@ -680,7 +683,7 @@ textarea {
 }
 
 .pill-segment-btn {
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: var(--radius-pill);
   font-size: 0.76rem;
   font-weight: 500;
@@ -688,6 +691,10 @@ textarea {
   background: transparent;
   color: var(--muted);
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: center;
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 

@@ -79,7 +79,7 @@ export default function StreakFreezeModal({
         monthly_grant: Number(monthlyGrant),
       });
       setData(updated);
-      setActionSuccess("✅ 规则与风控设定已保存！");
+      setActionSuccess("✅ 保护卡规则设置已保存！");
       if (onUpdated) onUpdated();
     } catch (err) {
       setError("保存规则失败: " + (err.message || "未知错误"));
@@ -261,9 +261,9 @@ export default function StreakFreezeModal({
               )}
             </div>
 
-            {/* Section 2: 规则与风控设定 */}
+            {/* Section 2: 规则设置 */}
             <div style={styles.sectionCard}>
-              <span style={styles.sectionHeaderTitle}>⚙️ 规则与风控设定</span>
+              <span style={styles.sectionHeaderTitle}>规则设置</span>
 
               <form onSubmit={handleSaveSettings} style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "10px" }}>
                 {/* 星星兑换单价 */}

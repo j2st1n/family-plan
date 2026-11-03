@@ -480,9 +480,9 @@ export default function Settings({
             <ShieldFreezeIcon size={18} />
           </div>
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
-            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)" }}>连击保护卡与风控</span>
+            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)" }}>连击保护卡</span>
             <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
-              防断签护航 · 库存调整、兑换星数与持有上限
+              防断签护航 · 持有张数、兑换星数与月度补给
             </span>
           </div>
           <ChevronRight size={16} />
@@ -904,7 +904,7 @@ export default function Settings({
           <div className="hand-drawer-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-handle-bar" />
             <div className="drawer-header">
-              <h3 className="drawer-header-title">连击保护卡与风控</h3>
+              <h3 className="drawer-header-title">连击保护卡设置</h3>
               <button
                 type="button"
                 className="drawer-close-btn"
@@ -942,7 +942,7 @@ export default function Settings({
                 </p>
               ) : freezeData && (
                 <div>
-                  {/* 库存卡片与家长手动奖惩 */}
+                  {/* 持有卡片与家长手动奖惩 */}
                   <div
                     style={{
                       backgroundColor: "var(--card-subtle)",
@@ -954,7 +954,7 @@ export default function Settings({
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
-                        <div style={{ fontSize: "0.75rem", color: "var(--muted)", fontWeight: 600 }}>当前可用库存</div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--muted)", fontWeight: 600 }}>孩子当前拥有</div>
                         <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginTop: "2px" }}>
                           <span style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--protect)" }}>
                             {freezeData.available_count}
@@ -1049,17 +1049,17 @@ export default function Settings({
                     )}
                   </div>
 
-                  {/* 保护卡风控设置卡片化：iOS 风格的紧凑设置行 (Setting Rows) */}
+                  {/* 保护卡规则设置卡片化：iOS 风格的紧凑设置行 (Setting Rows) */}
                   <div style={{ marginBottom: "14px" }}>
                     <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", marginBottom: "6px", paddingLeft: "4px" }}>
-                      规则与风控设定
+                      规则设置
                     </div>
                     <div className="ios-setting-card">
                       {/* Row 1: 兑换星数 */}
                       <div className="ios-setting-row">
                         <div className="ios-row-label-group">
                           <span className="ios-row-title">兑换星数</span>
-                          <span className="ios-row-hint">孩子在星星商城购买单价</span>
+                          <span className="ios-row-hint">孩子在星星商城兑换单价</span>
                         </div>
                         <div className="compact-stepper">
                           <button
@@ -1086,7 +1086,7 @@ export default function Settings({
                       <div className="ios-setting-row">
                         <div className="ios-row-label-group">
                           <span className="ios-row-title">持有上限</span>
-                          <span className="ios-row-hint">防囤积：达上限后商城禁止购买</span>
+                          <span className="ios-row-hint">达到上限后商城暂不可购</span>
                         </div>
                         <div className="pill-segment-group">
                           {[1, 2, 3, 5].map((lim) => (
@@ -1135,21 +1135,21 @@ export default function Settings({
                         borderRadius: "var(--radius-sm)",
                       }}
                     >
-                      {savingFreezeRules ? "保存规则中…" : "保存规则修改"}
+                      {savingFreezeRules ? "保存中…" : "保存规则修改"}
                     </button>
                   </div>
 
-                  {/* 抵扣与流转历史流水 */}
+                  {/* 抵扣与流转历史记录 */}
                   <div>
                     <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", marginBottom: "6px", paddingLeft: "4px" }}>
-                      流转明细流水
+                      卡片变动记录
                     </div>
                     {(!freezeData.history || freezeData.history.length === 0) &&
                     (!freezeData.usages || freezeData.usages.length === 0) ? (
                       <WarmEmptyState
                         icon="freeze"
-                        title="暂无流转记录"
-                        description="当发生自动抵扣、商城兑换或家长手动奖惩时，流转明细将自动呈现在此。"
+                        title="暂无使用记录"
+                        description="当发生自动抵扣、商城兑换或家长手动调整时，记录将呈现在此。"
                       />
                     ) : (
                       <div
