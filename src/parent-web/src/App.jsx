@@ -6,6 +6,7 @@ import Shop from "./pages/Shop.jsx";
 import Settings from "./pages/Settings.jsx";
 import api from "./api.js";
 import useSseRefresh from "./hooks/useSseRefresh.js";
+import { TodayIcon, AnalyticsIcon, ShopIcon, SettingsIcon } from "./components/Icons.jsx";
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem("parent_token"));
@@ -111,11 +112,19 @@ export default function App() {
 
   return (
     <>
-      {/* 一体化响应式 Header：手机端极简品牌栏（无胶囊、无退出），桌面端呈现顶部 4 栏导航 */}
+      {/* iOS Frosted Navigation Bar */}
       <header className="app-header">
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "1.3rem" }}>🌱</span>
-          <h1 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--accent)" }}>Family Plan</h1>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+          <span style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "-0.02em", color: "var(--text)" }}>
+            {tab === "today" ? "今天" : tab === "analytics" ? "成长统计" : tab === "shop" ? "星星商城" : "设置"}
+          </span>
+          {activeChild && (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ fontSize: "0.82rem", color: "var(--muted)", fontWeight: 500 }}>
+                {activeChild.name}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* 桌面端顶部导航链接（>=768px 显示，移动端由 CSS display:none 隐藏） */}
@@ -125,7 +134,8 @@ export default function App() {
             className={`desktop-nav-btn ${tab === "today" ? "active" : ""}`}
             onClick={() => handleTabChange("today")}
           >
-            <span>📌 今日看板</span>
+            <TodayIcon size={18} filled={tab === "today"} />
+            <span>今天</span>
             {totalPending > 0 && <span className="tab-badge">{totalPending}</span>}
           </button>
           <button
@@ -133,31 +143,33 @@ export default function App() {
             className={`desktop-nav-btn ${tab === "analytics" ? "active" : ""}`}
             onClick={() => handleTabChange("analytics")}
           >
-            📊 成长统计
+            <AnalyticsIcon size={18} filled={tab === "analytics"} />
+            <span>统计</span>
           </button>
           <button
             type="button"
             className={`desktop-nav-btn ${tab === "shop" ? "active" : ""}`}
             onClick={() => handleTabChange("shop")}
           >
-            🎁 星星商城
+            <ShopIcon size={18} filled={tab === "shop"} />
+            <span>商城</span>
           </button>
           <button
             type="button"
             className={`desktop-nav-btn ${tab === "settings" ? "active" : ""}`}
             onClick={() => handleTabChange("settings")}
           >
-            ⚙️ 我的设置
+            <SettingsIcon size={18} filled={tab === "settings"} />
+            <span>设置</span>
           </button>
         </nav>
       </header>
 
       {/* 4 大核心 Tab 主体内容区 */}
-      <main style={{ minHeight: "calc(100vh - 160px)" }}>
+      <main className="main-content-container" style={{ minHeight: "calc(100vh - 140px)" }}>
         {initialLoading ? (
           <div style={{ textAlign: "center", padding: "60px 16px", color: "var(--muted)" }}>
-            <span style={{ fontSize: "2rem", display: "block", marginBottom: "8px" }}>🌱</span>
-            <p style={{ fontSize: "0.9rem", fontWeight: 600 }}>正在加载家庭计划…</p>
+            <p style={{ fontSize: "0.9rem", fontWeight: 500 }}>正在载入…</p>
           </div>
         ) : tab === "today" ? (
           <TodayDashboard
@@ -209,8 +221,10 @@ export default function App() {
           className={`tab-item ${tab === "today" ? "active" : ""}`}
           onClick={() => handleTabChange("today")}
         >
-          <span className="tab-icon">📌</span>
-          <span className="tab-label">今日看板</span>
+          <span className="tab-icon">
+            <TodayIcon size={22} filled={tab === "today"} />
+          </span>
+          <span className="tab-label">今天</span>
           {totalPending > 0 && <span className="tab-badge">{totalPending}</span>}
         </button>
         <button
@@ -218,24 +232,30 @@ export default function App() {
           className={`tab-item ${tab === "analytics" ? "active" : ""}`}
           onClick={() => handleTabChange("analytics")}
         >
-          <span className="tab-icon">📊</span>
-          <span className="tab-label">成长统计</span>
+          <span className="tab-icon">
+            <AnalyticsIcon size={22} filled={tab === "analytics"} />
+          </span>
+          <span className="tab-label">统计</span>
         </button>
         <button
           type="button"
           className={`tab-item ${tab === "shop" ? "active" : ""}`}
           onClick={() => handleTabChange("shop")}
         >
-          <span className="tab-icon">🎁</span>
-          <span className="tab-label">星星商城</span>
+          <span className="tab-icon">
+            <ShopIcon size={22} filled={tab === "shop"} />
+          </span>
+          <span className="tab-label">商城</span>
         </button>
         <button
           type="button"
           className={`tab-item ${tab === "settings" ? "active" : ""}`}
           onClick={() => handleTabChange("settings")}
         >
-          <span className="tab-icon">⚙️</span>
-          <span className="tab-label">我的设置</span>
+          <span className="tab-icon">
+            <SettingsIcon size={22} filled={tab === "settings"} />
+          </span>
+          <span className="tab-label">设置</span>
         </button>
       </nav>
     </>

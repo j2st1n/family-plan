@@ -6,6 +6,7 @@ import { formatStars } from "../utils/format.js";
 import { CATEGORIES, CATEGORY_ICONS, inferCategory } from "../utils/category.js";
 import TaskCopilotModal from "../components/TaskCopilotModal.jsx";
 import { useFeedback } from "../components/FeedbackContext.jsx";
+import { CheckCircleIcon, SparklesIcon, PlusIcon } from "../components/Icons.jsx";
 
 function parseLocal(s) {
   if (!s || typeof s !== "string") return new Date();
@@ -436,18 +437,8 @@ export default function TodayDashboard({
         </div>
       )}
 
-      {/* 顶部平铺多孩切换胶囊 (ChildTabs) */}
-      <div
-        className="child-pills-bar"
-        style={{
-          display: "flex",
-          gap: "8px",
-          overflowX: "auto",
-          paddingBottom: "8px",
-          marginBottom: "14px",
-          scrollbarWidth: "none",
-        }}
-      >
+      {/* 顶部平铺多孩切换 (iOS Segmented Control) */}
+      <div className="ios-segmented-control" style={{ marginBottom: "14px" }}>
         {children.map((c) => {
           const isActive = c.id === activeChild?.id;
           const pCount = childPendingMap[c.id] || 0;
@@ -455,34 +446,17 @@ export default function TodayDashboard({
             <button
               key={c.id}
               onClick={() => onSelectChild(c.id)}
-              className={`child-pill ${isActive ? "active" : ""}`}
-              style={{
-                position: "relative",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "6px 16px",
-                borderRadius: "var(--radius-pill)",
-                border: isActive ? "1px solid var(--accent)" : "1px solid var(--border)",
-                backgroundColor: isActive ? "var(--accent)" : "var(--card)",
-                color: isActive ? "#FFFFFF" : "var(--text)",
-                fontWeight: isActive ? 600 : 500,
-                fontSize: "0.88rem",
-                cursor: "pointer",
-                boxShadow: isActive ? "0 2px 8px rgba(0, 113, 227, 0.25)" : "var(--shadow-sm)",
-                whiteSpace: "nowrap",
-                transition: "all 0.18s cubic-bezier(0.16, 1, 0.3, 1)",
-              }}
+              className={`ios-segment-item ${isActive ? "active" : ""}`}
             >
               <span>{c.name}</span>
               {pCount > 0 && (
                 <span
                   style={{
-                    backgroundColor: isActive ? "#FFFFFF" : "var(--flame)",
-                    color: isActive ? "var(--flame)" : "#FFFFFF",
-                    fontSize: "0.68rem",
-                    fontWeight: 800,
-                    padding: "1px 6px",
+                    backgroundColor: "var(--flame)",
+                    color: "#FFFFFF",
+                    fontSize: "0.65rem",
+                    fontWeight: 700,
+                    padding: "0 5px",
                     borderRadius: "999px",
                     lineHeight: "1.2",
                   }}
@@ -495,27 +469,27 @@ export default function TodayDashboard({
         })}
       </div>
 
-      {/* 日期选择与导航条 */}
+      {/* 日期选择与导航条 (iOS 极简胶囊切换) */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          backgroundColor: "var(--card)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius-pill)",
+          backgroundColor: "#FFFFFF",
+          borderRadius: "10px",
           padding: "6px 14px",
           marginBottom: "16px",
           boxShadow: "var(--shadow-sm)",
         }}
       >
         <button
-          onClick={() => setDate(addDays(date, -1))}
+          onClick={() => setDate(addDays(date, -1))
+          }
           style={{
-            padding: "4px 10px",
-            color: "var(--muted)",
-            fontSize: "1rem",
-            fontWeight: 700,
+            padding: "4px 8px",
+            color: "var(--accent)",
+            fontSize: "1.1rem",
+            fontWeight: 600,
             cursor: "pointer",
             borderRadius: "50%",
             display: "flex",
@@ -527,7 +501,6 @@ export default function TodayDashboard({
           ‹
         </button>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "0.95rem" }}>📅</span>
           <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--text)", letterSpacing: "-0.01em" }}>
             {formatDateDisplay(date)}
           </span>
@@ -535,10 +508,10 @@ export default function TodayDashboard({
         <button
           onClick={() => setDate(addDays(date, 1))}
           style={{
-            padding: "4px 10px",
-            color: "var(--muted)",
-            fontSize: "1rem",
-            fontWeight: 700,
+            padding: "4px 8px",
+            color: "var(--accent)",
+            fontSize: "1.1rem",
+            fontWeight: 600,
             cursor: "pointer",
             borderRadius: "50%",
             display: "flex",
@@ -654,9 +627,8 @@ export default function TodayDashboard({
       <div
         className="today-progress-card"
         style={{
-          backgroundColor: "var(--card)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius)",
+          backgroundColor: "#FFFFFF",
+          borderRadius: "14px",
           padding: "16px 20px",
           marginBottom: "16px",
           boxShadow: "var(--shadow-card)",
@@ -721,56 +693,37 @@ export default function TodayDashboard({
         <button
           type="button"
           onClick={() => setShowCopilot(true)}
-          style={{
-            flex: 1,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            padding: "10px 14px",
-            borderRadius: "var(--radius)",
-            backgroundColor: "var(--accent-light)",
-            border: "1px solid rgba(0, 113, 227, 0.2)",
-            color: "var(--accent)",
-            fontWeight: 650,
-            fontSize: "0.9rem",
-            cursor: "pointer",
-            boxShadow: "var(--shadow-sm)",
-            transition: "all 0.18s cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
+          className="ios-btn-secondary"
+          style={{ flex: 1, padding: "10px 14px", fontSize: "0.88rem" }}
         >
-          <span>✨</span>
-          <span>AI 一句话建任务</span>
+          <SparklesIcon size={16} />
+          <span>AI 建议建任务</span>
         </button>
 
         <button
           type="button"
-          className="btn-primary"
+          className="ios-btn-primary"
           onClick={openAddTaskModal}
-          style={{
-            flex: 1,
-            borderRadius: "var(--radius)",
-            padding: "10px 14px",
-            fontSize: "0.9rem",
-          }}
+          style={{ flex: 1, padding: "10px 14px", fontSize: "0.88rem" }}
         >
-          <span>➕</span>
+          <PlusIcon size={16} />
           <span>添加日常任务</span>
         </button>
       </div>
 
-      {/* 今日任务清单 */}
+      {/* 今日任务清单 (Apple Reminders 极简分组列表) */}
       <div className="task-section">
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "10px",
+            marginBottom: "8px",
+            padding: "0 4px",
           }}
         >
           <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.01em" }}>
-            📋 今日任务清单 ({tasks.length})
+            今日任务 ({tasks.length})
           </h3>
           {loading && (
             <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>加载中…</span>
@@ -781,81 +734,63 @@ export default function TodayDashboard({
           <div
             style={{
               textAlign: "center",
-              padding: "36px 16px",
-              backgroundColor: "var(--card)",
-              borderRadius: "var(--radius)",
-              border: "1px dashed var(--border)",
+              padding: "40px 16px",
+              backgroundColor: "#FFFFFF",
+              borderRadius: "12px",
+              boxShadow: "var(--shadow-sm)",
               color: "var(--muted)",
             }}
           >
-            <p style={{ fontSize: "1.6rem", marginBottom: "6px" }}>📝</p>
             <p style={{ fontSize: "0.9rem", fontWeight: 600 }}>今日暂无任务</p>
             <p style={{ fontSize: "0.78rem", marginTop: "4px" }}>
-              点击上方【✨ AI 一句话建任务】或【➕ 添加日常任务】开始安排！
+              轻点上方“添加日常任务”开始安排
             </p>
           </div>
         )}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {/* 1. 待完成任务：纯净白底 + 1px 细边 + 微型 iOS Badge + 柔和右侧圆角操作 */}
-          {pendingTasks.map((t) => {
-            const cat = inferCategory(t.title, t.description);
-            return (
-              <div
-                key={t.id}
-                style={{
-                  backgroundColor: "var(--card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius)",
-                  padding: "13px 16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  boxShadow: "var(--shadow-card)",
-                }}
-              >
-                <div style={{ flex: 1, minWidth: 0, marginRight: "10px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px", flexWrap: "wrap" }}>
-                    <span style={{ fontSize: "0.85rem" }}>{CATEGORY_ICONS[cat] || "📚"}</span>
-                    <span style={{ fontWeight: 650, fontSize: "0.92rem", color: "var(--text)" }}>
-                      {t.title}
-                    </span>
-                    <span className="ios-badge">
-                      {cat}
-                    </span>
-                    {t.require_approval && (
-                      <span
-                        style={{
-                          fontSize: "0.68rem",
-                          color: "var(--star)",
-                          backgroundColor: "var(--star-bg)",
-                          border: "1px solid var(--star-border)",
-                          padding: "1px 6px",
-                          borderRadius: "999px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        需审核
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
-                    ⏱️ {t.expected_minutes || 20} 分钟 · ⭐ {t.reward_stars} 星
-                    {t.scheduled_start && ` · ${t.scheduled_start}${t.scheduled_end ? `-${t.scheduled_end}` : ""}`}
-                  </p>
-                </div>
-
-                <div className="task-action-cluster">
+        {tasks.length > 0 && (
+          <div className="ios-grouped-card">
+            {/* 1. 待完成任务 */}
+            {pendingTasks.map((t) => {
+              const cat = inferCategory(t.title, t.description);
+              return (
+                <div key={t.id} className="reminders-task-row">
                   <button
                     type="button"
+                    className="reminders-checkbox-btn"
                     onClick={() => handleParentCheckTask(t.id)}
-                    className="capsule-btn capsule-accent"
-                    style={{ padding: "5px 14px", fontSize: "0.8rem" }}
-                    title="家长代为标记完成并给星"
+                    title="轻点打卡"
                   >
-                    代打卡
+                    <CheckCircleIcon checked={false} />
                   </button>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <div style={{ flex: 1, minWidth: 0, marginRight: "10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px", flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 600, fontSize: "0.92rem", color: "var(--text)" }}>
+                        {t.title}
+                      </span>
+                      <span className="ios-badge">{cat}</span>
+                      {t.require_approval && (
+                        <span
+                          style={{
+                            fontSize: "0.68rem",
+                            color: "var(--star)",
+                            backgroundColor: "var(--star-bg)",
+                            border: "1px solid var(--star-border)",
+                            padding: "1px 6px",
+                            borderRadius: "999px",
+                            fontWeight: 600,
+                          }}
+                        >
+                          需审核
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                      {t.expected_minutes || 20} 分钟 · +{t.reward_stars} 星
+                      {t.scheduled_start && ` · ${t.scheduled_start}${t.scheduled_end ? `-${t.scheduled_end}` : ""}`}
+                    </p>
+                  </div>
+                  <div className="task-action-cluster">
                     <button
                       type="button"
                       onClick={() => openEditTaskModal(t)}
@@ -882,59 +817,47 @@ export default function TodayDashboard({
                     </button>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {/* 2. 已完成任务列表 */}
-          {completedTasks.map((t) => (
-            <div
-              key={t.id}
-              style={{
-                backgroundColor: "var(--card)",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: "var(--radius)",
-                padding: "11px 16px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                opacity: 0.88,
-                boxShadow: "var(--shadow-sm)",
-              }}
-            >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <span
-                  style={{
-                    textDecoration: "line-through",
-                    color: "var(--muted)",
-                    fontSize: "0.88rem",
-                    fontWeight: 500,
-                  }}
+            {/* 2. 已完成任务 */}
+            {completedTasks.map((t) => (
+              <div key={t.id} className="reminders-task-row">
+                <button
+                  type="button"
+                  className="reminders-checkbox-btn"
+                  onClick={() => handleRevoke(t.id)}
+                  title="轻点撤销完成"
                 >
-                  ✓ {t.title}
-                </span>
-                <span style={{ fontSize: "0.75rem", color: "var(--muted)", marginLeft: "8px" }}>
-                  (已赚得 ⭐+{t.reward_stars})
-                </span>
+                  <CheckCircleIcon checked={true} color="#34C759" />
+                </button>
+                <div style={{ flex: 1, minWidth: 0, marginRight: "10px" }}>
+                  <span
+                    style={{
+                      fontWeight: 500,
+                      fontSize: "0.92rem",
+                      color: "var(--muted)",
+                      textDecoration: "line-through",
+                    }}
+                  >
+                    {t.title}
+                  </span>
+                  <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>
+                    已赚得 ⭐+{t.reward_stars}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRevoke(t.id)}
+                  className="capsule-btn capsule-muted"
+                  style={{ padding: "4px 10px", fontSize: "0.74rem" }}
+                >
+                  撤回
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => handleRevoke(t.id)}
-                style={{
-                  padding: "4px 10px",
-                  fontSize: "0.74rem",
-                  color: "var(--muted)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-pill)",
-                  backgroundColor: "var(--card)",
-                  cursor: "pointer",
-                }}
-              >
-                撤回
-              </button>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* AI Copilot 抽屉模态框 */}

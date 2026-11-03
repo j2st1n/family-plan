@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import api from "../api.js";
 import { useFeedback } from "../components/FeedbackContext.jsx";
 import WarmEmptyState from "../components/WarmEmptyState.jsx";
+import { UserGroupIcon, IpadIcon, RepeatIcon, ShieldFreezeIcon, ChevronRight } from "../components/Icons.jsx";
 
 const GRADE_OPTIONS = {
   幼儿园: ["小班", "中班", "大班"],
@@ -408,108 +409,95 @@ export default function Settings({
 
   return (
     <div className="settings-page" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      {/* 视觉脱水：页面大标题（剔除泛滥的 Emoji，保留文字排版层级） */}
       <div>
-        <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.01em" }}>
-          我的设置
-        </h2>
-        <p style={{ fontSize: "0.82rem", color: "var(--muted)", marginTop: "2px" }}>
-          家庭档案、设备绑定与习惯风控管理
-        </p>
+        <h2 className="ios-large-title">我的设置</h2>
+        <p className="ios-page-subtitle">家庭档案、设备绑定与习惯风控管理</p>
       </div>
 
-      {/* 架构收拢：主页改为清爽的分组列表，页面垂直高度压缩 65% 以上 */}
-      <div className="setting-group-card">
+      {/* iOS 标准分组卡片 */}
+      <div className="ios-grouped-card">
         {/* Item 1: 家庭与孩子档案 */}
         <button
           type="button"
-          className="setting-row-item"
+          className="ios-list-row"
           onClick={() => setActiveDrawer("profiles")}
         >
-          <div className="setting-row-left">
-            <span className="setting-row-title">家庭与孩子档案</span>
-            <span className="setting-row-subtitle">
+          <div className="ios-squircle-icon squircle-blue">
+            <UserGroupIcon size={18} />
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)" }}>家庭与孩子档案</span>
+            <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
               {children.length > 0 ? `${children.length} 位孩子档案 · 学段与达标线` : "未配置孩子档案"}
             </span>
           </div>
-          <div className="setting-row-right">
-            <span className="setting-row-chevron">›</span>
-          </div>
+          <ChevronRight size={16} />
         </button>
 
         {/* Item 2: iPad 设备访问码 */}
         <button
           type="button"
-          className="setting-row-item"
+          className="ios-list-row"
           onClick={() => setActiveDrawer("accessCode")}
         >
-          <div className="setting-row-left">
-            <span className="setting-row-title">iPad 设备访问码</span>
-            <span className="setting-row-subtitle">
+          <div className="ios-squircle-icon squircle-teal">
+            <IpadIcon size={18} />
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)" }}>iPad 设备访问码</span>
+            <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
               儿童端登录配对 · 6 位动态安全码
             </span>
           </div>
-          <div className="setting-row-right">
-            <span className="setting-row-chevron">›</span>
-          </div>
+          <ChevronRight size={16} />
         </button>
 
         {/* Item 3: 例行任务模板库 */}
         <button
           type="button"
-          className="setting-row-item"
+          className="ios-list-row"
           onClick={() => setActiveDrawer("routineTasks")}
         >
-          <div className="setting-row-left">
-            <span className="setting-row-title">例行任务模板库</span>
-            <span className="setting-row-subtitle">
+          <div className="ios-squircle-icon squircle-orange">
+            <RepeatIcon size={18} />
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)" }}>例行任务模板库</span>
+            <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
               {routineTasks.length > 0 ? `${routineTasks.length} 项循环任务 · 每周固定习惯` : "每周固定循环习惯配置"}
             </span>
           </div>
-          <div className="setting-row-right">
-            <span className="setting-row-chevron">›</span>
-          </div>
+          <ChevronRight size={16} />
         </button>
 
         {/* Item 4: 连击保护卡与风控 */}
         <button
           type="button"
-          className="setting-row-item"
+          className="ios-list-row"
           onClick={() => setActiveDrawer("freeze")}
         >
-          <div className="setting-row-left">
-            <span className="setting-row-title">连击保护卡与风控</span>
-            <span className="setting-row-subtitle">
+          <div className="ios-squircle-icon squircle-purple">
+            <ShieldFreezeIcon size={18} />
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)" }}>连击保护卡与风控</span>
+            <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
               防断签护航 · 库存调整、兑换星数与持有上限
             </span>
           </div>
-          <div className="setting-row-right">
-            <span className="setting-row-chevron">›</span>
-          </div>
+          <ChevronRight size={16} />
         </button>
       </div>
 
       {/* 账号退出操作区 */}
-      <div style={{ marginTop: "4px" }}>
+      <div className="ios-grouped-card">
         <button
           type="button"
           onClick={handleLogoutClick}
-          style={{
-            width: "100%",
-            color: "var(--danger)",
-            backgroundColor: "var(--card)",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius)",
-            fontWeight: 650,
-            fontSize: "0.9rem",
-            padding: "13px 20px",
-            cursor: "pointer",
-            boxShadow: "var(--shadow-card)",
-            transition: "all 0.15s ease",
-            textAlign: "center",
-          }}
+          className="ios-list-row"
+          style={{ justifyContent: "center", color: "var(--danger)", fontWeight: 600, fontSize: "0.95rem" }}
         >
-          退出当前登录
+          退出登录
         </button>
       </div>
 
