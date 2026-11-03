@@ -10,12 +10,12 @@ import { useFeedback } from "../components/FeedbackContext.jsx";
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 
 const STATUS_CONFIG = {
-  perfect: { label: "满分达标", color: "#244432", bg: "var(--cell-perfect)", icon: "🌲" },
-  qualified: { label: "达标完成", color: "#3B5C35", bg: "var(--cell-qualified)", icon: "🌱" },
-  missed: { label: "未达标", color: "#BA3A3A", bg: "#FDF2F2", icon: "🍂" },
-  rest: { label: "休息日", color: "#2D3731", bg: "#F0ECE4", icon: "☁️" },
-  vacation: { label: "休假中", color: "#8F5E00", bg: "#FCF4E4", icon: "🌴" },
-  frozen: { label: "保护卡抵扣", color: "#0E7490", bg: "#EDF9FA", icon: "❄️" },
+  perfect: { label: "满分达标", color: "#248A3D", bg: "var(--cell-perfect)", icon: "🌲" },
+  qualified: { label: "达标完成", color: "#34C759", bg: "var(--cell-qualified)", icon: "🌱" },
+  missed: { label: "未达标", color: "#FF3B30", bg: "var(--cell-missed)", icon: "🍂" },
+  rest: { label: "休息日", color: "#86868B", bg: "var(--cell-rest)", icon: "☁️" },
+  vacation: { label: "休假中", color: "#FF9500", bg: "var(--cell-vacation)", icon: "🌴" },
+  frozen: { label: "保护卡抵扣", color: "#00C7BE", bg: "var(--cell-frozen)", icon: "❄️" },
 };
 
 const CATEGORY_ICONS = {
@@ -366,7 +366,7 @@ export default function Analytics({ token, isActive, onExpired }) {
                       style={{
                         ...styles.progressBar,
                         width: `${cat.completion_rate}%`,
-                        backgroundColor: cat.completion_rate >= 80 ? "var(--accent)" : "#5C856E",
+                        backgroundColor: cat.completion_rate >= 80 ? "var(--cell-perfect)" : "var(--accent)",
                       }}
                     />
                   </div>
@@ -650,26 +650,26 @@ const styles = {
   },
   progressTrack: {
     height: "8px",
-    background: "var(--card-subtle)",
+    background: "#E5E5EA",
     borderRadius: "999px",
     overflow: "hidden",
   },
   progressBar: {
     height: "100%",
     borderRadius: "999px",
-    transition: "width 0.4s ease",
+    transition: "width 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
   },
   insightBox: {
     background: "var(--accent-light)",
     border: "1px solid var(--accent-pill)",
-    borderRadius: "10px",
-    padding: "0.7rem",
+    borderRadius: "12px",
+    padding: "0.8rem",
   },
   metricItem: {
-    background: "var(--card-subtle)",
-    border: "1px solid var(--border-subtle)",
-    borderRadius: "8px",
-    padding: "0.5rem 0.3rem",
+    background: "#F5F5F7",
+    border: "1px solid var(--border)",
+    borderRadius: "10px",
+    padding: "0.6rem 0.4rem",
     textAlign: "center",
   },
   metricVal: {
@@ -684,8 +684,9 @@ const styles = {
   modalOverlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(35, 45, 40, 0.45)",
-    backdropFilter: "blur(6px)",
+    background: "rgba(0, 0, 0, 0.4)",
+    backdropFilter: "saturate(180%) blur(16px)",
+    WebkitBackdropFilter: "saturate(180%) blur(16px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -695,7 +696,7 @@ const styles = {
   modalContent: {
     background: "var(--card)",
     borderRadius: "var(--radius-lg)",
-    padding: "1.3rem",
+    padding: "1.4rem",
     maxWidth: "420px",
     width: "100%",
     boxShadow: "var(--shadow-hover)",

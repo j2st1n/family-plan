@@ -121,8 +121,8 @@ export function ChildFeedbackProvider({ children }) {
             style={{
               backgroundColor: "var(--card, #FFFFFF)",
               borderRadius: "var(--radius-lg, 24px)",
-              border: "2px solid var(--border, #E8E2D5)",
-              boxShadow: "0 8px 24px rgba(80, 70, 60, 0.12)",
+              border: "1px solid var(--border, #E5E5EA)",
+              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.08)",
               padding: "24px 20px",
               width: "100%",
               maxWidth: "340px",

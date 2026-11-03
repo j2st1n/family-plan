@@ -4,8 +4,8 @@ import { playTimerDone } from "../utils/soundFx.js";
 
 /**
  * 沉浸式专注计时器 (FocusTimer)
- * 专为 iPad / 儿童平板打造：
- * 1. 采用大号 SVG 环状进度条，视觉直观生动
+ * Apple Watch 健身圆环质感（鲜活细光圈 + 高斯模糊背景）：
+ * 1. 采用精密 SVG Apple Watch 健身圆环进度条，鲜活荧光与羽化光晕
  * 2. 运行时无缝关联屏幕保活 (useScreenWakeLock)，防止平板休眠
  * 3. 支持暂停、继续、提前终止（二次防误触确认）
  * 4. 计时归零触发 Web Audio 纯前端舒缓钟声 (playTimerDone)
@@ -66,7 +66,7 @@ export default function FocusTimer({ task, onClose, onComplete }) {
   const pad = (n) => String(n).padStart(2, "0");
   const timeDisplay = `${pad(mins)}:${pad(secs)}`;
 
-  // SVG 环状进度条几何参数
+  // SVG 环状进度条几何参数 (保留 Sprint 1 测试要求几何规格)
   const size = 300;
   const strokeWidth = 16;
   const center = size / 2;
@@ -117,7 +117,7 @@ export default function FocusTimer({ task, onClose, onComplete }) {
         <div style={{ width: 44 }} /> {/* 占位以保持居中 */}
       </div>
 
-      {/* 核心圆形计时区域 */}
+      {/* 核心圆形计时区域：Apple Watch 健身圆环质感 */}
       <div style={styles.centerContainer}>
         <div style={styles.timerWrap}>
           <svg
@@ -126,39 +126,44 @@ export default function FocusTimer({ task, onClose, onComplete }) {
             style={styles.svg}
             viewBox={`0 0 ${size} ${size}`}
           >
-            {/* 渐变定义：森林绿+琥珀金温润双色 */}
+            {/* 渐变定义：Apple Watch Activity Green 鲜活双色 */}
             <defs>
-              <linearGradient id="focusGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#436A54" />
-                <stop offset="100%" stopColor="#9A6700" />
+              <linearGradient id="appleActivityGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#30D158" />
+                <stop offset="100%" stopColor="#34C759" />
               </linearGradient>
+              <filter id="activityGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
             </defs>
 
-            {/* 底层柔和手账纸质轨道 */}
+            {/* 底层暗调半通透圆环轨道 */}
             <circle
               cx={center}
               cy={center}
               r={radius}
               fill="transparent"
-              stroke="#EAE4D9"
+              stroke="rgba(255, 255, 255, 0.12)"
               strokeWidth={strokeWidth}
             />
 
-            {/* 动态进度环 */}
+            {/* 动态鲜活 Apple Watch 健身光圈进度环 */}
             <circle
               cx={center}
               cy={center}
               r={radius}
               fill="transparent"
-              stroke="url(#focusGradient)"
+              stroke="url(#appleActivityGradient)"
               strokeWidth={strokeWidth}
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
+              filter="url(#activityGlow)"
               style={{
                 transform: "rotate(-90deg)",
                 transformOrigin: "50% 50%",
-                transition: "stroke-dashoffset 0.8s ease-out, stroke 0.3s ease",
+                transition: "stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.3s ease",
               }}
             />
           </svg>
@@ -187,13 +192,13 @@ export default function FocusTimer({ task, onClose, onComplete }) {
             </span>
           ) : (
             <span style={styles.wakeLockInactive}>
-              {status === "paused" ? "⏸️ 暂停中·屏幕常亮已暂缓" : "💡 屏幕常亮待命"}
+              {status === "paused" ? "⏸️ 暂停中 · 屏幕常亮已暂缓" : "💡 屏幕常亮待命"}
             </span>
           )}
         </div>
       </div>
 
-      {/* 底部大触控控制按钮群 */}
+      {/* 底部大触控控制按钮群：iOS 磨砂胶囊 */}
       <div style={styles.controlBar}>
         {status === "running" && (
           <div style={styles.buttonGroup}>
@@ -238,12 +243,9 @@ export default function FocusTimer({ task, onClose, onComplete }) {
       {showConfirmQuit && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
-            <div style={{ fontSize: "2.4rem", marginBottom: "0.6rem" }}>
-              🤔
-            </div>
-            <h3 style={styles.modalTitle}>确定要提前结束专注吗？</h3>
+            <h3 style={styles.modalTitle}>提前结束专注？</h3>
             <p style={styles.modalText}>
-              距离完成还剩 {mins} 分钟，坚持一下，专注的小朋友最帅气！
+              坚持就是胜利！现在离开将不会获得本次专注奖励哦。
             </p>
             <div style={styles.modalActions}>
               <button
@@ -256,7 +258,7 @@ export default function FocusTimer({ task, onClose, onComplete }) {
                 onClick={handleConfirmQuit}
                 style={styles.modalQuitBtn}
               >
-                确定结束
+                确认结束
               </button>
             </div>
           </div>
@@ -270,61 +272,65 @@ const styles = {
   overlay: {
     position: "fixed",
     inset: 0,
-    zIndex: 1000,
-    backgroundColor: "rgba(250, 248, 245, 0.96)",
-    backdropFilter: "blur(16px)",
-    WebkitBackdropFilter: "blur(16px)",
+    zIndex: 999,
+    backgroundColor: "rgba(18, 18, 20, 0.88)",
+    backdropFilter: "saturate(180%) blur(25px)",
+    WebkitBackdropFilter: "saturate(180%) blur(25px)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    padding: "24px 20px calc(24px + env(safe-area-inset-bottom, 0px))",
-    overflowY: "auto",
-    color: "var(--text)",
+    padding: "24px 20px calc(28px + env(safe-area-inset-bottom, 0px))",
+    overflow: "hidden",
+    boxSizing: "border-box",
   },
   header: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     width: "100%",
-    maxWidth: 600,
+    maxWidth: 680,
     margin: "0 auto",
   },
   closeBtn: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    border: "1px solid var(--border)",
-    background: "#F0ECE4",
-    color: "var(--text)",
+    borderRadius: "50%",
+    background: "rgba(255, 255, 255, 0.14)",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    color: "#FFFFFF",
     fontSize: "1.2rem",
-    fontWeight: "bold",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    transition: "all 0.15s ease",
+    touchAction: "manipulation",
+    transition: "transform 0.15s ease, background 0.15s ease",
   },
   headerTitleWrap: {
     textAlign: "center",
+    flex: 1,
+    padding: "0 12px",
   },
   headerBadge: {
-    fontSize: "0.8rem",
+    display: "inline-block",
+    fontSize: "0.75rem",
     fontWeight: 650,
-    color: "var(--accent)",
-    background: "var(--accent-light)",
-    border: "1px solid var(--accent-pill)",
-    padding: "3px 12px",
-    borderRadius: 14,
+    color: "#30D158",
+    background: "rgba(48, 209, 88, 0.15)",
+    border: "1px solid rgba(48, 209, 88, 0.3)",
+    padding: "2px 10px",
+    borderRadius: 999,
+    marginBottom: "4px",
   },
   taskTitle: {
-    fontSize: "1.35rem",
+    fontSize: "1.25rem",
     fontWeight: 700,
-    color: "var(--text)",
-    marginTop: "0.3rem",
-    maxWidth: "320px",
+    color: "#FFFFFF",
+    margin: 0,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
+    letterSpacing: "-0.015em",
   },
   centerContainer: {
     display: "flex",
@@ -354,28 +360,30 @@ const styles = {
     zIndex: 2,
   },
   timeText: {
-    fontSize: "3.6rem",
-    fontWeight: 800,
-    color: "var(--text)",
+    fontSize: "3.8rem",
+    fontWeight: 750,
+    color: "#FFFFFF",
     fontVariantNumeric: "tabular-nums",
     letterSpacing: "-0.03em",
-    lineHeight: 1.2,
+    lineHeight: 1.1,
   },
   statusBadge: {
-    fontSize: "0.95rem",
-    fontWeight: 650,
-    color: "var(--accent)",
-    marginTop: "0.2rem",
-    background: "var(--accent-light)",
-    border: "1px solid var(--accent-pill)",
+    fontSize: "0.9rem",
+    fontWeight: 600,
+    color: "#30D158",
+    marginTop: "0.3rem",
+    background: "rgba(255, 255, 255, 0.12)",
+    border: "1px solid rgba(255, 255, 255, 0.18)",
     padding: "4px 14px",
-    borderRadius: "16px",
+    borderRadius: 999,
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
   },
   rewardHint: {
-    fontSize: "0.85rem",
+    fontSize: "0.86rem",
     color: "var(--star)",
     fontWeight: 650,
-    marginTop: "0.4rem",
+    marginTop: "0.45rem",
   },
   wakeLockIndicator: {
     marginTop: "1.5rem",
@@ -384,21 +392,21 @@ const styles = {
   wakeLockActive: {
     display: "inline-flex",
     alignItems: "center",
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    color: "var(--accent)",
-    background: "var(--accent-light)",
-    border: "1px solid var(--accent-pill)",
+    fontSize: "0.82rem",
+    fontWeight: 500,
+    color: "#0071E3",
+    background: "rgba(0, 113, 227, 0.15)",
+    border: "1px solid rgba(0, 113, 227, 0.3)",
     padding: "5px 14px",
     borderRadius: 999,
   },
   wakeLockInactive: {
     display: "inline-flex",
     alignItems: "center",
-    fontSize: "0.85rem",
-    color: "var(--muted)",
-    background: "#F0ECE4",
-    border: "1px solid var(--border)",
+    fontSize: "0.82rem",
+    color: "rgba(255, 255, 255, 0.5)",
+    background: "rgba(255, 255, 255, 0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.12)",
     padding: "5px 14px",
     borderRadius: 999,
   },
@@ -415,56 +423,61 @@ const styles = {
   },
   pauseBtn: {
     width: "100%",
-    minHeight: 64,
-    padding: "16px",
-    borderRadius: 24,
-    background: "var(--card)",
-    border: "2.5px solid var(--accent)",
-    color: "var(--accent)",
-    fontSize: "1.2rem",
-    fontWeight: 700,
+    minHeight: 58,
+    padding: "14px",
+    borderRadius: 980,
+    background: "rgba(255, 255, 255, 0.15)",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+    color: "#FFFFFF",
+    fontSize: "1.15rem",
+    fontWeight: 650,
     cursor: "pointer",
-    boxShadow: "0 3px 10px rgba(67, 106, 84, 0.12)",
+    boxShadow: "0 4px 14px rgba(0, 0, 0, 0.15)",
     touchAction: "manipulation",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    transition: "transform 0.1s ease",
   },
   resumeBtn: {
     width: "100%",
-    minHeight: 64,
-    padding: "16px",
-    borderRadius: 24,
-    background: "var(--accent)",
+    minHeight: 58,
+    padding: "14px",
+    borderRadius: 980,
+    background: "#34C759",
     border: "none",
     color: "#FFFFFF",
-    fontSize: "1.2rem",
-    fontWeight: 700,
+    fontSize: "1.15rem",
+    fontWeight: 650,
     cursor: "pointer",
-    boxShadow: "0 4px 14px rgba(67, 106, 84, 0.28)",
+    boxShadow: "0 4px 16px rgba(52, 199, 89, 0.4)",
     touchAction: "manipulation",
+    transition: "transform 0.1s ease",
   },
   completeBtn: {
     width: "100%",
-    minHeight: 64,
-    padding: "16px",
-    borderRadius: 24,
-    background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%)",
+    minHeight: 58,
+    padding: "14px",
+    borderRadius: 980,
+    background: "var(--accent)",
     border: "none",
     color: "#FFFFFF",
-    fontSize: "1.2rem",
-    fontWeight: 700,
+    fontSize: "1.15rem",
+    fontWeight: 650,
     cursor: "pointer",
-    boxShadow: "0 4px 16px rgba(67, 106, 84, 0.3)",
+    boxShadow: "0 4px 16px rgba(0, 113, 227, 0.4)",
     touchAction: "manipulation",
+    transition: "transform 0.1s ease",
   },
   secondaryBtn: {
     width: "100%",
-    minHeight: 48,
-    padding: "12px",
-    borderRadius: 18,
-    background: "#F0ECE4",
-    border: "1px solid var(--border)",
-    color: "var(--text)",
-    fontSize: "0.95rem",
-    fontWeight: 600,
+    minHeight: 46,
+    padding: "10px",
+    borderRadius: 980,
+    background: "rgba(255, 255, 255, 0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.14)",
+    color: "rgba(255, 255, 255, 0.75)",
+    fontSize: "0.92rem",
+    fontWeight: 500,
     cursor: "pointer",
     touchAction: "manipulation",
   },
@@ -472,35 +485,36 @@ const styles = {
     position: "fixed",
     inset: 0,
     zIndex: 1100,
-    background: "rgba(45, 55, 49, 0.45)",
-    backdropFilter: "blur(6px)",
-    WebkitBackdropFilter: "blur(6px)",
+    background: "rgba(0, 0, 0, 0.65)",
+    backdropFilter: "blur(14px)",
+    WebkitBackdropFilter: "blur(14px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
   },
   modalCard: {
-    background: "var(--card)",
-    borderRadius: 24,
-    border: "1px solid var(--border)",
+    background: "rgba(32, 32, 35, 0.95)",
+    borderRadius: 22,
+    border: "1px solid rgba(255, 255, 255, 0.15)",
     padding: "26px 22px",
     maxWidth: 360,
     width: "100%",
     textAlign: "center",
-    boxShadow: "0 12px 36px rgba(70, 60, 50, 0.15)",
+    boxShadow: "0 12px 36px rgba(0, 0, 0, 0.4)",
   },
   modalTitle: {
-    fontSize: "1.25rem",
+    fontSize: "1.2rem",
     fontWeight: 700,
-    color: "var(--text)",
+    color: "#FFFFFF",
     marginBottom: "0.5rem",
+    letterSpacing: "-0.015em",
   },
   modalText: {
-    fontSize: "0.95rem",
-    color: "var(--muted)",
-    lineHeight: 1.6,
-    marginBottom: "1.4rem",
+    fontSize: "0.92rem",
+    color: "rgba(255, 255, 255, 0.7)",
+    lineHeight: 1.5,
+    marginBottom: "1.3rem",
   },
   modalActions: {
     display: "flex",
@@ -508,25 +522,25 @@ const styles = {
   },
   modalStayBtn: {
     flex: 1,
-    minHeight: 52,
-    borderRadius: 16,
+    minHeight: 48,
+    borderRadius: 980,
     background: "var(--accent)",
     color: "#FFFFFF",
-    fontSize: "1.05rem",
-    fontWeight: 700,
+    fontSize: "1rem",
+    fontWeight: 650,
     border: "none",
     cursor: "pointer",
-    boxShadow: "0 2px 8px rgba(67, 106, 84, 0.2)",
+    boxShadow: "0 2px 8px rgba(0, 113, 227, 0.3)",
   },
   modalQuitBtn: {
     flex: 1,
-    minHeight: 52,
-    borderRadius: 16,
-    background: "#F0ECE4",
-    border: "1px solid var(--border)",
-    color: "var(--muted)",
-    fontSize: "1.05rem",
-    fontWeight: 600,
+    minHeight: 48,
+    borderRadius: 980,
+    background: "rgba(255, 255, 255, 0.1)",
+    border: "1px solid rgba(255, 255, 255, 0.16)",
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: "1rem",
+    fontWeight: 500,
     cursor: "pointer",
   },
 };

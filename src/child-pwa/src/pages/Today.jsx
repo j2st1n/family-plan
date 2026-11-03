@@ -35,7 +35,7 @@ function fireCelebration(originX = 0.5, originY = 0.6) {
       particleCount: 55,
       spread: 70,
       origin: { x: originX, y: originY },
-      colors: ["#436A54", "#9A6700", "#C2410C", "#0E7490", "#76A28A", "#D4A373"],
+      colors: ["#0071E3", "#34C759", "#FF9500", "#FF3B30", "#00C7BE", "#5856D6"],
       disableForReducedMotion: true,
       ticks: 200,
       gravity: 1.1,

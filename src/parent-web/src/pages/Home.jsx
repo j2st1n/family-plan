@@ -8,7 +8,7 @@ import TaskManage from "./TaskManage.jsx";
 import { formatStars } from "../utils/format.js";
 import { useFeedback } from "../components/FeedbackContext.jsx";
 
-const AVATARS = ["#436A54", "#9A6700", "#C2410C", "#0E7490", "#637A6D", "#507A65"];
+const AVATARS = ["#0071E3", "#34C759", "#FF9500", "#FF3B30", "#00C7BE", "#5856D6"];
 
 const GRADE_OPTIONS = {
   幼儿园: ["小班", "中班", "大班"],

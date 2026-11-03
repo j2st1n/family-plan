@@ -1,67 +1,79 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+/* ==========================================================================
+   Apple / iOS 现代极简设计系统 Tokens
+   规范参照：OpenDesign 官方 design-systems/apple/DESIGN.md & Apple HIG
+   ========================================================================== */
 
 :root {
-  /* 方案三【自然温润纸质手账风】设计系统 Tokens */
-  /* 画布底色：暖燕麦米色纸底，告别冷白刺眼感，高度护眼 */
-  --bg: #FAF8F5;
-  /* 卡片质感：卡片纯白或极浅乳白，配合温暖柔和纸质边线与低饱和漫反射投影 */
+  /* 1. 画布底色：Apple 经典超浅冷灰/云白画布 */
+  --bg: #F5F5F7;
+
+  /* 2. 卡片质感：纯净白底，1px 极细微边框，超柔羽化弥散微投影 */
   --card: #FFFFFF;
-  --card-subtle: #FAF7F2;
-  --border: #E8E2D5;
-  --border-subtle: #F0ECE4;
+  --card-subtle: #F5F5F7;
+  --border: #E5E5EA;
+  --border-subtle: #F2F2F7;
 
-  /* 墨水字阶：主文本深墨苔藓黑，次级文字鼠尾草灰（WCAG 2.2 AA 对比度 >= 4.5:1） */
-  --text: #2D3731;
-  --text-primary: #2D3731;
-  --muted: #67736C;
-  --muted-sage: #647069;
+  /* 3. 字体与字阶：主文本采用 Apple Near-Black Ink，次级说明文字采用 Secondary Neutral Gray */
+  --text: #1D1D1F;
+  --text-primary: #1D1D1F;
+  --muted: #86868B;
+  --muted-sage: #86868B;
 
-  /* 品牌主色：森林苔藓绿 */
-  --accent: #436A54;
-  --accent-hover: #355442;
-  --accent-light: #EEF4F0;
-  --accent-pill: #DFEAE3;
+  /* 4. 品牌主动作色：纯正 Apple Action Blue */
+  --accent: #0071E3;
+  --accent-hover: #0077ED;
+  --accent-light: #F0F6FD;
+  --accent-pill: #E1EFFF;
 
-  /* 游戏化语义色 */
-  --star: #8F5E00;
-  --star-bg: #FCF4E4;
-  --star-border: #F6E2B3;
-  --flame: #C2410C;
-  --flame-bg: #FFF1EB;
-  --flame-border: #FED7AA;
-  --protect: #0E7490;
-  --protect-bg: #EDF9FA;
-  --protect-border: #BAE6FD;
-  --danger: #BA3A3A;
-  --danger-bg: #FDF2F2;
-  --danger-border: #FECACA;
+  /* 5. 状态语义色（Apple Health/Fitness 标准） */
+  /* 满分/达标绿色：Apple Fitness 鲜活活力绿 */
+  --cell-perfect: #34C759;
+  --cell-perfect-border: #248A3D;
+  --cell-qualified: #34C759;
+  --cell-qualified-border: #248A3D;
+  --cell-missed: #FFF0EE;
+  --cell-missed-border: #FFB3B0;
+  --cell-frozen: #E5F9F8;
+  --cell-frozen-border: #00C7BE;
+  --cell-vacation: #FFF7EB;
+  --cell-vacation-border: #FFD599;
+  --cell-rest: #E5E5EA;
+  --cell-rest-border: #D2D2D7;
 
-  /* 单元格手账质感配色 (Heatmap Micro Calendar) */
-  --cell-perfect: #D8EAD9;
-  --cell-perfect-border: #7DAE88;
-  --cell-qualified: #EBF2DC;
-  --cell-qualified-border: #9FBF78;
-  --cell-missed: #FAE3DC;
-  --cell-missed-border: #DE876E;
-  --cell-frozen: #DCECF8;
-  --cell-frozen-border: #6BA6DC;
-  --cell-vacation: #FEF4DB;
-  --cell-vacation-border: #E5C06A;
-  --cell-rest: #F6F4EE;
-  --cell-rest-border: #DDD9D0;
+  /* 奖励星星：Apple 专属金色 */
+  --star: #FF9500;
+  --star-bg: #FFF7EB;
+  --star-border: #FFE5B5;
 
-  /* 圆角与阴影：低饱和温润漫反射投影 */
+  /* 连胜火焰：Apple 暖橙红 */
+  --flame: #FF3B30;
+  --flame-bg: #FFF1F0;
+  --flame-border: #FFD1CF;
+
+  /* 保护卡/冰霜：Apple 天空青蓝 */
+  --protect: #00C7BE;
+  --protect-bg: #E5F9F8;
+  --protect-border: #B2F0EC;
+
+  /* 危险/警告 */
+  --danger: #FF3B30;
+  --danger-bg: #FFF1F0;
+  --danger-border: #FFD1CF;
+
+  /* 圆角阶梯：Apple 经典柔和圆角 */
   --radius-sm: 8px;
   --radius: 14px;
   --radius-lg: 20px;
   --radius-pill: 999px;
-  --shadow-sm: 0 1px 3px rgba(80, 70, 60, 0.05);
-  --shadow-card: 0 2px 8px rgba(80, 70, 60, 0.05), 0 1px 3px rgba(80, 70, 60, 0.03);
-  --shadow-hover: 0 4px 14px rgba(80, 70, 60, 0.08), 0 2px 4px rgba(80, 70, 60, 0.03);
+
+  /* Apple 经典超柔羽化弥散微投影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.03);
 
   /* 排版黄金比例 */
-  --line-height-body: 1.75;
-  --line-height-display: 1.35;
+  --line-height-body: 1.5;
+  --line-height-display: 1.2;
 }
 
 *,
@@ -78,19 +90,22 @@ html {
 }
 
 body {
-  font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   font-weight: 400;
-  line-height: 1.75;
+  line-height: var(--line-height-body);
   background: var(--bg);
   color: var(--text);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.012em;
 }
 
 h1, h2, h3, h4, .display-text {
-  line-height: 1.35;
-  letter-spacing: -0.015em;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", sans-serif;
+  line-height: var(--line-height-display);
+  letter-spacing: -0.022em;
   font-weight: 700;
   color: var(--text);
 }
@@ -104,7 +119,7 @@ h1, h2, h3, h4, .display-text {
   #root {
     max-width: 100%;
     margin: 0 auto;
-    padding: 12px 14px calc(76px + env(safe-area-inset-bottom, 12px));
+    padding: 12px 16px calc(76px + env(safe-area-inset-bottom, 12px));
   }
 
   /* 彻底隐藏桌面端顶部导航链接与旧顶部导航 */
@@ -113,16 +128,23 @@ h1, h2, h3, h4, .display-text {
     display: none !important;
   }
 
-  /* 移动端极简 Header */
+  /* 移动端毛玻璃顶栏 Header */
   .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 0 12px;
-    margin-bottom: 8px;
+    padding: 10px 14px;
+    margin: -12px -16px 14px -16px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
   }
 
-  /* 移动端底部 4 栏 TabBar 规范 */
+  /* 移动端底部 4 栏 TabBar 规范：毛玻璃高斯模糊底栏 */
   .bottom-tabbar {
     position: fixed;
     bottom: 0;
@@ -133,9 +155,9 @@ h1, h2, h3, h4, .display-text {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    background: rgba(250, 248, 245, 0.95);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-top: 1px solid var(--border);
     z-index: 500;
   }
@@ -146,11 +168,11 @@ h1, h2, h3, h4, .display-text {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
+    gap: 2px;
     padding: 4px 0;
     color: var(--muted);
     font-size: 0.72rem;
-    font-weight: 600;
+    font-weight: 500;
     text-decoration: none;
     border: none;
     background: transparent;
@@ -160,12 +182,12 @@ h1, h2, h3, h4, .display-text {
   }
 
   .tab-item:active {
-    transform: scale(0.92);
+    transform: scale(0.94);
   }
 
   .tab-item.active {
     color: var(--accent);
-    font-weight: 700;
+    font-weight: 600;
   }
 
   .tab-item .tab-icon {
@@ -198,7 +220,7 @@ h1, h2, h3, h4, .display-text {
   #root {
     max-width: 1040px;
     margin: 0 auto;
-    padding: 24px 28px 48px;
+    padding: 0 28px 48px;
   }
 
   /* 桌面端强制隐藏底部 TabBar，杜绝重叠 */
@@ -207,13 +229,19 @@ h1, h2, h3, h4, .display-text {
     display: none !important;
   }
 
-  /* 桌面端统一一体化 Header */
+  /* 桌面端毛玻璃高斯模糊顶栏 Header */
   .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 0 20px;
-    margin-bottom: 24px;
+    padding: 14px 28px;
+    margin: 0 -28px 24px -28px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-bottom: 1px solid var(--border);
   }
 
@@ -223,6 +251,7 @@ h1, h2, h3, h4, .display-text {
     align-items: center;
   }
 
+  /* 极简现代胶囊切换 */
   .desktop-nav-btn {
     position: relative;
     display: inline-flex;
@@ -231,12 +260,12 @@ h1, h2, h3, h4, .display-text {
     padding: 8px 18px;
     border-radius: var(--radius-pill);
     border: 1px solid transparent;
-    font-size: 0.92rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 500;
     color: var(--muted);
     background: transparent;
     cursor: pointer;
-    transition: all 0.18s ease;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .desktop-nav-btn:hover {
@@ -247,7 +276,8 @@ h1, h2, h3, h4, .display-text {
   .desktop-nav-btn.active {
     background: var(--accent);
     color: #FFFFFF;
-    box-shadow: 0 2px 8px rgba(67, 106, 84, 0.25);
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 113, 227, 0.25);
   }
 
   .desktop-nav-btn .tab-badge {
@@ -266,7 +296,7 @@ h1, h2, h3, h4, .display-text {
   }
 }
 
-/* 旧版导航保底重定向隐藏 */
+/* 旧版导航保底隐藏 */
 .top-nav, .nav-tabs {
   display: none !important;
 }
@@ -274,7 +304,7 @@ h1, h2, h3, h4, .display-text {
 .brand-icon {
   width: 56px;
   height: 56px;
-  border-radius: 18px;
+  border-radius: 16px;
   background: var(--accent);
   display: flex;
   align-items: center;
@@ -282,7 +312,7 @@ h1, h2, h3, h4, .display-text {
   font-size: 1.6rem;
   color: #FFFFFF;
   margin: 0 auto 14px;
-  box-shadow: 0 4px 12px rgba(67, 106, 84, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.2);
 }
 
 .stat-chip {
@@ -291,12 +321,13 @@ h1, h2, h3, h4, .display-text {
   gap: 3px;
   padding: 3px 10px;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 600;
   border-radius: var(--radius-pill);
   background: var(--star-bg);
   color: var(--star);
   border: 1px solid var(--star-border);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 .stat-chip.green {
@@ -320,7 +351,7 @@ h1, h2, h3, h4, .display-text {
 .child-avatar {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: 12px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -355,18 +386,18 @@ textarea {
   border-radius: 10px;
   background: var(--accent);
   color: #FFFFFF;
-  font-weight: 650;
+  font-weight: 600;
   font-size: 0.9rem;
   border: none;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(67, 106, 84, 0.2);
-  transition: all 0.18s ease;
+  box-shadow: 0 2px 6px rgba(0, 113, 227, 0.2);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   touch-action: manipulation;
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
-  box-shadow: 0 4px 12px rgba(67, 106, 84, 0.28);
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
   transform: translateY(-1px);
 }
 
@@ -375,7 +406,7 @@ textarea {
 }
 
 .btn-primary:disabled {
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -386,18 +417,20 @@ textarea {
   gap: 6px;
   padding: 8px 16px;
   border-radius: 10px;
-  background: #F0ECE4;
+  background: var(--card);
   color: var(--text);
   border: 1px solid var(--border);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   touch-action: manipulation;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #E8E3DA;
+  background: var(--card-subtle);
+  border-color: #D2D2D7;
 }
 
 .btn-secondary:active:not(:disabled) {
@@ -413,7 +446,7 @@ textarea {
   background: transparent;
   color: var(--muted);
   border: none;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.18s ease;
 }
@@ -424,13 +457,13 @@ textarea {
 }
 
 /* ==========================================================================
-   Compact Heatmap & Micro Calendar Styles
+   Compact Heatmap & Micro Calendar Styles (Apple Fitness Green Scale)
    ========================================================================== */
 .compact-heatmap-card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 12px 14px;
+  padding: 14px 16px;
   box-shadow: var(--shadow-card);
 }
 
@@ -450,7 +483,7 @@ textarea {
 
 .weekday-micro-label {
   font-size: 0.68rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--muted);
   display: flex;
   align-items: center;
@@ -485,19 +518,20 @@ textarea {
 .heatmap-cell:hover {
   transform: scale(1.15);
   z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .heatmap-cell.selected {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
-.heatmap-cell.status-perfect { background: var(--cell-perfect); border-color: var(--cell-perfect-border); }
-.heatmap-cell.status-qualified { background: var(--cell-qualified); border-color: var(--cell-qualified-border); }
+.heatmap-cell.status-perfect { background: var(--cell-perfect); border-color: var(--cell-perfect-border); color: #FFFFFF; font-weight: 600; }
+.heatmap-cell.status-qualified { background: var(--cell-qualified); border-color: var(--cell-qualified-border); color: #FFFFFF; font-weight: 600; }
 .heatmap-cell.status-missed { background: var(--cell-missed); border-color: var(--cell-missed-border); }
 .heatmap-cell.status-frozen { background: var(--cell-frozen); border-color: var(--cell-frozen-border); }
 .heatmap-cell.status-vacation { background: var(--cell-vacation); border-color: var(--cell-vacation-border); }
-.heatmap-cell.status-rest { background: var(--cell-rest); border-style: dashed; border-color: var(--cell-rest-border); }
+.heatmap-cell.status-rest { background: var(--cell-rest); border-color: var(--cell-rest-border); }
 
 .cell-placeholder {
   aspect-ratio: 1;
@@ -511,23 +545,23 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 0.7rem;
+  gap: 10px;
+  font-size: 0.72rem;
   color: var(--muted);
-  padding-top: 4px;
+  padding-top: 6px;
   flex-wrap: wrap;
 }
 
 .legend-chip {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 0.7rem;
+  gap: 4px;
+  font-size: 0.72rem;
 }
 
 .legend-chip .dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 2px;
   display: inline-block;
 }
@@ -535,30 +569,31 @@ textarea {
 .legend-chip .dot.dot-perfect { background: var(--cell-perfect); border: 1px solid var(--cell-perfect-border); }
 .legend-chip .dot.dot-qualified { background: var(--cell-qualified); border: 1px solid var(--cell-qualified-border); }
 .legend-chip .dot.dot-missed { background: var(--cell-missed); border: 1px solid var(--cell-missed-border); }
-.legend-chip .dot.dot-rest { background: var(--cell-rest); border: 1px dashed var(--cell-rest-border); }
+.legend-chip .dot.dot-rest { background: var(--cell-rest); border: 1px solid var(--cell-rest-border); }
 
 .selected-pill {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: var(--radius-pill);
-  font-size: 0.75rem;
-  margin-bottom: 6px;
-  background: var(--card-subtle);
-  border: 1px solid var(--border-subtle);
+  font-size: 0.76rem;
+  margin-bottom: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ==========================================================================
-   Hand-Drawn Journal Style Modal Drawers & Setting Rows
+   Apple iOS Style Modal Drawers & Grouped TableView
    ========================================================================== */
 
 .hand-drawer-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(45, 55, 49, 0.45);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
   z-index: 1000;
   display: flex;
   justify-content: center;
@@ -584,7 +619,7 @@ textarea {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: slideUpSheet 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideUpSheet 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (min-width: 768px) {
@@ -616,7 +651,7 @@ textarea {
   width: 38px;
   height: 4px;
   border-radius: 2px;
-  background-color: var(--border);
+  background-color: #D2D2D7;
   margin: 10px auto 2px auto;
   flex-shrink: 0;
 }
@@ -631,7 +666,7 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
@@ -640,19 +675,19 @@ textarea {
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--text);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .drawer-close-btn {
-  background: var(--card-subtle);
-  border: 1px solid var(--border-subtle);
+  background: #F2F2F7;
+  border: 1px solid var(--border);
   border-radius: 50%;
   width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--muted);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -660,17 +695,20 @@ textarea {
 
 .drawer-close-btn:hover {
   color: var(--text);
-  background: var(--border-subtle);
+  background: #E5E5EA;
 }
 
 .drawer-body {
-  padding: 16px 18px calc(20px + env(safe-area-inset-bottom, 0px));
+  padding: 18px 20px calc(24px + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
   flex: 1;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Grouped List & Setting Rows */
+/* ==========================================================================
+   iOS Settings Standard Grouped TableView
+   ========================================================================== */
+
 .setting-group-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -683,7 +721,7 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 16px;
+  padding: 15px 18px;
   border-bottom: 1px solid var(--border-subtle);
   cursor: pointer;
   background: transparent;
@@ -701,7 +739,7 @@ textarea {
 
 .setting-row-item:hover,
 .setting-row-item:active {
-  background-color: var(--card-subtle);
+  background-color: #F9F9FB;
 }
 
 .setting-row-left {
@@ -712,8 +750,9 @@ textarea {
 
 .setting-row-title {
   font-size: 0.95rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .setting-row-subtitle {
@@ -728,9 +767,8 @@ textarea {
 }
 
 .setting-row-chevron {
-  color: var(--muted);
-  font-size: 1.15rem;
-  opacity: 0.5;
+  color: #C7C7CC;
+  font-size: 1.25rem;
   font-weight: 300;
   transform: translateY(-1px);
 }
@@ -749,7 +787,7 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: 13px 16px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -765,8 +803,9 @@ textarea {
 
 .ios-row-title {
   font-size: 0.88rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .ios-row-hint {
@@ -774,71 +813,81 @@ textarea {
   color: var(--muted);
 }
 
+/* iOS Stepper */
 .compact-stepper {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: var(--card-subtle);
+  gap: 4px;
+  background: #F2F2F7;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  padding: 3px 6px;
+  padding: 2px 4px;
 }
 
 .stepper-btn {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--card);
+  border: 1px solid #D2D2D7;
+  background: #FFFFFF;
   color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: transform 0.1s ease, background-color 0.1s ease;
+}
+
+.stepper-btn:active:not(:disabled) {
+  transform: scale(0.92);
+  background: #E5E5EA;
 }
 
 .stepper-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 .stepper-val {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--text);
-  min-width: 28px;
+  min-width: 32px;
   text-align: center;
+  padding: 0 2px;
 }
 
+/* iOS Segmented Control */
 .pill-segment-group {
   display: inline-flex;
-  gap: 4px;
-  background: var(--card-subtle);
-  border: 1px solid var(--border);
+  gap: 2px;
+  background: #E5E5EA;
   border-radius: var(--radius-pill);
   padding: 2px;
 }
 
 .pill-segment-btn {
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: var(--radius-pill);
   font-size: 0.76rem;
-  font-weight: 600;
+  font-weight: 500;
   border: none;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .pill-segment-btn.active {
-  background: var(--accent);
-  color: #FFFFFF;
-  box-shadow: 0 1px 3px rgba(67, 106, 84, 0.2);
+  background: #FFFFFF;
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
 /* Capsule Micro Buttons */
@@ -846,20 +895,24 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: var(--radius-pill);
   font-size: 0.76rem;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all 0.15s ease;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
 }
 
 .capsule-accent {
   background: var(--accent);
   color: #FFFFFF;
-  box-shadow: 0 1px 3px rgba(67, 106, 84, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 113, 227, 0.2);
+}
+
+.capsule-accent:hover {
+  background: var(--accent-hover);
 }
 
 .capsule-danger {
@@ -872,15 +925,20 @@ textarea {
   background: var(--card);
   border-color: var(--border);
   color: var(--text);
+  box-shadow: var(--shadow-sm);
 }
 
-/* Journal Input with Focus Aperture Ring */
+.capsule-muted:hover {
+  background: var(--card-subtle);
+}
+
+/* iOS Standard Input with Focus Aperture Ring */
 .form-input-journal {
   width: 100%;
-  padding: 8px 12px;
+  padding: 9px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: #FFFFFF;
   color: var(--text);
   font-size: 0.88rem;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -890,13 +948,13 @@ textarea {
 
 .form-input-journal:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(67, 106, 84, 0.15);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
 }
 
 .task-action-cluster {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .task-micro-action {
@@ -907,20 +965,36 @@ textarea {
   justify-content: center;
   border-radius: 8px;
   background: var(--card);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   color: var(--muted);
   cursor: pointer;
   font-size: 0.82rem;
-  transition: all 0.12s ease;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .task-micro-action:hover {
   background: var(--card-subtle);
   color: var(--text);
+  border-color: #D2D2D7;
 }
 
 .task-micro-action.delete:hover {
   background: var(--danger-bg);
   color: var(--danger);
   border-color: var(--danger-border);
+}
+
+/* Micro iOS Badge */
+.ios-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #F5F5F7;
+  color: #1D1D1F;
+  border: 1px solid #E5E5EA;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }

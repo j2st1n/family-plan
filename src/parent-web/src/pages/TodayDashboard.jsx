@@ -444,7 +444,7 @@ export default function TodayDashboard({
           gap: "8px",
           overflowX: "auto",
           paddingBottom: "8px",
-          marginBottom: "12px",
+          marginBottom: "14px",
           scrollbarWidth: "none",
         }}
       >
@@ -461,25 +461,25 @@ export default function TodayDashboard({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                padding: "6px 14px",
+                padding: "6px 16px",
                 borderRadius: "var(--radius-pill)",
                 border: isActive ? "1px solid var(--accent)" : "1px solid var(--border)",
-                backgroundColor: isActive ? "var(--accent-light)" : "var(--card)",
-                color: isActive ? "var(--accent)" : "var(--text)",
-                fontWeight: isActive ? 700 : 500,
+                backgroundColor: isActive ? "var(--accent)" : "var(--card)",
+                color: isActive ? "#FFFFFF" : "var(--text)",
+                fontWeight: isActive ? 600 : 500,
                 fontSize: "0.88rem",
                 cursor: "pointer",
-                boxShadow: isActive ? "0 2px 6px rgba(67, 106, 84, 0.15)" : "none",
+                boxShadow: isActive ? "0 2px 8px rgba(0, 113, 227, 0.25)" : "var(--shadow-sm)",
                 whiteSpace: "nowrap",
-                transition: "all 0.15s ease",
+                transition: "all 0.18s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
               <span>{c.name}</span>
               {pCount > 0 && (
                 <span
                   style={{
-                    backgroundColor: "var(--flame)",
-                    color: "#FFFFFF",
+                    backgroundColor: isActive ? "#FFFFFF" : "var(--flame)",
+                    color: isActive ? "var(--flame)" : "#FFFFFF",
                     fontSize: "0.68rem",
                     fontWeight: 800,
                     padding: "1px 6px",
@@ -501,21 +501,26 @@ export default function TodayDashboard({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          backgroundColor: "var(--card-subtle)",
+          backgroundColor: "var(--card)",
           border: "1px solid var(--border)",
-          borderRadius: "var(--radius-sm)",
-          padding: "6px 10px",
-          marginBottom: "14px",
+          borderRadius: "var(--radius-pill)",
+          padding: "6px 14px",
+          marginBottom: "16px",
+          boxShadow: "var(--shadow-sm)",
         }}
       >
         <button
           onClick={() => setDate(addDays(date, -1))}
           style={{
-            padding: "4px 8px",
+            padding: "4px 10px",
             color: "var(--muted)",
-            fontSize: "0.9rem",
+            fontSize: "1rem",
             fontWeight: 700,
             cursor: "pointer",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           title="前一天"
         >
@@ -523,18 +528,22 @@ export default function TodayDashboard({
         </button>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <span style={{ fontSize: "0.95rem" }}>📅</span>
-          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text)" }}>
+          <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--text)", letterSpacing: "-0.01em" }}>
             {formatDateDisplay(date)}
           </span>
         </div>
         <button
           onClick={() => setDate(addDays(date, 1))}
           style={{
-            padding: "4px 8px",
+            padding: "4px 10px",
             color: "var(--muted)",
-            fontSize: "0.9rem",
+            fontSize: "1rem",
             fontWeight: 700,
             cursor: "pointer",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           title="后一天"
         >
@@ -547,10 +556,10 @@ export default function TodayDashboard({
         <div
           className="pending-hero-card"
           style={{
-            backgroundColor: "var(--star-bg)",
-            border: "1.5px solid var(--star-border)",
+            backgroundColor: "var(--card)",
+            border: "1px solid #FFE5B5",
             borderRadius: "var(--radius)",
-            padding: "14px 16px",
+            padding: "16px",
             marginBottom: "16px",
             boxShadow: "var(--shadow-card)",
           }}
@@ -560,12 +569,12 @@ export default function TodayDashboard({
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: "10px",
+              marginBottom: "12px",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span style={{ fontSize: "1.1rem" }}>⏳</span>
-              <span style={{ fontWeight: 700, color: "var(--star)", fontSize: "0.95rem" }}>
+              <span style={{ fontWeight: 700, color: "var(--star)", fontSize: "0.95rem", letterSpacing: "-0.01em" }}>
                 待点赞任务 ({submittedTasks.length} 项)
               </span>
             </div>
@@ -576,7 +585,7 @@ export default function TodayDashboard({
                 onClick={handleApproveAll}
                 disabled={actionInProgress}
                 style={{
-                  padding: "4px 10px",
+                  padding: "4px 12px",
                   fontSize: "0.78rem",
                   borderRadius: "var(--radius-pill)",
                 }}
@@ -594,10 +603,11 @@ export default function TodayDashboard({
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  backgroundColor: "var(--card)",
+                  backgroundColor: "#FFFDF9",
                   borderRadius: "var(--radius-sm)",
-                  padding: "10px 12px",
-                  border: "1px solid var(--star-border)",
+                  padding: "12px 14px",
+                  border: "1px solid #FFE5B5",
+                  boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div>
@@ -640,14 +650,14 @@ export default function TodayDashboard({
         </div>
       )}
 
-      {/* 今日进度概览卡片 */}
+      {/* 今日进度概览卡片 (Apple Fitness / Activity Rings 风格) */}
       <div
         className="today-progress-card"
         style={{
           backgroundColor: "var(--card)",
           border: "1px solid var(--border)",
           borderRadius: "var(--radius)",
-          padding: "16px",
+          padding: "16px 20px",
           marginBottom: "16px",
           boxShadow: "var(--shadow-card)",
           display: "flex",
@@ -656,10 +666,10 @@ export default function TodayDashboard({
         }}
       >
         <div>
-          <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text)", marginBottom: "4px" }}>
+          <h2 style={{ fontSize: "1.08rem", fontWeight: 700, color: "var(--text)", marginBottom: "4px", letterSpacing: "-0.015em" }}>
             今日已完成 {completedTasks.length} / {tasks.length} 项
           </h2>
-          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "6px" }}>
+          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "8px", flexWrap: "wrap" }}>
             <span className="stat-chip">⭐ {formatStars(rewards.stars_total)} 星</span>
             <span className="stat-chip flame">🔥 {rewards.current_streak_days} 天连胜</span>
             {rewards.streak_freeze_count > 0 && (
@@ -668,25 +678,41 @@ export default function TodayDashboard({
           </div>
         </div>
 
-        {/* Circular progress badge */}
-        <div
-          style={{
-            width: "56px",
-            height: "56px",
-            borderRadius: "50%",
-            backgroundColor: "var(--accent-light)",
-            border: "2px solid var(--accent)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--accent)", lineHeight: 1 }}>
-            {completionRate}%
-          </span>
-          <span style={{ fontSize: "0.62rem", color: "var(--muted)", marginTop: "1px" }}>完成度</span>
+        {/* Apple Fitness Activity Ring */}
+        <div style={{ position: "relative", width: "64px", height: "64px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="64" height="64" viewBox="0 0 64 64" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
+            <circle
+              cx="32"
+              cy="32"
+              r="26"
+              fill="none"
+              stroke="#E5E5EA"
+              strokeWidth="6"
+            />
+            <circle
+              cx="32"
+              cy="32"
+              r="26"
+              fill="none"
+              stroke="#34C759"
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 26}
+              strokeDashoffset={2 * Math.PI * 26 * (1 - Math.min(100, Math.max(0, completionRate)) / 100)}
+              style={{
+                transition: "stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+                filter: completionRate > 0 ? "drop-shadow(0 0 4px rgba(52, 199, 89, 0.4))" : "none",
+              }}
+            />
+          </svg>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
+            <span style={{ fontSize: "0.95rem", fontWeight: 750, color: "var(--text)", lineHeight: 1, letterSpacing: "-0.02em" }}>
+              {completionRate}%
+            </span>
+            <span style={{ fontSize: "0.58rem", color: "var(--muted)", marginTop: "2px", fontWeight: 500 }}>
+              完成
+            </span>
+          </div>
         </div>
       </div>
 
@@ -704,13 +730,13 @@ export default function TodayDashboard({
             padding: "10px 14px",
             borderRadius: "var(--radius)",
             backgroundColor: "var(--accent-light)",
-            border: "1.5px solid var(--accent)",
+            border: "1px solid rgba(0, 113, 227, 0.2)",
             color: "var(--accent)",
-            fontWeight: 700,
+            fontWeight: 650,
             fontSize: "0.9rem",
             cursor: "pointer",
-            boxShadow: "0 2px 6px rgba(67, 106, 84, 0.12)",
-            transition: "all 0.18s ease",
+            boxShadow: "var(--shadow-sm)",
+            transition: "all 0.18s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         >
           <span>✨</span>
@@ -743,7 +769,7 @@ export default function TodayDashboard({
             marginBottom: "10px",
           }}
         >
-          <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text)" }}>
+          <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.01em" }}>
             📋 今日任务清单 ({tasks.length})
           </h3>
           {loading && (
@@ -771,7 +797,7 @@ export default function TodayDashboard({
         )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {/* 1. 待完成任务 */}
+          {/* 1. 待完成任务：纯净白底 + 1px 细边 + 微型 iOS Badge + 柔和右侧圆角操作 */}
           {pendingTasks.map((t) => {
             const cat = inferCategory(t.title, t.description);
             return (
@@ -780,19 +806,22 @@ export default function TodayDashboard({
                 style={{
                   backgroundColor: "var(--card)",
                   border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-sm)",
-                  padding: "12px 14px",
+                  borderRadius: "var(--radius)",
+                  padding: "13px 16px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  boxShadow: "var(--shadow-sm)",
+                  boxShadow: "var(--shadow-card)",
                 }}
               >
                 <div style={{ flex: 1, minWidth: 0, marginRight: "10px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px", flexWrap: "wrap" }}>
                     <span style={{ fontSize: "0.85rem" }}>{CATEGORY_ICONS[cat] || "📚"}</span>
                     <span style={{ fontWeight: 650, fontSize: "0.92rem", color: "var(--text)" }}>
                       {t.title}
+                    </span>
+                    <span className="ios-badge">
+                      {cat}
                     </span>
                     {t.require_approval && (
                       <span
@@ -801,8 +830,8 @@ export default function TodayDashboard({
                           color: "var(--star)",
                           backgroundColor: "var(--star-bg)",
                           border: "1px solid var(--star-border)",
-                          padding: "1px 5px",
-                          borderRadius: "4px",
+                          padding: "1px 6px",
+                          borderRadius: "999px",
                           fontWeight: 600,
                         }}
                       >
@@ -821,7 +850,7 @@ export default function TodayDashboard({
                     type="button"
                     onClick={() => handleParentCheckTask(t.id)}
                     className="capsule-btn capsule-accent"
-                    style={{ padding: "5px 12px", fontSize: "0.8rem" }}
+                    style={{ padding: "5px 14px", fontSize: "0.8rem" }}
                     title="家长代为标记完成并给星"
                   >
                     代打卡
@@ -862,14 +891,15 @@ export default function TodayDashboard({
             <div
               key={t.id}
               style={{
-                backgroundColor: "var(--card-subtle)",
+                backgroundColor: "var(--card)",
                 border: "1px solid var(--border-subtle)",
-                borderRadius: "var(--radius-sm)",
-                padding: "10px 14px",
+                borderRadius: "var(--radius)",
+                padding: "11px 16px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                opacity: 0.85,
+                opacity: 0.88,
+                boxShadow: "var(--shadow-sm)",
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -891,11 +921,11 @@ export default function TodayDashboard({
                 type="button"
                 onClick={() => handleRevoke(t.id)}
                 style={{
-                  padding: "3px 8px",
-                  fontSize: "0.72rem",
+                  padding: "4px 10px",
+                  fontSize: "0.74rem",
                   color: "var(--muted)",
                   border: "1px solid var(--border)",
-                  borderRadius: "4px",
+                  borderRadius: "var(--radius-pill)",
                   backgroundColor: "var(--card)",
                   cursor: "pointer",
                 }}
@@ -931,9 +961,9 @@ export default function TodayDashboard({
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(45, 55, 49, 0.45)",
-            backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)",
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            backdropFilter: "saturate(180%) blur(16px)",
+            WebkitBackdropFilter: "saturate(180%) blur(16px)",
             zIndex: 1000,
             display: "flex",
             alignItems: "center",
@@ -950,11 +980,11 @@ export default function TodayDashboard({
               borderRadius: "var(--radius-lg)",
               border: "1px solid var(--border)",
               boxShadow: "var(--shadow-hover)",
-              padding: "20px",
+              padding: "22px 24px",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "14px" }}>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "16px", letterSpacing: "-0.015em" }}>
               {editingTask ? "编辑任务" : "添加日常任务"}
             </h3>
 
@@ -986,13 +1016,13 @@ export default function TodayDashboard({
                     style={{
                       padding: "5px 12px",
                       fontSize: "0.82rem",
-                      fontWeight: isSelected ? 700 : 500,
+                      fontWeight: isSelected ? 650 : 500,
                       borderRadius: "var(--radius-pill)",
                       border: isSelected ? "1.5px solid var(--accent)" : "1px solid var(--border)",
-                      backgroundColor: isSelected ? "var(--accent-light)" : "var(--card-subtle)",
+                      backgroundColor: isSelected ? "var(--accent-light)" : "var(--card)",
                       color: isSelected ? "var(--accent)" : "var(--muted)",
                       cursor: "pointer",
-                      boxShadow: isSelected ? "0 2px 6px rgba(67, 106, 84, 0.15)" : "none",
+                      boxShadow: isSelected ? "0 2px 6px rgba(0, 113, 227, 0.2)" : "none",
                       transition: "all 0.15s ease",
                     }}
                   >
@@ -1077,9 +1107,9 @@ export default function TodayDashboard({
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                padding: "8px 12px",
-                borderRadius: "8px",
-                backgroundColor: taskForm.require_approval ? "var(--star-bg)" : "var(--card-subtle)",
+                padding: "9px 14px",
+                borderRadius: "var(--radius-sm)",
+                backgroundColor: taskForm.require_approval ? "var(--star-bg)" : "#F5F5F7",
                 border: taskForm.require_approval ? "1px solid var(--star-border)" : "1px solid var(--border)",
                 cursor: "pointer",
                 marginBottom: "18px",
@@ -1090,7 +1120,7 @@ export default function TodayDashboard({
                 checked={taskForm.require_approval}
                 onChange={(e) => setTaskForm({ ...taskForm, require_approval: e.target.checked })}
               />
-              <span style={{ fontSize: "0.88rem", fontWeight: 650, color: taskForm.require_approval ? "var(--star)" : "var(--text)" }}>
+              <span style={{ fontSize: "0.88rem", fontWeight: 600, color: taskForm.require_approval ? "var(--star)" : "var(--text)" }}>
                 需家长点赞审核确认（孩子提交打卡后，需家长点赞发星）
               </span>
             </label>

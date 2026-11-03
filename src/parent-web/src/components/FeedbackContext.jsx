@@ -134,9 +134,9 @@ export function FeedbackProvider({ children }) {
                   gap: "8px",
                   boxShadow: "0 4px 14px rgba(80, 70, 60, 0.12)",
                   transition: "all 0.2s ease",
-                  backgroundColor: isSuccess ? "#EEF4F0" : isError ? "#FDF2F2" : "#FFFFFF",
-                  color: isSuccess ? "#264834" : isError ? "var(--danger, #BA3A3A)" : "var(--text, #2D3731)",
-                  border: `1px solid ${isSuccess ? "#7DAE88" : isError ? "#FECACA" : "var(--border, #E8E2D5)"}`,
+                  backgroundColor: isSuccess ? "#EBF9EE" : isError ? "#FFF1F0" : "#FFFFFF",
+                  color: isSuccess ? "#248A3D" : isError ? "var(--danger, #FF3B30)" : "var(--text, #1D1D1F)",
+                  border: `1px solid ${isSuccess ? "#34C759" : isError ? "#FFD1CF" : "var(--border, #E5E5EA)"}`,
                 }}
               >
                 <span>{isSuccess ? "✓" : isError ? "⚠" : "ℹ"}</span>
@@ -147,15 +147,15 @@ export function FeedbackProvider({ children }) {
         </div>
       )}
 
-      {/* Hand-drawn Journal Style Confirm Modal */}
+      {/* Apple / iOS Style Confirm Modal */}
       {confirmDialog && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(45, 55, 49, 0.45)",
-            backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)",
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            backdropFilter: "saturate(180%) blur(16px)",
+            WebkitBackdropFilter: "saturate(180%) blur(16px)",
             zIndex: 10000,
             display: "flex",
             alignItems: "center",
@@ -168,8 +168,8 @@ export function FeedbackProvider({ children }) {
             style={{
               backgroundColor: "var(--card, #FFFFFF)",
               borderRadius: "var(--radius-lg, 20px)",
-              border: "1px solid var(--border, #E8E2D5)",
-              boxShadow: "var(--shadow-hover, 0 4px 14px rgba(80, 70, 60, 0.08))",
+              border: "1px solid var(--border, #E5E5EA)",
+              boxShadow: "var(--shadow-hover)",
               padding: "20px 22px",
               width: "100%",
               maxWidth: "380px",
@@ -180,7 +180,7 @@ export function FeedbackProvider({ children }) {
               style={{
                 fontSize: "1.05rem",
                 fontWeight: 700,
-                color: "var(--text, #2D3731)",
+                color: "var(--text, #1D1D1F)",
                 marginBottom: "8px",
               }}
             >
@@ -189,7 +189,7 @@ export function FeedbackProvider({ children }) {
             <p
               style={{
                 fontSize: "0.88rem",
-                color: "var(--muted, #67736C)",
+                color: "var(--muted, #86868B)",
                 lineHeight: 1.6,
                 marginBottom: "20px",
               }}
@@ -203,9 +203,9 @@ export function FeedbackProvider({ children }) {
                 style={{
                   padding: "7px 16px",
                   borderRadius: "var(--radius-sm, 8px)",
-                  backgroundColor: "var(--card-subtle, #FAF7F2)",
-                  border: "1px solid var(--border, #E8E2D5)",
-                  color: "var(--muted, #67736C)",
+                  backgroundColor: "var(--card-subtle, #F5F5F7)",
+                  border: "1px solid var(--border, #E5E5EA)",
+                  color: "var(--muted, #86868B)",
                   fontSize: "0.85rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -219,13 +219,13 @@ export function FeedbackProvider({ children }) {
                 style={{
                   padding: "7px 18px",
                   borderRadius: "var(--radius-sm, 8px)",
-                  backgroundColor: confirmDialog.isDestructive ? "var(--danger, #BA3A3A)" : "var(--accent, #436A54)",
+                  backgroundColor: confirmDialog.isDestructive ? "var(--danger, #FF3B30)" : "var(--accent, #0071E3)",
                   color: "#FFFFFF",
                   border: "none",
                   fontSize: "0.85rem",
                   fontWeight: 650,
                   cursor: "pointer",
-                  boxShadow: confirmDialog.isDestructive ? "0 2px 6px rgba(186, 58, 58, 0.25)" : "0 2px 6px rgba(67, 106, 84, 0.25)",
+                  boxShadow: confirmDialog.isDestructive ? "0 2px 6px rgba(255, 59, 48, 0.25)" : "0 2px 6px rgba(0, 113, 227, 0.25)",
                 }}
               >
                 {confirmDialog.confirmText}
@@ -235,15 +235,15 @@ export function FeedbackProvider({ children }) {
         </div>
       )}
 
-      {/* Hand-drawn Journal Style Alert Modal */}
+      {/* Apple / iOS Style Alert Modal */}
       {alertDialog && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(45, 55, 49, 0.45)",
-            backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)",
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            backdropFilter: "saturate(180%) blur(16px)",
+            WebkitBackdropFilter: "saturate(180%) blur(16px)",
             zIndex: 10000,
             display: "flex",
             alignItems: "center",
@@ -256,8 +256,8 @@ export function FeedbackProvider({ children }) {
             style={{
               backgroundColor: "var(--card, #FFFFFF)",
               borderRadius: "var(--radius-lg, 20px)",
-              border: "1px solid var(--border, #E8E2D5)",
-              boxShadow: "var(--shadow-hover, 0 4px 14px rgba(80, 70, 60, 0.08))",
+              border: "1px solid var(--border, #E5E5EA)",
+              boxShadow: "var(--shadow-hover)",
               padding: "20px 22px",
               width: "100%",
               maxWidth: "360px",
@@ -268,7 +268,7 @@ export function FeedbackProvider({ children }) {
               style={{
                 fontSize: "1.02rem",
                 fontWeight: 700,
-                color: "var(--text, #2D3731)",
+                color: "var(--text, #1D1D1F)",
                 marginBottom: "8px",
               }}
             >
@@ -277,7 +277,7 @@ export function FeedbackProvider({ children }) {
             <p
               style={{
                 fontSize: "0.88rem",
-                color: "var(--muted, #67736C)",
+                color: "var(--muted, #86868B)",
                 lineHeight: 1.6,
                 marginBottom: "18px",
               }}
@@ -291,7 +291,7 @@ export function FeedbackProvider({ children }) {
                 style={{
                   padding: "7px 18px",
                   borderRadius: "var(--radius-sm, 8px)",
-                  backgroundColor: "var(--accent, #436A54)",
+                  backgroundColor: "var(--accent, #0071E3)",
                   color: "#FFFFFF",
                   border: "none",
                   fontSize: "0.85rem",

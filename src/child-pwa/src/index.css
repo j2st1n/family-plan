@@ -1,54 +1,59 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+/* ==========================================================================
+   Apple / iOS 现代极简设计系统 Tokens (Child PWA)
+   规范参照：OpenDesign 官方 design-systems/apple/DESIGN.md & Apple HIG
+   ========================================================================== */
 
 :root {
-  /* 方案三【自然温润纸质手账风】设计系统 Tokens */
-  /* 画布底色：暖燕麦米色纸底，告别冷白刺眼感，高度护眼 */
-  --bg: #FAF8F5;
-  /* 卡片质感：卡片纯白或极浅乳白，配合温暖柔和纸质边线与低饱和漫反射投影 */
+  /* 1. 画布底色：Apple 经典超浅冷灰/云白画布 */
+  --bg: #F5F5F7;
+
+  /* 2. 卡片质感：纯净白底，1px 极细微边框，超柔羽化弥散微投影 */
   --card: #FFFFFF;
-  --card-subtle: #FAF7F2;
-  --border: #E8E2D5;
-  --border-subtle: #F0ECE4;
+  --card-subtle: #F5F5F7;
+  --border: #E5E5EA;
+  --border-subtle: #F2F2F7;
 
-  /* 墨水字阶：主文本深墨苔藓黑，次级文字鼠尾草灰（WCAG 2.2 AA 对比度 >= 4.5:1） */
-  --text: #2D3731;
-  --text-primary: #2D3731;
-  --muted: #67736C;
-  --muted-sage: #647069;
+  /* 3. 字体与字阶：主文本采用 Apple Near-Black Ink，次级说明文字采用 Secondary Neutral Gray */
+  --text: #1D1D1F;
+  --text-primary: #1D1D1F;
+  --muted: #86868B;
+  --muted-sage: #86868B;
 
-  /* 品牌主色：森林苔藓绿 */
-  --accent: #436A54;
-  --accent-hover: #355442;
-  --accent-light: #EEF4F0;
-  --accent-pill: #DFEAE3;
+  /* 4. 品牌主动作色：纯正 Apple Action Blue */
+  --accent: #0071E3;
+  --accent-hover: #0077ED;
+  --accent-light: #F0F6FD;
+  --accent-pill: #E1EFFF;
 
-  /* 游戏化语义色 */
-  --star: #8F5E00;
-  --star-bg: #FCF4E4;
-  --star-border: #F6E2B3;
-  --flame: #C2410C;
-  --flame-bg: #FFF1EB;
-  --flame-border: #FED7AA;
-  --protect: #0E7490;
-  --protect-bg: #EDF9FA;
-  --protect-border: #BAE6FD;
-  --danger: #BA3A3A;
-  --danger-bg: #FDF2F2;
-  --danger-border: #FECACA;
+  /* 5. 状态语义色（Apple Health/Fitness 标准） */
+  --star: #FF9500;
+  --star-bg: #FFF7EB;
+  --star-border: #FFE5B5;
+  --flame: #FF3B30;
+  --flame-bg: #FFF1F0;
+  --flame-border: #FFD1CF;
+  --protect: #00C7BE;
+  --protect-bg: #E5F9F8;
+  --protect-border: #B2F0EC;
+  --danger: #FF3B30;
+  --danger-bg: #FFF1F0;
+  --danger-border: #FFD1CF;
 
-  /* 圆角与阴影：低饱和温润漫反射投影 */
+  /* 儿童触控友好大圆角 */
   --radius-sm: 8px;
   --radius: 18px;
   --radius-lg: 24px;
   --radius-pill: 999px;
-  --shadow-sm: 0 1px 3px rgba(80, 70, 60, 0.05);
-  --shadow-card: 0 2px 8px rgba(80, 70, 60, 0.05), 0 1px 3px rgba(80, 70, 60, 0.03);
-  --shadow-hover: 0 4px 14px rgba(80, 70, 60, 0.08), 0 2px 4px rgba(80, 70, 60, 0.03);
-  --shadow-stamp: 0 3px 10px rgba(67, 106, 84, 0.16);
+
+  /* Apple 经典超柔羽化弥散微投影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-stamp: 0 4px 14px rgba(0, 113, 227, 0.18);
 
   /* 排版黄金比例 */
-  --line-height-body: 1.75;
-  --line-height-display: 1.35;
+  --line-height-body: 1.5;
+  --line-height-display: 1.25;
 }
 
 *,
@@ -65,19 +70,22 @@ html {
 }
 
 body {
-  font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   font-weight: 400;
-  line-height: 1.75;
+  line-height: var(--line-height-body);
   background: var(--bg);
   color: var(--text);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.012em;
 }
 
 h1, h2, h3, h4, .display-text {
-  line-height: 1.35;
-  letter-spacing: -0.015em;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", sans-serif;
+  line-height: var(--line-height-display);
+  letter-spacing: -0.022em;
   font-weight: 700;
   color: var(--text);
 }
@@ -86,15 +94,16 @@ h1, h2, h3, h4, .display-text {
   width: 100%;
   max-width: 680px;
   margin: 0 auto;
-  padding: 28px 24px calc(80px + env(safe-area-inset-bottom, 0px));
+  padding: 24px 20px calc(80px + env(safe-area-inset-bottom, 0px));
 }
 
 @media (min-width: 600px) {
   #root {
-    padding: 36px 36px calc(100px + env(safe-area-inset-bottom, 0px));
+    padding: 32px 32px calc(96px + env(safe-area-inset-bottom, 0px));
   }
 }
 
+/* 底部磨砂高斯模糊导航栏 (Safari 移动端原生优化) */
 .nav-tabs {
   position: fixed;
   bottom: 0;
@@ -104,9 +113,9 @@ h1, h2, h3, h4, .display-text {
   justify-content: center;
   gap: 8px;
   padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px));
-  background: rgba(250, 248, 245, 0.94);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-top: 1px solid var(--border);
   z-index: 200;
 }
@@ -114,29 +123,30 @@ h1, h2, h3, h4, .display-text {
 .nav-tab {
   flex: 1;
   max-width: 160px;
-  padding: 12px 18px;
+  padding: 10px 18px;
   text-align: center;
   font-size: 0.95rem;
-  font-weight: 650;
+  font-weight: 600;
   font-family: inherit;
   letter-spacing: -0.01em;
   color: var(--muted);
   background: transparent;
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   border: none;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nav-tab.on {
-  background: var(--accent-light);
-  color: var(--accent);
+  background: var(--accent);
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.25);
 }
 
 .brand-icon {
   width: 64px;
   height: 64px;
-  border-radius: 20px;
+  border-radius: 18px;
   background: var(--accent);
   display: flex;
   align-items: center;
@@ -144,7 +154,7 @@ h1, h2, h3, h4, .display-text {
   font-size: 1.8rem;
   color: #FFFFFF;
   margin: 0 auto 14px;
-  box-shadow: 0 4px 12px rgba(67, 106, 84, 0.22);
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.22);
 }
 
 .stat-chip {
@@ -153,12 +163,13 @@ h1, h2, h3, h4, .display-text {
   gap: 3px;
   padding: 4px 12px;
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 650;
   border-radius: var(--radius-pill);
   background: var(--star-bg);
   color: var(--star);
   border: 1px solid var(--star-border);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 .stat-chip.green {
@@ -193,22 +204,26 @@ textarea {
   font-variant-numeric: tabular-nums;
 }
 
-/* 72x72px 精致印章/素雅纸贴般触控复选圆钮 (符合儿童人体工学) */
+/* ==========================================================================
+   72x72px 儿童端人体工学触控复选圆钮 (iOS 磨砂高反光胶囊 + iOS Spring scale(0.96))
+   ========================================================================== */
 .task-check-btn {
   width: 72px;
   height: 72px;
   min-width: 72px;
   min-height: 72px;
   border-radius: 50%;
-  border: 3.5px solid var(--accent);
-  background: #FAF7F2;
+  border: 2px solid rgba(0, 113, 227, 0.25);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 3px 10px rgba(67, 106, 84, 0.14), inset 0 1px 2px rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(255, 255, 255, 0.95);
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -219,23 +234,23 @@ textarea {
 }
 
 .task-check-btn:active:not(:disabled) {
-  transform: scale(0.90);
-  box-shadow: 0 1px 4px rgba(67, 106, 84, 0.18), inset 0 2px 4px rgba(67, 106, 84, 0.08);
+  transform: scale(0.96);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .task-check-btn.completed {
   background: var(--accent);
   border-color: var(--accent);
   color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(67, 106, 84, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 16px rgba(0, 113, 227, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
   cursor: default;
 }
 
 .task-check-btn.submitted {
   background: var(--star-bg);
-  border: 3px dashed var(--star);
+  border: 2.5px dashed var(--star);
   color: var(--star);
-  box-shadow: 0 3px 10px rgba(154, 103, 0, 0.18);
+  box-shadow: 0 3px 10px rgba(255, 149, 0, 0.2);
   cursor: default;
 }
 
@@ -249,17 +264,17 @@ textarea {
   border: 1px solid var(--star-border);
   color: var(--star);
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 650;
 }
 
 .task-check-btn.spring-pop {
-  animation: stampSpringPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: stampSpringPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes stampSpringPop {
-  0% { transform: scale(0.85); }
-  50% { transform: scale(1.16); }
-  75% { transform: scale(0.97); }
+  0% { transform: scale(0.92); }
+  50% { transform: scale(1.08); }
+  75% { transform: scale(0.98); }
   100% { transform: scale(1); }
 }
 
@@ -289,11 +304,11 @@ textarea {
 }
 
 .task-focus-btn:hover {
-  background: #E1ECE5;
+  background: #E1EFFF;
 }
 
 .task-focus-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
 }
 
 /* 按钮通用层级规范 (Primary, Secondary, Ghost, Outline) */
@@ -310,23 +325,23 @@ textarea {
   font-size: 0.95rem;
   border: none;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(67, 106, 84, 0.2);
-  transition: all 0.18s ease;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.25);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   touch-action: manipulation;
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
-  box-shadow: 0 4px 12px rgba(67, 106, 84, 0.28);
+  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.35);
   transform: translateY(-1px);
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
 .btn-primary:disabled {
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -337,22 +352,24 @@ textarea {
   gap: 6px;
   padding: 10px 20px;
   border-radius: 14px;
-  background: #F0ECE4;
+  background: var(--card);
   color: var(--text);
   border: 1px solid var(--border);
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   touch-action: manipulation;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #E8E3DA;
+  background: var(--card-subtle);
+  border-color: #D2D2D7;
 }
 
 .btn-secondary:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
 .btn-ghost {
