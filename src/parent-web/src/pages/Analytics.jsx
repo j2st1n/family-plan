@@ -432,97 +432,140 @@ export default function Analytics({ token, isActive, onExpired }) {
               </div>
             </div>
 
-            <div style={{ marginTop: "0.8rem", paddingTop: "0.8rem", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.8rem", color: "var(--muted)" }}>
-              <span>⭐ 本期获得: <strong style={{ color: "var(--star)" }}>+{formatStars(analyticsData.insights.stars.stars_earned)}</strong></span>
-              <span>🛍️ 本期兑换: <strong style={{ color: "var(--text)" }}>-{formatStars(analyticsData.insights.stars.stars_spent)}</strong></span>
-              <span>💰 结余: <strong style={{ color: "var(--accent)" }}>{formatStars(analyticsData.insights.stars.current_stars)}</strong></span>
+            <div style={{ marginTop: "0.8rem", paddingTop: "0.8rem", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.8rem", color: "var(--muted)", flexWrap: "wrap", gap: "6px" }}>
+              <span style={{ whiteSpace: "nowrap" }}>⭐ 本期获得: <strong style={{ color: "var(--star)", fontVariantNumeric: "tabular-nums" }}>+{formatStars(analyticsData.insights.stars.stars_earned)}</strong></span>
+              <span style={{ whiteSpace: "nowrap" }}>🛍️ 本期兑换: <strong style={{ color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>-{formatStars(analyticsData.insights.stars.stars_spent)}</strong></span>
+              <span style={{ whiteSpace: "nowrap" }}>💰 结余: <strong style={{ color: "var(--accent)", fontVariantNumeric: "tabular-nums" }}>{formatStars(analyticsData.insights.stars.current_stars)}</strong></span>
             </div>
           </div>
         </>
       )}
 
-      {/* Vacation Management Modal (iOS 底部抽屉 Sheet) */}
+      {/* Vacation Management Modal (iOS 标准底部抽屉 Sheet) */}
       {showVacationModal && (
         <div className="ios-sheet-overlay" onClick={() => setShowVacationModal(false)}>
           <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-handle-bar" />
             <div className="ios-sheet-header">
-              <span className="ios-sheet-header-title">休假模式管理</span>
-              <button type="button" onClick={() => setShowVacationModal(false)} className="ios-sheet-close-btn">取消</button>
+              <button
+                type="button"
+                className="ios-sheet-nav-btn"
+                onClick={() => setShowVacationModal(false)}
+              >
+                取消
+              </button>
+              <span className="ios-sheet-header-title">休假模式</span>
+              <button
+                type="button"
+                className="ios-sheet-nav-action-btn"
+                disabled={!vacationForm.start_date || !vacationForm.end_date}
+                onClick={handleCreateVacation}
+              >
+                登记
+              </button>
             </div>
 
             <div className="ios-sheet-body">
-              <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginBottom: "1rem" }}>
-                休假模式开启后，所设区间内每天自动豁免，任务未完成不扣减连击天数。
-              </p>
-
-              {/* Create Vacation Form */}
-              <form onSubmit={handleCreateVacation} style={{ marginBottom: "1.2rem", background: "#FFFFFF", border: "1px solid var(--border)", padding: "14px", borderRadius: "12px" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                  <div>
-                    <label style={styles.inputLabel}>开始日期</label>
-                    <input
-                      type="date"
-                      required
-                      value={vacationForm.start_date}
-                      onChange={(e) => setVacationForm({ ...vacationForm, start_date: e.target.value })}
-                      style={styles.modalInput}
-                    />
-                  </div>
-                  <div>
-                    <label style={styles.inputLabel}>结束日期</label>
-                    <input
-                      type="date"
-                      required
-                      value={vacationForm.end_date}
-                      onChange={(e) => setVacationForm({ ...vacationForm, end_date: e.target.value })}
-                      style={styles.modalInput}
-                    />
-                  </div>
-                </div>
-                <div style={{ marginBottom: "0.8rem" }}>
-                  <label style={styles.inputLabel}>休假原因 (选填)</label>
+              {/* Group 1: 登记休假 Inset Grouped Card */}
+              <div className="ios-grouped-card" style={{ marginBottom: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", minHeight: "48px" }}>
+                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                    开始日期
+                  </span>
                   <input
-                    type="text"
-                    placeholder="例如：期末出游、生病休养"
-                    value={vacationForm.reason}
-                    onChange={(e) => setVacationForm({ ...vacationForm, reason: e.target.value })}
-                    style={styles.modalInput}
+                    type="date"
+                    required
+                    value={vacationForm.start_date}
+                    onChange={(e) => setVacationForm({ ...vacationForm, start_date: e.target.value })}
+                    className="ios-time-input"
                   />
                 </div>
-                {vacationError && (
-                  <p style={{ color: "var(--danger)", fontSize: "0.8rem", marginBottom: "0.4rem" }}>{vacationError}</p>
-                )}
-                <button type="submit" className="ios-btn-primary" style={{ width: "100%", padding: "10px" }}>
-                  + 登记新休假
-                </button>
-              </form>
 
-              {/* Vacations List */}
-              <h4 style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.5rem" }}>已设置的休假</h4>
-              {vacationLoading ? (
-                <p style={{ textAlign: "center", color: "var(--muted)", fontSize: "0.85rem" }}>加载中…</p>
-              ) : vacations.length === 0 ? (
-                <p style={{ color: "var(--muted)", fontSize: "0.8rem", textAlign: "center", padding: "1rem 0" }}>
-                  暂无休假记录
-                </p>
-              ) : (
-                <div style={{ maxHeight: "200px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                  {vacations.map((v) => (
-                  <div key={v.id} style={styles.vacationItem}>
-                    <div>
-                      <div style={{ fontSize: "0.85rem", fontWeight: 650 }}>
-                        {v.start_date} ~ {v.end_date}
-                      </div>
-                      {v.reason && <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>{v.reason}</div>}
-                    </div>
-                    <button onClick={() => handleDeleteVacation(v.id)} style={styles.delBtn}>
-                      删除
-                    </button>
-                  </div>
-                ))}
+                <div className="ios-separator" />
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", minHeight: "48px" }}>
+                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                    结束日期
+                  </span>
+                  <input
+                    type="date"
+                    required
+                    value={vacationForm.end_date}
+                    onChange={(e) => setVacationForm({ ...vacationForm, end_date: e.target.value })}
+                    className="ios-time-input"
+                  />
+                </div>
+
+                <div className="ios-separator" />
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", minHeight: "48px" }}>
+                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500, flexShrink: 0, marginRight: "12px" }}>
+                    休假原因
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="选填，如：期末出游、生病"
+                    value={vacationForm.reason}
+                    onChange={(e) => setVacationForm({ ...vacationForm, reason: e.target.value })}
+                    style={{
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      fontSize: "0.92rem",
+                      color: "var(--text)",
+                      textAlign: "right",
+                      flex: 1,
+                      fontFamily: "inherit",
+                    }}
+                  />
+                </div>
               </div>
-            )}
+
+              {/* iOS Section Footer Hint */}
+              <div style={{ fontSize: "0.76rem", color: "var(--muted)", margin: "4px 16px 18px 16px", lineHeight: 1.4 }}>
+                休假模式开启后，所设区间内每天自动豁免，任务未完成不扣减连击天数。
+              </div>
+
+              {vacationError && (
+                <div style={{ background: "var(--danger-bg)", border: "1px solid var(--danger-border)", color: "var(--danger)", padding: "8px 12px", borderRadius: "10px", fontSize: "0.82rem", marginBottom: "14px" }}>
+                  {vacationError}
+                </div>
+              )}
+
+              {/* Group 2: 已设置的休假 (Inset Grouped) */}
+              <div className="ios-group-label" style={{ margin: "0 0 6px 16px" }}>
+                已设置的休假 ({vacations.length})
+              </div>
+
+              {vacationLoading ? (
+                <p style={{ textAlign: "center", color: "var(--muted)", fontSize: "0.85rem", padding: "20px 0" }}>加载中…</p>
+              ) : vacations.length === 0 ? (
+                <div className="ios-grouped-card" style={{ padding: "24px 16px", textAlign: "center", color: "var(--muted)", marginBottom: "16px" }}>
+                  <p style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text)" }}>暂无休假记录</p>
+                  <p style={{ fontSize: "0.78rem", marginTop: "4px" }}>轻点右上角“登记”新增休假区间</p>
+                </div>
+              ) : (
+                <div className="ios-grouped-card" style={{ marginBottom: "16px" }}>
+                  {vacations.map((v) => (
+                    <div key={v.id} className="reminders-task-row">
+                      <div style={{ flex: 1, minWidth: 0, marginRight: "10px" }}>
+                        <div style={{ fontSize: "0.92rem", fontWeight: 600, color: "var(--text)" }}>
+                          {v.start_date} ~ {v.end_date}
+                        </div>
+                        {v.reason && <div style={{ fontSize: "0.76rem", color: "var(--muted)", marginTop: "2px" }}>{v.reason}</div>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteVacation(v.id)}
+                        className="capsule-btn capsule-muted"
+                        style={{ color: "var(--danger)", padding: "4px 10px", fontSize: "0.74rem" }}
+                      >
+                        删除
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

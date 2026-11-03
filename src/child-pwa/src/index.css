@@ -637,6 +637,40 @@ textarea {
   outline: none;
 }
 
+/* iOS Standard Switch (51x31px Apple Standard) */
+.ios-switch {
+  position: relative;
+  width: 51px;
+  height: 31px;
+  background-color: #E9E9EB;
+  border-radius: 31px;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+  user-select: none;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.ios-switch.on {
+  background-color: #34C759;
+}
+
+.ios-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  background-color: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16);
+  transition: transform 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.ios-switch.on .ios-switch-thumb {
+  transform: translateX(20px);
+}
+
 /* iOS Standard Input */
 .form-input-journal {
   width: 100%;

@@ -988,142 +988,189 @@ export default function TodayDashboard({
             </div>
 
             <div className="ios-sheet-body">
-              {/* Title */}
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                任务名称 *
-              </label>
-              <input
-                type="text"
-                placeholder="如：练琴20分钟、口算一页、跳绳500下..."
-                value={taskForm.title}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                className="form-input-journal"
-                style={{ marginBottom: "14px" }}
-              />
-
-              {/* 四维习惯分类 4 选 1 胶囊 */}
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "6px" }}>
-                四维习惯分类
-              </label>
-              <div style={{ display: "flex", gap: "6px", marginBottom: "16px", flexWrap: "wrap" }}>
-                {CATEGORIES.map((cat) => {
-                  const isSelected = taskForm.category === cat;
-                  return (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => handleCategorySelect(cat)}
-                      className={`capsule-btn ${isSelected ? "capsule-accent" : "capsule-muted"}`}
-                      style={{ padding: "6px 14px", fontSize: "0.82rem" }}
-                    >
-                      <span>{CATEGORY_ICONS[cat]} {cat}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Duration and Stars */}
-              <div style={{ display: "flex", gap: "10px", marginBottom: "14px" }}>
-                <label style={{ flex: 1 }}>
-                  <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
-                    预计时长 (分钟)
-                  </span>
+              {/* Group 1: 基本信息 Inset Grouped */}
+              <div className="ios-grouped-card" style={{ marginBottom: "18px" }}>
+                {/* 任务名称 */}
+                <div style={{ padding: "12px 16px" }}>
                   <input
-                    type="number"
-                    min={1}
-                    max={240}
-                    value={taskForm.minutes}
-                    onChange={(e) => setTaskForm({ ...taskForm, minutes: e.target.value })}
+                    type="text"
+                    placeholder="任务名称，如：练琴20分钟、口算一页..."
+                    value={taskForm.title}
+                    onChange={(e) => handleTitleChange(e.target.value)}
                     className="form-input-journal"
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      fontSize: "1.02rem",
+                      color: "var(--text)",
+                      fontFamily: "inherit",
+                      padding: 0,
+                      boxShadow: "none",
+                    }}
+                    autoFocus
                   />
-                </label>
+                </div>
 
-                <label style={{ flex: 1 }}>
-                  <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "4px" }}>
+                <div className="ios-separator" />
+
+                {/* 四维习惯分类 */}
+                <div style={{ padding: "10px 16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                      习惯分类
+                    </span>
+                    <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
+                      {taskForm.category}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                    {CATEGORIES.map((cat) => {
+                      const isSelected = taskForm.category === cat;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => handleCategorySelect(cat)}
+                          className={`capsule-btn ${isSelected ? "capsule-accent" : "capsule-muted"}`}
+                          style={{ padding: "4px 10px", fontSize: "0.76rem" }}
+                        >
+                          <span>{CATEGORY_ICONS[cat]} {cat}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="ios-separator" />
+
+                {/* 预计时长 */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                    预计时长
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setTaskForm((f) => ({ ...f, minutes: Math.max(5, (parseInt(f.minutes) || 20) - 5) }))}
+                      className="ios-stepper-btn"
+                    >
+                      −
+                    </button>
+                    <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)", minWidth: "48px", textAlign: "center" }}>
+                      {taskForm.minutes || 20} 分钟
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setTaskForm((f) => ({ ...f, minutes: Math.min(240, (parseInt(f.minutes) || 20) + 5) }))}
+                      className="ios-stepper-btn"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="ios-separator" />
+
+                {/* 奖励星星 */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
                     奖励星星
                   </span>
-                  <select
-                    value={taskForm.stars}
-                    onChange={(e) => setTaskForm({ ...taskForm, stars: parseInt(e.target.value) })}
-                    className="form-input-journal"
-                  >
-                    {[0, 1, 2, 3, 4, 5].map((n) => (
-                      <option key={n} value={n}>
-                        {n === 0 ? "0 星" : "⭐".repeat(n) + ` (${n}星)`}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                  <div className="ios-segmented-control">
+                    {[0, 1, 2, 3, 5].map((starVal) => {
+                      const active = taskForm.stars === starVal;
+                      return (
+                        <button
+                          key={starVal}
+                          type="button"
+                          onClick={() => setTaskForm({ ...taskForm, stars: starVal })}
+                          className={`ios-segmented-item ${active ? "active" : ""}`}
+                        >
+                          {starVal === 0 ? "0星" : `⭐ ${starVal}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
-              {/* Time range */}
-              <div style={{ display: "flex", gap: "10px", marginBottom: "14px" }}>
-                <label style={{ flex: 1 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
-                    <span style={{ fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)" }}>
-                      计划开始
-                    </span>
-                    <span style={{ fontSize: "0.72rem", color: "var(--muted)", opacity: 0.8 }}>HH:MM</span>
-                  </div>
+              {/* Group 2: 时间安排 (可选) */}
+              <div className="ios-group-label" style={{ margin: "0 0 6px 16px" }}>时间安排 (可选)</div>
+              <div className="ios-grouped-card" style={{ marginBottom: "18px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                    计划开始
+                  </span>
                   <input
-                    type="text"
-                    placeholder="19:00"
-                    value={taskForm.start}
+                    type="time"
+                    value={taskForm.start || ""}
                     onChange={(e) => setTaskForm({ ...taskForm, start: e.target.value })}
-                    className="form-input-journal"
+                    className="ios-time-input"
                   />
-                </label>
+                </div>
 
-                <label style={{ flex: 1 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
-                    <span style={{ fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)" }}>
-                      计划结束
+                <div className="ios-separator" />
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                    计划结束
+                  </span>
+                  <input
+                    type="time"
+                    value={taskForm.end || ""}
+                    onChange={(e) => setTaskForm({ ...taskForm, end: e.target.value })}
+                    className="ios-time-input"
+                  />
+                </div>
+              </div>
+
+              {/* Group 3: 需家长点赞审核确认 */}
+              <div className="ios-grouped-card" style={{ marginBottom: "20px" }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "12px 16px",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div>
+                    <span style={{ fontSize: "0.95rem", fontWeight: 500, color: "var(--text)" }}>
+                      需家长点赞确认发星
                     </span>
-                    <span style={{ fontSize: "0.72rem", color: "var(--muted)", opacity: 0.8 }}>自动推算</span>
+                    <p style={{ fontSize: "0.74rem", color: "var(--muted)", marginTop: "2px" }}>
+                      孩子打卡后不立即加星，需家长审核后发放
+                    </p>
                   </div>
                   <input
-                    type="text"
-                    placeholder="19:20"
-                    value={taskForm.end}
-                    onChange={(e) => setTaskForm({ ...taskForm, end: e.target.value })}
-                    className="form-input-journal"
+                    type="checkbox"
+                    checked={taskForm.require_approval}
+                    onChange={(e) => setTaskForm({ ...taskForm, require_approval: e.target.checked })}
+                    style={{ width: 18, height: 18, accentColor: "var(--accent)" }}
                   />
                 </label>
               </div>
-
-              {/* Require Approval Checkbox */}
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "10px 14px",
-                  borderRadius: "10px",
-                  backgroundColor: taskForm.require_approval ? "var(--star-bg)" : "#FFFFFF",
-                  border: taskForm.require_approval ? "1px solid var(--star-border)" : "1px solid var(--border)",
-                  cursor: "pointer",
-                  marginBottom: "20px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={taskForm.require_approval}
-                  onChange={(e) => setTaskForm({ ...taskForm, require_approval: e.target.checked })}
-                />
-                <span style={{ fontSize: "0.88rem", fontWeight: 600, color: taskForm.require_approval ? "var(--star)" : "var(--text)" }}>
-                  需家长点赞确认发星
-                </span>
-              </label>
 
               {/* Save Button */}
               <button
                 type="button"
-                className="ios-btn-primary"
+                className="btn-primary"
                 onClick={handleSaveRegularTask}
                 disabled={actionInProgress || !taskForm.title.trim()}
-                style={{ width: "100%", padding: "12px", fontSize: "0.95rem" }}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "12px",
+                  fontSize: "0.98rem",
+                  fontWeight: 650,
+                  opacity: taskForm.title.trim() ? 1 : 0.4,
+                  cursor: taskForm.title.trim() ? "pointer" : "not-allowed",
+                }}
               >
-                {actionInProgress ? "保存中..." : "保存任务"}
+                {actionInProgress ? "保存中..." : editingTask ? "保存修改" : "确认添加"}
               </button>
             </div>
           </div>
