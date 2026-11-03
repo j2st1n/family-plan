@@ -28,10 +28,10 @@
   --accent-pill: #E1EFFF;
 
   /* 5. 状态语义色（Apple Health/Fitness 标准） */
-  --cell-perfect: #34C759;
-  --cell-perfect-border: #248A3D;
-  --cell-qualified: #34C759;
-  --cell-qualified-border: #248A3D;
+  --cell-perfect: #248A3D;
+  --cell-perfect-border: #1B662D;
+  --cell-qualified: #E8F8ED;
+  --cell-qualified-border: #85E09B;
   --cell-missed: #FFF0EE;
   --cell-missed-border: #FFB3B0;
   --cell-frozen: #E5F9F8;
@@ -949,7 +949,7 @@ textarea {
 }
 
 .heatmap-cell.status-perfect { background: var(--cell-perfect); border-color: var(--cell-perfect-border); color: #FFFFFF; font-weight: 600; }
-.heatmap-cell.status-qualified { background: var(--cell-qualified); border-color: var(--cell-qualified-border); color: #FFFFFF; font-weight: 600; }
+.heatmap-cell.status-qualified { background: var(--cell-qualified); border-color: var(--cell-qualified-border); color: #1E7B34; font-weight: 600; }
 .heatmap-cell.status-missed { background: var(--cell-missed); border-color: var(--cell-missed-border); }
 .heatmap-cell.status-frozen { background: var(--cell-frozen); border-color: var(--cell-frozen-border); }
 .heatmap-cell.status-vacation { background: var(--cell-vacation); border-color: var(--cell-vacation-border); }
