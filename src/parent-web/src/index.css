@@ -1013,7 +1013,11 @@ textarea {
 .hand-drawer-overlay,
 .ios-sheet-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100dvh;
   background-color: rgba(0, 0, 0, 0.4);
   backdrop-filter: saturate(180%) blur(16px);
   -webkit-backdrop-filter: saturate(180%) blur(16px);
@@ -1021,7 +1025,9 @@ textarea {
   display: flex;
   justify-content: center;
   align-items: flex-end;
+  padding-bottom: var(--keyboard-height, 0px);
   animation: fadeIn 0.18s ease;
+  overflow: hidden;
 }
 
 @media (min-width: 768px) {
@@ -1036,7 +1042,8 @@ textarea {
 .ios-sheet-content {
   background: var(--card);
   width: 100%;
-  max-height: 88vh;
+  max-height: 88dvh;
+  height: auto;
   border-radius: 20px 20px 0 0;
   border: 1px solid var(--border);
   border-bottom: none;
@@ -1183,6 +1190,7 @@ textarea {
   overflow-y: auto;
   flex: 1;
   -webkit-overflow-scrolling: touch;
+  scroll-padding-bottom: 240px;
 }
 
 .settings-version-footer {

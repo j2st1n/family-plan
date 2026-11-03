@@ -92,9 +92,28 @@ export default function App() {
     }
   }, [token]);
 
+  // VisualViewport keyboard dynamic adaptation for iOS Safari
   useEffect(() => {
-    refreshGlobalMeta();
-  }, [refreshGlobalMeta]);
+    if (typeof window === "undefined" || !window.visualViewport) return;
+
+    const handleViewportChange = () => {
+      const vv = window.visualViewport;
+      if (!vv) return;
+      // Calculate keyboard height
+      const keyboardHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty("--keyboard-height", `${keyboardHeight}px`);
+      document.documentElement.style.setProperty("--visual-viewport-height", `${vv.height}px`);
+    };
+
+    window.visualViewport.addEventListener("resize", handleViewportChange);
+    window.visualViewport.addEventListener("scroll", handleViewportChange);
+    handleViewportChange();
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handleViewportChange);
+      window.visualViewport?.removeEventListener("scroll", handleViewportChange);
+    };
+  }, []);
 
   useSseRefresh({
     token,

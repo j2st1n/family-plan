@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Bind from "./pages/Bind.jsx";
 import Today from "./pages/Today.jsx";
 import Shop from "./pages/Shop.jsx";
@@ -14,6 +14,28 @@ export default function App() {
     }
   });
   const [tab, setTab] = useState("today");
+
+  // VisualViewport keyboard dynamic adaptation for iOS Safari
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+
+    const handleViewportChange = () => {
+      const vv = window.visualViewport;
+      if (!vv) return;
+      const keyboardHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty("--keyboard-height", `${keyboardHeight}px`);
+      document.documentElement.style.setProperty("--visual-viewport-height", `${vv.height}px`);
+    };
+
+    window.visualViewport.addEventListener("resize", handleViewportChange);
+    window.visualViewport.addEventListener("scroll", handleViewportChange);
+    handleViewportChange();
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handleViewportChange);
+      window.visualViewport?.removeEventListener("scroll", handleViewportChange);
+    };
+  }, []);
 
   function handleBound(token, profile) {
     localStorage.setItem("device_token", token);

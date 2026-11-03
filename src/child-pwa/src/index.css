@@ -446,7 +446,11 @@ textarea {
 /* iOS Sheet Drawer */
 .ios-sheet-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100dvh;
   background-color: rgba(0, 0, 0, 0.4);
   backdrop-filter: saturate(180%) blur(16px);
   -webkit-backdrop-filter: saturate(180%) blur(16px);
@@ -454,7 +458,9 @@ textarea {
   display: flex;
   justify-content: center;
   align-items: flex-end;
+  padding-bottom: var(--keyboard-height, 0px);
   animation: fadeIn 0.18s ease;
+  overflow: hidden;
 }
 
 @media (min-width: 768px) {
@@ -468,7 +474,8 @@ textarea {
   background: #F2F2F7;
   width: 100%;
   max-width: 540px;
-  max-height: 88vh;
+  max-height: 88dvh;
+  height: auto;
   border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
