@@ -75,7 +75,7 @@ export default function Bind({ onBound }) {
           background: loading ? "var(--border)" : "var(--accent)",
           borderRadius: "16px",
           transition: "all 0.18s ease",
-          boxShadow: "0 2px 8px rgba(67, 106, 84, 0.2)",
+          boxShadow: "0 2px 8px rgba(0, 113, 227, 0.25)",
         }}
       >
         {loading ? "绑定中…" : "绑定"}

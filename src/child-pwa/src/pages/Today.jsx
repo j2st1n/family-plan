@@ -263,11 +263,17 @@ export default function Today({ child, onExpired, active }) {
 
   return (
     <div>
-      <div style={{ marginBottom: "1.4rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "var(--accent)", letterSpacing: "-0.015em" }}>
-            你好，{child?.name ?? "小朋友"}
-          </h1>
+      {/* 顶部标题区 (Apple iOS Large Title) */}
+      <div style={{ marginBottom: "16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div>
+            <h1 className="ios-large-title">
+              你好，{child?.name ?? "小朋友"}
+            </h1>
+            <p className="ios-page-subtitle">
+              {dateStr}
+            </p>
+          </div>
           {data?.rewards?.is_on_vacation && (
             <span
               style={{
@@ -275,90 +281,81 @@ export default function Today({ child, onExpired, active }) {
                 alignItems: "center",
                 gap: "4px",
                 padding: "4px 12px",
-                borderRadius: "var(--radius-pill)",
+                borderRadius: "999px",
                 background: "var(--star-bg)",
                 color: "var(--star)",
                 border: "1px solid var(--star-border)",
-                fontWeight: 700,
-                fontSize: "0.85rem",
+                fontWeight: 650,
+                fontSize: "0.8rem",
               }}
             >
               🌴 休假中
             </span>
           )}
         </div>
-        <p style={{ color: "var(--muted)", marginTop: "0.3rem", fontSize: "0.95rem" }}>{dateStr}</p>
       </div>
 
-      {data?.rewards?.is_on_vacation && (
-        <div
-          style={{
-            background: "var(--star-bg)",
-            border: "1px solid var(--star-border)",
-            borderRadius: "16px",
-            padding: "0.75rem 1rem",
-            marginBottom: "1.2rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.6rem",
-            color: "var(--star)",
-            boxShadow: "var(--shadow-card)",
-          }}
-        >
-          <span style={{ fontSize: "1.5rem" }}>🌴</span>
-          <div>
-            <div style={{ fontWeight: 750, fontSize: "0.95rem" }}>休假中 · 任务自动豁免</div>
-            <div style={{ fontSize: "0.78rem", color: "var(--star)", opacity: 0.85 }}>尽情享受假期，连击不会中断哦！</div>
+      {/* 今日进度概览卡片 (Apple Fitness / Activity Ring 风格) */}
+      <div
+        style={{
+          backgroundColor: "#FFFFFF",
+          borderRadius: "16px",
+          padding: "18px 20px",
+          marginBottom: "20px",
+          boxShadow: "var(--shadow-sm)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div>
+          <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.015em" }}>
+            今日已完成 {completed.length} / {(data?.tasks || []).length} 项
+          </div>
+          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "10px", flexWrap: "wrap" }}>
+            <span className="stat-chip">⭐ {formatStars(data?.rewards?.stars_total ?? 0)} 星</span>
+            <span className="stat-chip flame">🔥 {data?.rewards?.current_streak_days ?? 0} 天连胜</span>
+            {data?.rewards?.streak_freeze_count > 0 && (
+              <span className="stat-chip protect">❄️ {data?.rewards?.streak_freeze_count} 卡</span>
+            )}
           </div>
         </div>
-      )}
 
-      {/* 顶部三项状态统计胶囊 (iOS Standard Metric Pods) */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "1.4rem" }}>
-        <div
-          style={{
-            flex: 1,
-            background: "#FFFFFF",
-            borderRadius: "14px",
-            padding: "12px 8px",
-            textAlign: "center",
-            boxShadow: "var(--shadow-sm)",
-          }}
-        >
-          <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>
-            ⭐ {formatStars(data?.rewards?.stars_total ?? 0)}
+        {/* Apple Fitness Activity Ring */}
+        <div style={{ position: "relative", width: "72px", height: "72px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="72" height="72" viewBox="0 0 72 72" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
+            <circle
+              cx="36"
+              cy="36"
+              r="29"
+              fill="none"
+              stroke="#E5E5EA"
+              strokeWidth="5"
+            />
+            <circle
+              cx="36"
+              cy="36"
+              r="29"
+              fill="none"
+              stroke="#34C759"
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 29}
+              strokeDashoffset={2 * Math.PI * 29 * (1 - Math.min(100, Math.max(0, (data?.tasks?.length ? Math.round((completed.length / data.tasks.length) * 100) : 0))) / 100)}
+              style={{
+                transition: "stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+                filter: completed.length > 0 ? "drop-shadow(0 0 4px rgba(52, 199, 89, 0.3))" : "none",
+              }}
+            />
+          </svg>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+            <span style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text)", lineHeight: "1.1", letterSpacing: "-0.03em" }}>
+              {data?.tasks?.length ? Math.round((completed.length / data.tasks.length) * 100) : 0}%
+            </span>
+            <span style={{ fontSize: "0.62rem", color: "var(--muted)", fontWeight: 500, lineHeight: "1", marginTop: "2px" }}>
+              达成
+            </span>
           </div>
-          <div style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, marginTop: "2px" }}>星星余额</div>
-        </div>
-        <div
-          style={{
-            flex: 1,
-            background: "#FFFFFF",
-            borderRadius: "14px",
-            padding: "12px 8px",
-            textAlign: "center",
-            boxShadow: "var(--shadow-sm)",
-          }}
-        >
-          <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>
-            🔥 {data?.rewards?.current_streak_days ?? 0}
-          </div>
-          <div style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, marginTop: "2px" }}>连续天数</div>
-        </div>
-        <div
-          style={{
-            flex: 1,
-            background: "#FFFFFF",
-            borderRadius: "14px",
-            padding: "12px 8px",
-            textAlign: "center",
-            boxShadow: "var(--shadow-sm)",
-          }}
-        >
-          <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>
-            ❄️ {data?.rewards?.streak_freeze_count ?? 0}
-          </div>
-          <div style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, marginTop: "2px" }}>保护卡</div>
         </div>
       </div>
 
@@ -366,149 +363,91 @@ export default function Today({ child, onExpired, active }) {
         <div
           style={{
             textAlign: "center",
-            padding: "2.6rem 1rem",
-            background: "var(--card)",
-            borderRadius: "var(--radius)",
-            border: "1px dashed var(--border)",
-            margin: "1.5rem 0",
+            padding: "40px 16px",
+            background: "#FFFFFF",
+            borderRadius: "14px",
             boxShadow: "var(--shadow-sm)",
+            color: "var(--muted)",
           }}
         >
-          <span style={{ fontSize: "2.4rem", display: "block", marginBottom: "0.5rem" }}>🌿</span>
-          <p style={{ fontWeight: 650, fontSize: "1.05rem", color: "var(--text)", marginBottom: "0.3rem" }}>
+          <p style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text)", marginBottom: "4px" }}>
             今天的所有任务都整理好啦
           </p>
-          <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
             享受充实的一天，尽情去探索与玩耍吧！
           </p>
         </div>
       )}
 
-      {timed.length > 0 && (
-        <div style={{ marginBottom: "1.2rem" }}>
-          <p style={{ fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "0.5rem" }}>
-            已安排时间
-          </p>
-          {timed.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              child={child}
-              completing={completingIds.has(task.id)}
-              poppingId={poppingId}
-              schedulingId={schedulingId}
-              scheduleForm={scheduleForm}
-              setScheduleForm={setScheduleForm}
-              editingId={editingId}
-              editForm={editForm}
-              setEditForm={setEditForm}
-              onComplete={handleComplete}
-              onStartFocus={(t) => setFocusingTask(t)}
-              onSchedule={startSchedule}
-              onSaveSchedule={handleSchedule}
-              onCancelSchedule={() => setSchedulingId(null)}
-              onEdit={startEdit}
-              onSaveEdit={handleSaveEdit}
-              onCancelEdit={() => setEditingId(null)}
-              onDelete={handleDelete}
-              scheduleLabel={scheduleLabel}
-            />
-          ))}
+      {/* 待完成任务 (Apple Reminders Inset Grouped Table) */}
+      {[...timed, ...free].length > 0 && (
+        <div style={{ marginBottom: "20px" }}>
+          <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text)", marginBottom: "8px", paddingLeft: "4px" }}>
+            今日任务 ({[...timed, ...free].length})
+          </div>
+          <div className="ios-grouped-card">
+            {[...timed, ...free].map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                child={child}
+                completing={completingIds.has(task.id)}
+                poppingId={poppingId}
+                schedulingId={schedulingId}
+                scheduleForm={scheduleForm}
+                setScheduleForm={setScheduleForm}
+                editingId={editingId}
+                editForm={editForm}
+                setEditForm={setEditForm}
+                onComplete={handleComplete}
+                onStartFocus={(t) => setFocusingTask(t)}
+                onSchedule={startSchedule}
+                onSaveSchedule={handleSchedule}
+                onCancelSchedule={() => setSchedulingId(null)}
+                onEdit={startEdit}
+                onSaveEdit={handleSaveEdit}
+                onCancelEdit={() => setEditingId(null)}
+                onDelete={handleDelete}
+                scheduleLabel={scheduleLabel}
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {free.length > 0 && (
-        <div style={{ marginBottom: "1.2rem" }}>
-          <p style={{ fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "0.5rem" }}>
-            自由安排
-          </p>
-          {free.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              child={child}
-              completing={completingIds.has(task.id)}
-              poppingId={poppingId}
-              schedulingId={schedulingId}
-              scheduleForm={scheduleForm}
-              setScheduleForm={setScheduleForm}
-              editingId={editingId}
-              editForm={editForm}
-              setEditForm={setEditForm}
-              onComplete={handleComplete}
-              onStartFocus={(t) => setFocusingTask(t)}
-              onSchedule={startSchedule}
-              onSaveSchedule={handleSchedule}
-              onCancelSchedule={() => setSchedulingId(null)}
-              onEdit={startEdit}
-              onSaveEdit={handleSaveEdit}
-              onCancelEdit={() => setEditingId(null)}
-              onDelete={handleDelete}
-              scheduleLabel={scheduleLabel}
-            />
-          ))}
-        </div>
-      )}
-
+      {/* 已完成任务 */}
       {completed.length > 0 && (
-        <div
-          style={{
-            borderTop: "1px solid var(--border)",
-            paddingTop: "0.8rem",
-            marginBottom: "1.2rem",
-          }}
-        >
-          <button
-            onClick={() => setShowCompleted((c) => !c)}
-            style={{
-              width: "100%",
-              textAlign: "left",
-              padding: "0.4rem 0",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontSize: "0.88rem",
-              fontWeight: 650,
-              color: "var(--muted)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <span>{showCompleted ? "▼" : "▶"} 已完成 {completed.length} 项 · 每一项都是成长的印记 🌱</span>
-            <span style={{ fontSize: "0.78rem", color: "var(--accent)" }}>{showCompleted ? "收起" : "展开查看"}</span>
-          </button>
-          {showCompleted && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}>
-              {completed.map((task) => (
-                <div key={task.id} style={{ flex: "1 1 280px", minWidth: 0 }}>
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    child={child}
-                    completing={completingIds.has(task.id)}
-                    poppingId={poppingId}
-                    schedulingId={schedulingId}
-                    scheduleForm={scheduleForm}
-                    setScheduleForm={setScheduleForm}
-                    editingId={editingId}
-                    editForm={editForm}
-                    setEditForm={setEditForm}
-                    onComplete={handleComplete}
-                    onStartFocus={(t) => setFocusingTask(t)}
-                    onSchedule={startSchedule}
-                    onSaveSchedule={handleSchedule}
-                    onCancelSchedule={() => setSchedulingId(null)}
-                    onEdit={startEdit}
-                    onSaveEdit={handleSaveEdit}
-                    onCancelEdit={() => setEditingId(null)}
-                    onDelete={handleDelete}
-                    scheduleLabel={scheduleLabel}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+        <div style={{ marginBottom: "20px" }}>
+          <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--muted)", marginBottom: "8px", paddingLeft: "4px" }}>
+            已完成 ({completed.length})
+          </div>
+          <div className="ios-grouped-card">
+            {completed.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                child={child}
+                completing={completingIds.has(task.id)}
+                poppingId={poppingId}
+                schedulingId={schedulingId}
+                scheduleForm={scheduleForm}
+                setScheduleForm={setScheduleForm}
+                editingId={editingId}
+                editForm={editForm}
+                setEditForm={setEditForm}
+                onComplete={handleComplete}
+                onStartFocus={(t) => setFocusingTask(t)}
+                onSchedule={startSchedule}
+                onSaveSchedule={handleSchedule}
+                onCancelSchedule={() => setSchedulingId(null)}
+                onEdit={startEdit}
+                onSaveEdit={handleSaveEdit}
+                onCancelEdit={() => setEditingId(null)}
+                onDelete={handleDelete}
+                scheduleLabel={scheduleLabel}
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -687,7 +626,7 @@ export default function Today({ child, onExpired, active }) {
             borderRadius: "var(--radius-pill)",
             fontSize: "1rem",
             fontWeight: 650,
-            boxShadow: "0 6px 20px rgba(67, 106, 84, 0.28)",
+            boxShadow: "0 6px 20px rgba(0, 0, 0, 0.15)",
             border: "1px solid rgba(255, 255, 255, 0.2)",
             zIndex: 1200,
           }}
@@ -752,44 +691,48 @@ function TaskCard({
   const src = task.schedule_by === "child" ? `${child?.name || "孩子"}安排` : "";
 
   return (
-    <div style={{ ...st.tc, opacity: isCompleted ? 0.65 : 1 }}>
+    <div className="reminders-task-row" style={{ opacity: isCompleted ? 0.6 : 1 }}>
       {editingId === task.id ? (
-        <div>
+        <div style={{ width: "100%" }}>
           <input
             placeholder="任务名 *"
             value={editForm.title}
             onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-            style={st.fi}
+            className="form-input-journal"
+            style={{ marginBottom: "8px" }}
             autoFocus
           />
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
             <input
               type="number"
               placeholder="分钟 *"
               value={editForm.minutes}
               onChange={(e) => setEditForm({ ...editForm, minutes: e.target.value })}
-              style={{ ...st.fi, flex: 1 }}
+              className="form-input-journal"
+              style={{ flex: 1, marginBottom: 0 }}
             />
             <RewardSelect
               value={editForm.stars}
               onChange={(value) => setEditForm({ ...editForm, stars: value })}
             />
           </div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
             <input
               type="time"
               value={editForm.start}
               onChange={(e) => setEditForm({ ...editForm, start: e.target.value })}
-              style={{ ...st.fi, flex: 1 }}
+              className="form-input-journal"
+              style={{ flex: 1, marginBottom: 0 }}
             />
             <input
               type="time"
               value={editForm.end}
               onChange={(e) => setEditForm({ ...editForm, end: e.target.value })}
-              style={{ ...st.fi, flex: 1 }}
+              className="form-input-journal"
+              style={{ flex: 1, marginBottom: 0 }}
             />
           </div>
-          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.3rem" }}>
+          <div style={{ display: "flex", gap: "8px" }}>
             <button onClick={() => onSaveEdit(task.id)} style={st.fsb}>
               保存
             </button>
@@ -799,22 +742,24 @@ function TaskCard({
           </div>
         </div>
       ) : schedulingId === task.id ? (
-        <div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+        <div style={{ width: "100%" }}>
+          <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
             <input
               type="time"
               value={scheduleForm.start}
               onChange={(e) => setScheduleForm({ ...scheduleForm, start: e.target.value })}
-              style={{ ...st.fi, flex: 1 }}
+              className="form-input-journal"
+              style={{ flex: 1, marginBottom: 0 }}
             />
             <input
               type="time"
               value={scheduleForm.end}
               onChange={(e) => setScheduleForm({ ...scheduleForm, end: e.target.value })}
-              style={{ ...st.fi, flex: 1 }}
+              className="form-input-journal"
+              style={{ flex: 1, marginBottom: 0 }}
             />
           </div>
-          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.3rem" }}>
+          <div style={{ display: "flex", gap: "8px" }}>
             <button onClick={() => onSaveSchedule(task.id)} style={st.fsb}>
               保存
             </button>
@@ -824,14 +769,14 @@ function TaskCard({
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "12px" }}>
           {/* 左侧：任务详情区域 (从左到右阅读顺畅) */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
               <p
                 style={{
-                  fontSize: "1.05rem",
-                  fontWeight: 650,
+                  fontSize: "1rem",
+                  fontWeight: 600,
                   color: isCompleted ? "var(--muted)" : "var(--text)",
                   textDecoration: isCompleted ? "line-through" : "none",
                   wordBreak: "break-word",
@@ -871,7 +816,7 @@ function TaskCard({
               )}
             </div>
 
-            <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: "4px" }}>
+            <p style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: "4px" }}>
               {task.expected_minutes ? `${task.expected_minutes} 分钟 · ` : ""}⭐+{task.reward_stars}
               {isScheduled ? ` · ${task.scheduled_start}${task.scheduled_end ? `-${task.scheduled_end}` : ""}` : " · 自由安排"}
             </p>
@@ -882,8 +827,8 @@ function TaskCard({
                 display: "flex",
                 flexWrap: "wrap",
                 alignItems: "center",
-                gap: "0.5rem",
-                marginTop: "0.45rem",
+                gap: "6px",
+                marginTop: "6px",
               }}
             >
               {/* 时长型任务 (expected_minutes > 0) 提供 ⏱️ 开启专注 入口 */}
@@ -893,8 +838,9 @@ function TaskCard({
                   onClick={() => onStartFocus(task)}
                   className="task-focus-btn"
                   aria-label={`开启 ${task.title} 专注计时`}
+                  style={{ minHeight: "30px", padding: "4px 10px", fontSize: "0.78rem" }}
                 >
-                  ⏱️ 开启专注 ({task.expected_minutes}m)
+                  ⏱️ 专注 ({task.expected_minutes}m)
                 </button>
               )}
 
@@ -906,7 +852,7 @@ function TaskCard({
               {isUnapproved && (
                 <button
                   onClick={() => onDelete(task.id)}
-                  style={{ ...st.pillBtn, background: "var(--danger-bg)", color: "var(--danger)", border: "1px solid var(--danger-border)" }}
+                  style={{ ...st.pillBtn, background: "var(--danger-bg)", color: "var(--danger)" }}
                 >
                   删除
                 </button>
@@ -924,20 +870,18 @@ function TaskCard({
             {isSubmitted ? (
               <div
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 36,
+                  height: 36,
                   borderRadius: "50%",
                   background: "var(--star-bg)",
                   border: "1.5px solid var(--star-border)",
                   display: "flex",
-                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
                 title="等待家长点赞发星"
               >
-                <span style={{ fontSize: "1.2rem", lineHeight: 1 }}>⏳</span>
-                <span style={{ fontSize: "0.62rem", color: "var(--star)", fontWeight: 700, marginTop: "2px" }}>待审核</span>
+                <span style={{ fontSize: "1.1rem", lineHeight: 1 }}>⏳</span>
               </div>
             ) : !isUnapproved ? (
               <button
@@ -947,20 +891,34 @@ function TaskCard({
                 className={`task-check-btn ${isCompleted ? "completed" : ""} ${isPopping ? "spring-pop" : ""}`}
                 aria-label={isCompleted ? "任务已完成" : `标记完成: ${task.title}`}
                 title={isCompleted ? "已完成" : "轻点打卡完成"}
+                style={{
+                  width: 36,
+                  height: 36,
+                  minWidth: 36,
+                  minHeight: 36,
+                  borderRadius: "50%",
+                  border: isCompleted ? "none" : "2px solid #C7C7CC",
+                  backgroundColor: isCompleted ? "#34C759" : "#FFFFFF",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: isCompleted ? "default" : "pointer",
+                  boxShadow: isCompleted ? "0 2px 6px rgba(52, 199, 89, 0.35)" : "none",
+                  padding: 0,
+                }}
               >
                 {isCompleted ? (
-                  <span style={{ fontSize: "1.8rem", fontWeight: 700, color: "#FFFFFF", lineHeight: 1 }}>
+                  <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "#FFFFFF", lineHeight: 1 }}>
                     ✓
                   </span>
                 ) : isCompleting ? (
-                  <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--accent)" }}>…</span>
+                  <span style={{ fontSize: "1rem", fontWeight: 700, color: "var(--accent)" }}>…</span>
                 ) : (
                   <span
                     style={{
-                      fontSize: "1.8rem",
+                      fontSize: "1.1rem",
                       fontWeight: 700,
-                      color: "var(--accent)",
-                      opacity: 0.35,
+                      color: "transparent",
                       lineHeight: 1,
                     }}
                   >
@@ -971,8 +929,8 @@ function TaskCard({
             ) : (
               <div
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 36,
+                  height: 36,
                   borderRadius: "50%",
                   border: "1.5px dashed var(--danger)",
                   background: "var(--danger-bg)",
@@ -981,7 +939,7 @@ function TaskCard({
                   justifyContent: "center",
                 }}
               >
-                <span style={{ fontSize: "0.75rem", color: "var(--danger)", fontWeight: 700 }}>待确认</span>
+                <span style={{ fontSize: "0.68rem", color: "var(--danger)", fontWeight: 700 }}>待确认</span>
               </div>
             )}
           </div>
@@ -1031,35 +989,35 @@ const st = {
   },
   fsb: {
     flex: 1,
-    padding: "0.55rem",
+    padding: "8px",
     fontSize: "0.9rem",
     fontWeight: 650,
     color: "#FFFFFF",
     background: "var(--accent)",
-    borderRadius: "12px",
+    borderRadius: "10px",
     border: "none",
     cursor: "pointer",
-    boxShadow: "0 2px 6px rgba(67, 106, 84, 0.2)",
+    boxShadow: "0 2px 6px rgba(0, 113, 227, 0.25)",
   },
   fcb: {
     flex: 1,
-    padding: "0.55rem",
+    padding: "8px",
     fontSize: "0.9rem",
     fontWeight: 600,
     color: "var(--muted)",
-    background: "#F0ECE4",
-    border: "1px solid var(--border)",
-    borderRadius: "12px",
+    background: "rgba(118, 118, 128, 0.12)",
+    border: "none",
+    borderRadius: "10px",
     cursor: "pointer",
   },
   pillBtn: {
-    padding: "0.35rem 0.7rem",
+    padding: "4px 10px",
     borderRadius: "var(--radius-pill)",
-    background: "var(--accent-light)",
-    color: "var(--accent)",
-    border: "1px solid var(--accent-pill)",
-    fontSize: "0.8rem",
-    fontWeight: 650,
+    background: "rgba(118, 118, 128, 0.12)",
+    color: "var(--text)",
+    border: "none",
+    fontSize: "0.78rem",
+    fontWeight: 600,
     whiteSpace: "nowrap",
     cursor: "pointer",
   },
