@@ -1017,20 +1017,38 @@ textarea {
   }
 }
 
-.drawer-header {
+.drawer-header,
+.ios-sheet-header {
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 16px;
+  border-bottom: 0.5px solid var(--separator);
   flex-shrink: 0;
+  background: var(--card);
 }
 
-.drawer-header-title {
-  font-size: 1.05rem;
-  font-weight: 700;
+.drawer-header-title,
+.ios-sheet-header-title {
+  font-size: 1rem;
+  font-weight: 600;
   color: var(--text);
   letter-spacing: -0.015em;
+}
+
+.ios-sheet-close-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+
+.ios-sheet-close-btn:active {
+  opacity: 0.6;
 }
 
 .drawer-close-btn {
@@ -1053,8 +1071,9 @@ textarea {
   background: #E5E5EA;
 }
 
-.drawer-body {
-  padding: 18px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+.drawer-body,
+.ios-sheet-body {
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 16px));
   overflow-y: auto;
   flex: 1;
   -webkit-overflow-scrolling: touch;

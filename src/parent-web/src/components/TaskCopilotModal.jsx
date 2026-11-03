@@ -3,9 +3,9 @@ import api from "../api.js";
 import { CATEGORIES, CATEGORY_ICONS, inferCategory } from "../utils/category.js";
 
 const QUICK_PROMPTS = [
-  "每天晚上7点练琴20分钟给1星需确认",
-  "明天上午读绘本20分钟，下午跳绳500下(2星)，晚上口算拍照审核",
-  "做完作业整理书包15分钟 1星",
+  "今晚7点练琴20分钟给1星",
+  "读绘本20分钟，跳绳500下(2星)",
+  "整理书包15分钟 1星",
 ];
 
 export default function TaskCopilotModal({
@@ -167,60 +167,54 @@ export default function TaskCopilotModal({
           )}
 
           {/* Spoken prompt textarea */}
-          <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 650, color: "var(--muted)", marginBottom: "6px" }}>
-            口语描述想让孩子做的事：
-          </label>
-          <textarea
-            rows={3}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="如：每天晚上7点练琴20分钟给1星需确认；或明天上午读绘本20分钟，下午跳绳500下(2星)..."
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              fontSize: "0.9rem",
-              borderRadius: "var(--radius-sm)",
-              border: "1px solid var(--border)",
-              backgroundColor: "var(--bg)",
-              color: "var(--text)",
-              resize: "none",
-              outline: "none",
-              marginBottom: "8px",
-              boxSizing: "border-box",
-            }}
-          />
+          <div style={{ marginBottom: "16px" }}>
+            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 650, color: "var(--muted)", marginBottom: "6px" }}>
+              口语描述想让孩子做的事：
+            </label>
+            <textarea
+              rows={3}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="如：每天晚上7点练琴20分钟给1星需确认；或明天上午读绘本20分钟，下午跳绳500下(2星)..."
+              className="form-input-journal"
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                fontSize: "0.9rem",
+                borderRadius: "10px",
+                resize: "none",
+                marginBottom: "10px",
+                boxSizing: "border-box",
+              }}
+            />
 
-          {/* Quick chips */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "14px" }}>
-            <span style={{ fontSize: "0.75rem", color: "var(--muted)", alignSelf: "center" }}>试试示例：</span>
-            {QUICK_PROMPTS.map((q, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setPrompt(q)}
-                style={{
-                  fontSize: "0.75rem",
-                  padding: "4px 8px",
-                  borderRadius: "var(--radius-pill)",
-                  backgroundColor: "var(--accent-light)",
-                  color: "var(--accent)",
-                  border: "1px solid var(--border)",
-                  cursor: "pointer",
-                }}
-              >
-                {q.length > 18 ? q.slice(0, 18) + "…" : q}
-              </button>
-            ))}
+            {/* Quick chips */}
+            <div>
+              <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginBottom: "6px" }}>试试示例：</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                {QUICK_PROMPTS.map((q, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setPrompt(q)}
+                    className="capsule-btn capsule-muted"
+                    style={{ fontSize: "0.76rem", padding: "5px 10px" }}
+                  >
+                    {q.length > 20 ? q.slice(0, 20) + "…" : q}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <button
             type="button"
-            className="btn-primary"
+            className="ios-btn-primary"
             onClick={handleParse}
             disabled={loading}
-            style={{ width: "100%", marginBottom: "16px" }}
+            style={{ width: "100%", padding: "12px", fontSize: "0.95rem", marginBottom: "18px" }}
           >
-            {loading ? "⚡ 正在智能解析中..." : "⚡ 开始智能解析"}
+            {loading ? "正在智能解析中…" : "开始智能解析"}
           </button>
 
           {/* Parse Results Preview */}
@@ -482,31 +476,28 @@ export default function TaskCopilotModal({
           )}
         </div>
 
-        {/* Footer actions */}
-        <div
-          style={{
-            padding: "12px 20px",
-            borderTop: "1px solid var(--border)",
-            backgroundColor: "var(--card-subtle)",
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: "10px",
-          }}
-        >
-          <button type="button" className="btn-secondary" onClick={onClose} disabled={publishing}>
-            取消
-          </button>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={handlePublish}
-            disabled={publishing || !result?.tasks || result.tasks.length === 0}
+        {/* Footer actions (iOS 风格底部全宽主按钮) */}
+        {result?.tasks?.length > 0 && (
+          <div
+            style={{
+              padding: "12px 16px calc(12px + env(safe-area-inset-bottom, 0px))",
+              borderTop: "0.5px solid var(--separator)",
+              backgroundColor: "#FFFFFF",
+            }}
           >
-            {publishing
-              ? "发布中..."
-              : `确认一键发布 (${result?.tasks?.length || 0})`}
-          </button>
-        </div>
+            <button
+              type="button"
+              className="ios-btn-primary"
+              onClick={handlePublish}
+              disabled={publishing}
+              style={{ width: "100%", padding: "12px", fontSize: "0.95rem" }}
+            >
+              {publishing
+                ? "正在发布中…"
+                : `确认发布 (${result.tasks.length} 项任务)`}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
