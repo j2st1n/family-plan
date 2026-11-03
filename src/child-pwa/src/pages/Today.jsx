@@ -824,73 +824,8 @@ function TaskCard({
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          {/* 左侧状态/打卡圆钮 (Apple 极简圆环与待审核状态) */}
-          {isSubmitted ? (
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: "50%",
-                background: "var(--star-bg)",
-                border: "1.5px solid var(--star-border)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-              title="等待家长点赞发星"
-            >
-              <span style={{ fontSize: "1.2rem", lineHeight: 1 }}>⏳</span>
-            </div>
-          ) : !isUnapproved ? (
-            <button
-              type="button"
-              onClick={(e) => onComplete(task, e)}
-              disabled={isCompleted || isCompleting}
-              className={`task-check-btn ${isCompleted ? "completed" : ""} ${isPopping ? "spring-pop" : ""}`}
-              aria-label={isCompleted ? "任务已完成" : `标记完成: ${task.title}`}
-              style={{ flexShrink: 0 }}
-            >
-              {isCompleted ? (
-                <span style={{ fontSize: "1.6rem", fontWeight: 700, color: "#FFFFFF", lineHeight: 1 }}>
-                  ✓
-                </span>
-              ) : isCompleting ? (
-                <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>…</span>
-              ) : (
-                <span
-                  style={{
-                    fontSize: "1.6rem",
-                    fontWeight: 700,
-                    color: "var(--accent)",
-                    opacity: 0.35,
-                    lineHeight: 1,
-                  }}
-                >
-                  ✓
-                </span>
-              )}
-            </button>
-          ) : (
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: "50%",
-                border: "1.5px dashed var(--danger)",
-                background: "var(--danger-bg)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <span style={{ fontSize: "0.75rem", color: "var(--danger)", fontWeight: 700 }}>待确认</span>
-            </div>
-          )}
-
-          {/* 任务详情区域 (去重、克制排版) */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+          {/* 左侧：任务详情区域 (从左到右阅读顺畅) */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
               <p
@@ -941,7 +876,7 @@ function TaskCard({
               {isScheduled ? ` · ${task.scheduled_start}${task.scheduled_end ? `-${task.scheduled_end}` : ""}` : " · 自由安排"}
             </p>
 
-            {/* 操作入口行 */}
+            {/* 操作入口行 (开启专注、修改、安排时间) */}
             <div
               style={{
                 display: "flex",
@@ -982,6 +917,73 @@ function TaskCard({
                 </button>
               )}
             </div>
+          </div>
+
+          {/* 右侧：iOS Trailing Accessory 主打卡完成按钮 (大拇指右手热区) */}
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {isSubmitted ? (
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: "50%",
+                  background: "var(--star-bg)",
+                  border: "1.5px solid var(--star-border)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                title="等待家长点赞发星"
+              >
+                <span style={{ fontSize: "1.2rem", lineHeight: 1 }}>⏳</span>
+                <span style={{ fontSize: "0.62rem", color: "var(--star)", fontWeight: 700, marginTop: "2px" }}>待审核</span>
+              </div>
+            ) : !isUnapproved ? (
+              <button
+                type="button"
+                onClick={(e) => onComplete(task, e)}
+                disabled={isCompleted || isCompleting}
+                className={`task-check-btn ${isCompleted ? "completed" : ""} ${isPopping ? "spring-pop" : ""}`}
+                aria-label={isCompleted ? "任务已完成" : `标记完成: ${task.title}`}
+                title={isCompleted ? "已完成" : "轻点打卡完成"}
+              >
+                {isCompleted ? (
+                  <span style={{ fontSize: "1.8rem", fontWeight: 700, color: "#FFFFFF", lineHeight: 1 }}>
+                    ✓
+                  </span>
+                ) : isCompleting ? (
+                  <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--accent)" }}>…</span>
+                ) : (
+                  <span
+                    style={{
+                      fontSize: "1.8rem",
+                      fontWeight: 700,
+                      color: "var(--accent)",
+                      opacity: 0.35,
+                      lineHeight: 1,
+                    }}
+                  >
+                    ✓
+                  </span>
+                )}
+              </button>
+            ) : (
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: "50%",
+                  border: "1.5px dashed var(--danger)",
+                  background: "var(--danger-bg)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span style={{ fontSize: "0.75rem", color: "var(--danger)", fontWeight: 700 }}>待确认</span>
+              </div>
+            )}
           </div>
         </div>
       )}

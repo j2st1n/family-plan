@@ -244,10 +244,10 @@ textarea {
 }
 
 .task-check-btn.completed {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: #34C759;
+  border-color: #34C759;
   color: #FFFFFF;
-  box-shadow: 0 4px 16px rgba(0, 113, 227, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 16px rgba(52, 199, 89, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
   cursor: default;
 }
 
