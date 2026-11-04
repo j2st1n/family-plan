@@ -446,8 +446,12 @@ class AIService:
                 data = resp.json()
                 content_str = data["choices"][0]["message"]["content"]
 
-                # 提取 JSON 块
-                parsed_json = json.loads(content_str)
+                # 提取 JSON 块 (兼容被 ```json ... ``` 包裹的情况)
+                clean_content = content_str.strip()
+                if clean_content.startswith("```"):
+                    clean_content = re.sub(r"^```(?:json)?\s*", "", clean_content)
+                    clean_content = re.sub(r"\s*```$", "", clean_content)
+                parsed_json = json.loads(clean_content)
                 raw_summary = parsed_json.get("raw_summary", f"已为您解析生成 {len(parsed_json.get('tasks', []))} 项任务")
                 raw_tasks = parsed_json.get("tasks", [])
 
@@ -480,6 +484,7 @@ class AIService:
                 if not task_items:
                     raise ValueError("Model parsed 0 tasks")
 
+                # Reset circuit breaker on success
                 self.circuit_breaker.record_success()
                 return CopilotParseResult(
                     tasks=task_items,

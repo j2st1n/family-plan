@@ -8,7 +8,7 @@ class ParsedTaskItem(BaseModel):
     title: str = Field(..., min_length=1, max_length=160, description="任务标题，如：练琴20分钟")
     description: Optional[str] = Field(default=None, max_length=2000, description="任务说明")
     expected_minutes: int = Field(default=20, ge=1, le=240, description="预估时长(分钟)")
-    reward_stars: int = Field(default=1, ge=0, le=5, description="奖励星星数")
+    reward_stars: int = Field(default=1, ge=0, description="奖励星星数")
     category: str = Field(default="学习思考", description="四维习惯分类：学习思考, 体育运动, 生活自理, 家务协助")
     start: Optional[str] = Field(default=None, description="计划开始时间 (HH:MM)")
     end: Optional[str] = Field(default=None, description="计划结束时间 (HH:MM)")
