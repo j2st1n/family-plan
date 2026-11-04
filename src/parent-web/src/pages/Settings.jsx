@@ -1515,12 +1515,12 @@ export default function Settings({
                       {showApiKey ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
                     </button>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "6px" }}>
-                    <LockIcon size={12} color="var(--muted)" />
-                    <span style={{ fontSize: "0.72rem", color: "var(--muted)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "6px" }}>
+                    <LockIcon size={12} color="var(--muted)" style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: "0.72rem", color: "var(--muted)", lineHeight: 1.35, wordBreak: "break-word" }}>
                       {aiSettings?.has_api_key && !aiForm.api_key
-                        ? `当前状态：已安全加密 (${aiSettings.api_key_masked})，留空提交将保持原配置`
-                        : "采用 AES-256-GCM 服务端密钥派生加密存储，绝不泄露明文"}
+                        ? `当前状态：已安全加密 (${aiSettings.api_key_masked})，留空提交保持原配置`
+                        : "AES-256-GCM 服务端密钥派生加密，零明文泄露风险"}
                     </span>
                   </div>
                 </div>
