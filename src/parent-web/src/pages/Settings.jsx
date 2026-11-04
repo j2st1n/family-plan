@@ -198,7 +198,7 @@ export default function Settings({
     loadAiSettings();
   }, [loadAiSettings]);
 
-  const handleProviderSelect = (provId) => {
+  const handleSelectAiProvider = (provId) => {
     const preset = AI_PRESETS.find((p) => p.id === provId);
     setAiForm((prev) => ({
       ...prev,
@@ -209,6 +209,8 @@ export default function Settings({
     setTestResult(null);
     setAvailableModels([]);
   };
+
+  const handleProviderSelect = handleSelectAiProvider;
 
   const handleSaveAiSettings = async () => {
     if (!token) return;
