@@ -5,8 +5,9 @@ import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
 import { CATEGORIES, CATEGORY_ICONS, inferCategory } from "../utils/category.js";
 import TaskCopilotModal from "../components/TaskCopilotModal.jsx";
+import SharePosterModal from "../components/SharePosterModal.jsx";
 import { useFeedback } from "../components/FeedbackContext.jsx";
-import { CheckCircleIcon, SparklesIcon, PlusIcon } from "../components/Icons.jsx";
+import { CheckCircleIcon, SparklesIcon, PlusIcon, ShareIcon } from "../components/Icons.jsx";
 
 function parseLocal(s) {
   if (!s || typeof s !== "string") return new Date();
@@ -86,6 +87,7 @@ export default function TodayDashboard({
   // Modals state
   const [showCopilot, setShowCopilot] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
 
   // Regular task form state
@@ -507,23 +509,47 @@ export default function TodayDashboard({
             {formatDateDisplay(date)}
           </span>
         </div>
-        <button
-          onClick={() => setDate(addDays(date, 1))}
-          style={{
-            padding: "4px 8px",
-            color: "var(--accent)",
-            fontSize: "1.1rem",
-            fontWeight: 600,
-            cursor: "pointer",
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          title="后一天"
-        >
-          ›
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <button
+            onClick={() => setDate(addDays(date, 1))}
+            style={{
+              padding: "4px 8px",
+              color: "var(--accent)",
+              fontSize: "1.1rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            title="后一天"
+          >
+            ›
+          </button>
+          <button
+            type="button"
+            className="ios-share-trigger-btn"
+            onClick={() => setShowShareModal(true)}
+            title="生成自律成就海报"
+            aria-label="分享自律成长成就海报"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "32px",
+              height: "32px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(0, 113, 227, 0.08)",
+              border: "none",
+              color: "var(--accent)",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <ShareIcon size={17} color="var(--accent)" />
+          </button>
+        </div>
       </div>
 
       {/* 置顶高亮【⏳ 待点赞任务 (Pending Approvals)】Hero 卡片 */}
@@ -1155,6 +1181,20 @@ export default function TodayDashboard({
           </div>
         </div>
       )}
+
+      {/* 自律成长成就卡分享抽屉 (iOS Sheet) */}
+      <SharePosterModal
+        open={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        childName={activeChild?.name || "小朋友"}
+        dateStr={date}
+        completionRate={completionRate}
+        completedCount={completedTasks.length}
+        totalCount={tasks.length}
+        streakDays={rewards.current_streak_days || 0}
+        stars={rewards.stars_total || 0}
+        tasks={tasks}
+      />
     </div>
   );
 }

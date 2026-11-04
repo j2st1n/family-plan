@@ -396,6 +396,53 @@ textarea {
   color: var(--text);
 }
 
+.ios-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: var(--accent);
+  color: #FFFFFF;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 113, 227, 0.2);
+}
+
+.ios-btn-primary:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.ios-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ios-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: rgba(118, 118, 128, 0.12);
+  color: var(--accent);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ios-btn-secondary:active {
+  background-color: rgba(118, 118, 128, 0.2);
+}
+
 /* ==========================================================================
    Apple iOS HIG Standard Components
    ========================================================================== */

@@ -13,6 +13,8 @@ import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
 import { playTaskComplete, playTaskSubmitted, initAudioUnlock } from "../utils/soundFx.js";
 import FocusTimer from "../components/FocusTimer.jsx";
+import SharePosterModal from "../components/SharePosterModal.jsx";
+import { ShareIcon } from "../components/Icons.jsx";
 import { childFeedback } from "../components/ChildFeedback.jsx";
 
 const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
@@ -73,6 +75,7 @@ export default function Today({ child, onExpired, active }) {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", minutes: "", stars: 1, start: "", end: "" });
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [focusingTask, setFocusingTask] = useState(null);
 
   // 1s 防抖记录：记录每个任务上一次点击完成的时间戳
@@ -265,7 +268,7 @@ export default function Today({ child, onExpired, active }) {
     <div>
       {/* 顶部标题区 (Apple iOS Large Title) */}
       <div style={{ marginBottom: "16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <h1 className="ios-large-title">
               你好，{child?.name ?? "小朋友"}
@@ -274,24 +277,49 @@ export default function Today({ child, onExpired, active }) {
               {dateStr}
             </p>
           </div>
-          {data?.rewards?.is_on_vacation && (
-            <span
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {data?.rewards?.is_on_vacation && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "4px 12px",
+                  borderRadius: "999px",
+                  background: "var(--star-bg)",
+                  color: "var(--star)",
+                  border: "1px solid var(--star-border)",
+                  fontWeight: 650,
+                  fontSize: "0.8rem",
+                }}
+              >
+                🌴 休假中
+              </span>
+            )}
+            <button
+              type="button"
+              className="ios-share-trigger-btn"
+              onClick={() => setShowShareModal(true)}
+              title="分享今日自律成就卡"
+              aria-label="分享今日自律成就卡"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "4px",
-                padding: "4px 12px",
-                borderRadius: "999px",
-                background: "var(--star-bg)",
-                color: "var(--star)",
-                border: "1px solid var(--star-border)",
-                fontWeight: 650,
-                fontSize: "0.8rem",
+                justifyContent: "center",
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                backgroundColor: "#FFFFFF",
+                border: "1px solid var(--border)",
+                color: "var(--accent)",
+                cursor: "pointer",
+                boxShadow: "var(--shadow-sm)",
+                transition: "opacity 0.15s ease",
               }}
             >
-              🌴 休假中
-            </span>
-          )}
+              <ShareIcon size={18} color="var(--accent)" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -673,6 +701,20 @@ export default function Today({ child, onExpired, active }) {
           }}
         />
       )}
+
+      {/* 自律成长成就卡分享抽屉 (iOS Sheet) */}
+      <SharePosterModal
+        open={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        childName={child?.name || "小朋友"}
+        dateStr={dateStr}
+        completionRate={data?.tasks?.length ? Math.round((completed.length / data.tasks.length) * 100) : 0}
+        completedCount={completed.length}
+        totalCount={(data?.tasks || []).length}
+        streakDays={data?.rewards?.current_streak_days ?? 0}
+        stars={data?.rewards?.stars_total ?? 0}
+        tasks={data?.tasks || []}
+      />
     </div>
   );
 }
