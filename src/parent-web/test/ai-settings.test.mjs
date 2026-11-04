@@ -91,8 +91,8 @@ test("Settings.jsx integrates AI Assistant entry item and iOS Canonical Drawer S
 
   // 1. Entry item in Inset Grouped list
   assert.ok(
-    content.includes("✦ AI 智能助手"),
-    "Settings must have '✦ AI 智能助手' entry item"
+    content.includes("AI 智能助手"),
+    "Settings must have 'AI 智能助手' entry item"
   );
   assert.ok(
     content.includes('setActiveDrawer("aiSettings")'),

@@ -266,6 +266,14 @@ const api = {
       body: JSON.stringify(data),
     });
   },
+
+  fetchAiModels(token, data) {
+    return request("/ai/fetch-models", {
+      method: "POST",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
+  },
 };
 
 export default api;

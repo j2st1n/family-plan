@@ -17,6 +17,8 @@ from app.db.session import get_db
 from app.models.parent import Parent
 from app.models.parent_ai_settings import ParentAISettings
 from app.schemas.ai import (
+    AIFetchModelsRequest,
+    AIFetchModelsResponse,
     AIHealthStatus,
     AISettingsResponse,
     AISettingsUpdateRequest,
@@ -274,6 +276,122 @@ async def test_ai_connection(
             latency_ms=None,
             message=f"网络请求失败：{str(exc)[:120]}",
             status_code=500,
+        )
+
+
+@router.post("/fetch-models", response_model=AIFetchModelsResponse)
+async def fetch_ai_models(
+    payload: AIFetchModelsRequest,
+    current_parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+) -> AIFetchModelsResponse:
+    """
+    拉取远程 Base URL 提供的可用模型列表（兼容 OpenAI /v1/models 与 Ollama /api/tags）。
+    """
+    saved_row = db.query(ParentAISettings).filter(ParentAISettings.parent_id == current_parent.id).first()
+
+    provider = (
+        payload.provider
+        or (saved_row.provider if saved_row else None)
+        or "deepseek"
+    ).strip().lower()
+
+    base_url = (
+        payload.base_url
+        if payload.base_url is not None
+        else (saved_row.base_url if saved_row else "")
+    )
+    base_url = (base_url or "").strip().rstrip("/")
+    if not base_url:
+        if provider == "deepseek":
+            base_url = "https://api.deepseek.com/v1"
+        elif provider == "openai":
+            base_url = "https://api.openai.com/v1"
+        elif provider == "ollama":
+            base_url = "http://localhost:11434/v1"
+        else:
+            base_url = "https://api.deepseek.com/v1"
+
+    target_key: Optional[str] = None
+    if payload.api_key is not None and payload.api_key.strip() and not is_masked_api_key(payload.api_key):
+        target_key = payload.api_key.strip()
+    elif saved_row and saved_row.api_key_encrypted:
+        target_key = decrypt_ai_api_key(saved_row.api_key_encrypted)
+    elif settings.ai_api_key:
+        target_key = settings.ai_api_key.strip()
+
+    # Determine endpoint
+    clean_base = base_url.rstrip("/")
+    if clean_base.endswith("/chat/completions"):
+        clean_base = clean_base[:-17]
+
+    if clean_base.endswith("/v1"):
+        endpoint = f"{clean_base}/models"
+    else:
+        endpoint = f"{clean_base}/v1/models"
+
+    headers = {"Content-Type": "application/json"}
+    if target_key:
+        headers["Authorization"] = f"Bearer {target_key}"
+
+    try:
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            resp = await client.get(endpoint, headers=headers)
+            if resp.status_code == 200:
+                data = resp.json()
+                raw_models = []
+                if isinstance(data, dict):
+                    if "data" in data and isinstance(data["data"], list):
+                        raw_models = data["data"]
+                    elif "models" in data and isinstance(data["models"], list):
+                        raw_models = data["models"]
+                elif isinstance(data, list):
+                    raw_models = data
+
+                model_ids = []
+                for m in raw_models:
+                    if isinstance(m, dict) and "id" in m:
+                        model_ids.append(str(m["id"]))
+                    elif isinstance(m, dict) and "name" in m:
+                        model_ids.append(str(m["name"]))
+                    elif isinstance(m, str):
+                        model_ids.append(m)
+
+                if model_ids:
+                    return AIFetchModelsResponse(
+                        success=True,
+                        models=model_ids[:50],
+                        message=f"成功获取 {len(model_ids)} 个可用模型",
+                    )
+                else:
+                    return AIFetchModelsResponse(
+                        success=False,
+                        models=[],
+                        message="服务端未返回任何模型项",
+                    )
+            elif resp.status_code == 401:
+                return AIFetchModelsResponse(
+                    success=False,
+                    models=[],
+                    message="鉴权失败：API Key 无效或未授权 (HTTP 401)",
+                )
+            else:
+                return AIFetchModelsResponse(
+                    success=False,
+                    models=[],
+                    message=f"拉取失败 (HTTP {resp.status_code})：端点可能不支持 /models",
+                )
+    except (httpx.TimeoutException, TimeoutError, asyncio.TimeoutError):
+        return AIFetchModelsResponse(
+            success=False,
+            models=[],
+            message="拉取超时：请求超过 4 秒无响应",
+        )
+    except Exception as exc:
+        return AIFetchModelsResponse(
+            success=False,
+            models=[],
+            message=f"拉取模型失败：{str(exc)[:100]}",
         )
 
 

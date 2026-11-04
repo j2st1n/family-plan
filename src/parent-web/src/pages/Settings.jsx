@@ -59,7 +59,7 @@ const AI_PRESETS = [
     id: "openai",
     label: "OpenAI",
     defaultBaseUrl: "https://api.openai.com/v1",
-    defaultModel: "gpt-4o-mini",
+    defaultModel: "gpt-4o",
   },
   {
     id: "ollama",
@@ -71,7 +71,7 @@ const AI_PRESETS = [
     id: "custom",
     label: "自定义中转",
     defaultBaseUrl: "",
-    defaultModel: "gpt-4o-mini",
+    defaultModel: "deepseek-chat",
   },
 ];
 
@@ -144,8 +144,33 @@ export default function Settings({
     model: "deepseek-chat",
     is_enabled: true,
   });
-  const [testingConnection, setTestingConnection] = useState(false);
-  const [testResult, setTestResult] = useState(null);
+  const [fetchingModels, setFetchingModels] = useState(false);
+  const [availableModels, setAvailableModels] = useState([]);
+
+  const handleFetchAiModels = async () => {
+    if (!token) return;
+    setFetchingModels(true);
+    try {
+      const payload = {
+        provider: aiForm.provider,
+        base_url: aiForm.base_url.trim(),
+      };
+      if (aiForm.api_key.trim()) {
+        payload.api_key = aiForm.api_key.trim();
+      }
+      const res = await api.fetchAiModels(token, payload);
+      if (res.success && res.models && res.models.length > 0) {
+        setAvailableModels(res.models);
+        toast.success(`成功拉取 ${res.models.length} 个可用模型`);
+      } else {
+        toast.error(res.message || "拉取失败");
+      }
+    } catch (err) {
+      toast.error(err.message || "拉取失败");
+    } finally {
+      setFetchingModels(false);
+    }
+  };
 
   const loadAiSettings = useCallback(async () => {
     if (!token) return;
@@ -171,7 +196,7 @@ export default function Settings({
     loadAiSettings();
   }, [loadAiSettings]);
 
-  const handleSelectAiProvider = (provId) => {
+  const handleProviderSelect = (provId) => {
     const preset = AI_PRESETS.find((p) => p.id === provId);
     setAiForm((prev) => ({
       ...prev,
@@ -180,6 +205,7 @@ export default function Settings({
       model: preset?.defaultModel ?? prev.model,
     }));
     setTestResult(null);
+    setAvailableModels([]);
   };
 
   const handleSaveAiSettings = async () => {
@@ -636,7 +662,7 @@ export default function Settings({
             <SparklesIcon size={18} />
           </div>
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
-            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)" }}>✦ AI 智能助手</span>
+            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)" }}>AI 智能助手</span>
             <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
               {aiSettings?.active_mode || "纯离线规则"} · 智能分词与任务解析
             </span>
@@ -1527,16 +1553,38 @@ export default function Settings({
 
                 <div className="ios-separator" />
 
-                {/* Row 3: Model 名称 */}
+                {/* Row 3: Model 名称与拉取模型按钮 */}
                 <div style={{ padding: "12px 16px" }}>
-                  <div style={{ fontSize: "0.78rem", color: "var(--muted)", fontWeight: 500, marginBottom: "4px" }}>
-                    模型标识 (Model)
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                    <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontWeight: 500 }}>
+                      模型标识 (Model)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleFetchAiModels}
+                      disabled={fetchingModels || (!aiForm.base_url.trim() && !aiForm.provider)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--accent)",
+                        fontSize: "0.76rem",
+                        fontWeight: 600,
+                        cursor: fetchingModels ? "not-allowed" : "pointer",
+                        padding: "2px 4px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        opacity: fetchingModels ? 0.5 : 1,
+                      }}
+                    >
+                      {fetchingModels ? "正在拉取..." : "↓ 拉取可用模型"}
+                    </button>
                   </div>
                   <input
                     type="text"
                     value={aiForm.model}
                     onChange={(e) => setAiForm({ ...aiForm, model: e.target.value })}
-                    placeholder="deepseek-chat"
+                    placeholder="如：deepseek-chat、gpt-4o"
                     style={{
                       width: "100%",
                       border: "none",
@@ -1547,6 +1595,21 @@ export default function Settings({
                       fontFamily: "inherit",
                     }}
                   />
+                  {availableModels.length > 0 && (
+                    <div style={{ marginTop: "10px", display: "flex", flexWrap: "wrap", gap: "6px", maxHeight: "120px", overflowY: "auto" }}>
+                      {availableModels.map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setAiForm({ ...aiForm, model: m })}
+                          className={`pill-segment-btn ${aiForm.model === m ? "active" : ""}`}
+                          style={{ fontSize: "0.74rem", padding: "3px 8px", borderRadius: "6px" }}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -90,6 +90,18 @@ class AISettingsUpdateRequest(BaseModel):
     clear_api_key: Optional[bool] = Field(default=False, description="显式清除现有 API Key")
 
 
+class AIFetchModelsRequest(BaseModel):
+    provider: Optional[str] = Field(default=None, max_length=32)
+    base_url: Optional[str] = Field(default=None, max_length=255)
+    api_key: Optional[str] = Field(default=None, max_length=512)
+
+
+class AIFetchModelsResponse(BaseModel):
+    success: bool = Field(..., description="是否拉取成功")
+    models: list[str] = Field(default_factory=list, description="模型名称列表")
+    message: str = Field(..., description="提示信息")
+
+
 class AITestConnectionRequest(BaseModel):
     provider: Optional[str] = Field(default=None, max_length=32)
     base_url: Optional[str] = Field(default=None, max_length=255)
