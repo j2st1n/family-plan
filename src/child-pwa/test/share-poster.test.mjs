@@ -159,5 +159,5 @@ test("Child PWA SharePosterModal.jsx provides iOS Sheet drawer preview and actio
   assert.ok(content.includes("自律成长成就卡"), "Must have header title");
   assert.ok(content.includes("ios-poster-preview-img"), "Must have preview img");
   assert.ok(content.includes("长按图片"), "Must have long press hint");
-  assert.ok(content.includes("下载保存卡片"), "Must have download button");
+  assert.ok(content.includes("保存卡片到相册"), "Must have download button");
 });

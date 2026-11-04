@@ -204,6 +204,6 @@ test("SharePosterModal.jsx conforms to iOS Sheet HIG and provides preview and ac
   assert.ok(content.includes("长按图片"), "Must have '长按图片' hint for mobile/WeChat users");
 
   // 3. 下载保存按钮
-  assert.ok(content.includes("下载保存卡片"), "Must provide '下载保存卡片' button");
-  assert.ok(content.includes("调用系统分享"), "Must provide Web Share trigger button");
+  assert.ok(content.includes("保存卡片到相册"), "Must provide '保存卡片到相册' button");
+  assert.ok(content.includes("分享"), "Must provide Web Share trigger button");
 });

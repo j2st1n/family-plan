@@ -401,6 +401,7 @@ export default function TodayDashboard({
   const submittedTasks = tasks.filter((t) => t.status === "submitted");
   const pendingTasks = tasks.filter((t) => t.status === "pending");
   const completedTasks = tasks.filter((t) => t.status === "completed");
+  const earnedStarsToday = completedTasks.reduce((sum, t) => sum + (t.stars_awarded ?? t.reward_stars ?? 0), 0);
   const completionRate = tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
 
   if (children.length === 0) {
@@ -1193,6 +1194,7 @@ export default function TodayDashboard({
         totalCount={tasks.length}
         streakDays={rewards.current_streak_days || 0}
         stars={rewards.stars_total || 0}
+        starsToday={earnedStarsToday}
         tasks={tasks}
       />
     </div>

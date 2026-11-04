@@ -12,6 +12,7 @@ export default function SharePosterModal({
   totalCount = 0,
   streakDays = 0,
   stars = 0,
+  starsToday = 0,
   tasks = [],
   quote = "",
 }) {
@@ -37,6 +38,7 @@ export default function SharePosterModal({
         totalCount,
         streakDays,
         stars,
+        starsToday,
         tasks,
         quote,
       });
@@ -174,7 +176,7 @@ export default function SharePosterModal({
                 }}
               >
                 <ShareIcon size={18} color="#FFFFFF" />
-                <span>{isSharing ? "正在调起系统分享…" : "调用系统分享 (微信/相册)"}</span>
+                <span>{isSharing ? "正在分享…" : "分享"}</span>
               </button>
             )}
 
@@ -195,7 +197,7 @@ export default function SharePosterModal({
               }}
             >
               <DownloadIcon size={18} />
-              <span>下载保存卡片</span>
+              <span>保存卡片到相册</span>
             </button>
           </div>
         </div>

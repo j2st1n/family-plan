@@ -264,6 +264,8 @@ export default function Today({ child, onExpired, active }) {
       </div>
     );
 
+  const earnedStarsToday = completed.reduce((sum, t) => sum + (t.stars_awarded ?? t.reward_stars ?? 0), 0);
+
   return (
     <div>
       {/* 顶部标题区 (Apple iOS Large Title) */}
@@ -713,6 +715,7 @@ export default function Today({ child, onExpired, active }) {
         totalCount={(data?.tasks || []).length}
         streakDays={data?.rewards?.current_streak_days ?? 0}
         stars={data?.rewards?.stars_total ?? 0}
+        starsToday={earnedStarsToday}
         tasks={data?.tasks || []}
       />
     </div>
