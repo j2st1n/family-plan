@@ -144,6 +144,8 @@ export default function Settings({
     model: "deepseek-chat",
     is_enabled: true,
   });
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [testResult, setTestResult] = useState(null);
   const [fetchingModels, setFetchingModels] = useState(false);
   const [availableModels, setAvailableModels] = useState([]);
 
