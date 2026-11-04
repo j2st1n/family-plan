@@ -148,7 +148,7 @@ export function drawGrowthPoster(canvas, {
 
   // 1. 2x Retina 高清像素适配 (固定逻辑画布 360 x 580，物理渲染 720 x 1160)
   const logicalWidth = 360;
-  const logicalHeight = 580;
+  const logicalHeight = 500;
   const dpr = 2;
 
   canvas.width = logicalWidth * dpr;
@@ -170,7 +170,7 @@ export function drawGrowthPoster(canvas, {
   const cardX = 14;
   const cardY = 14;
   const cardW = 332;
-  const cardH = 552;
+  const cardH = 472;
   ctx.beginPath();
   drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 18);
   ctx.fillStyle = APPLE_SYSTEM_COLORS.cardBg;
@@ -366,48 +366,11 @@ export function drawGrowthPoster(canvas, {
     ctx.fillText("今日自律行动进行中，完成任务即可点亮清单！🌱", taskBoxX + taskBoxW / 2, taskBoxY + taskBoxH / 2);
   }
 
-  // 8. 温馨亲子成长寄语卡片
-  const quoteBoxX = 28;
-  const quoteBoxY = 434;
-  const quoteBoxW = 304;
-  const quoteBoxH = 58;
-
-  ctx.beginPath();
-  drawRoundedRect(ctx, quoteBoxX, quoteBoxY, quoteBoxW, quoteBoxH, 10);
-  ctx.fillStyle = APPLE_SYSTEM_COLORS.appleBlueBg;
-  ctx.fill();
-  ctx.strokeStyle = APPLE_SYSTEM_COLORS.appleBlueBorder;
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // 左侧苹果蓝装饰坚线
-  ctx.beginPath();
-  drawRoundedRect(ctx, quoteBoxX + 8, quoteBoxY + 10, 3, 38, 1.5);
-  ctx.fillStyle = APPLE_SYSTEM_COLORS.appleBlue;
-  ctx.fill();
-
-  // 寄语文案
-  const finalQuote = quote || getWarmEncouragementQuote(completionRate, streakDays);
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-  ctx.font = "italic 500 11px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
-  ctx.fillStyle = APPLE_SYSTEM_COLORS.textPrimary;
-  ctx.fillText(`「${finalQuote}」`, quoteBoxX + 18, quoteBoxY + 22);
-
-  ctx.font = "600 9.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
-  ctx.fillStyle = APPLE_SYSTEM_COLORS.appleBlue;
-  ctx.fillText("—— 爸爸妈妈为你骄傲与喝彩 ❤️", quoteBoxX + 18, quoteBoxY + 41);
-
-  // 9. 底部品牌与高清水印
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = "400 9.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
-  ctx.fillStyle = APPLE_SYSTEM_COLORS.textTertiary;
-  ctx.fillText("家庭成长自律计划 · 陪伴孩子走好每一步", logicalWidth / 2, 516);
+  ctx.fillText("家庭成长自律计划 · 陪伴孩子走好每一步", logicalWidth / 2, 452);
 
   ctx.font = "400 8.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = "#C7C7CC";
-  ctx.fillText("Apple iOS HIG 设计 · 2x Retina 高清纯净生成", logicalWidth / 2, 532);
+  ctx.fillText("Apple iOS HIG 设计 · 2x Retina 高清纯净生成", logicalWidth / 2, 468);
 
   ctx.restore();
 }

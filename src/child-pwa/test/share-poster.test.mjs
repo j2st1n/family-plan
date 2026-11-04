@@ -77,7 +77,7 @@ test("Child PWA posterCanvas adheres to Apple System Colors & 2x Retina renderin
   });
 
   assert.equal(canvas.width, 720, "Must be 720 for 2x Retina");
-  assert.equal(canvas.height, 1160, "Must be 1160 for 2x Retina");
+  assert.equal(canvas.height, 1000, "Must be 1000 for 2x Retina");
 
   const texts = canvas._textDrawn.join(" ");
   assert.ok(texts.includes("天天"), "Must render child name");

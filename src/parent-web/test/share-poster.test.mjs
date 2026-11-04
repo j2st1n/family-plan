@@ -84,7 +84,7 @@ test("drawGrowthPoster configures 2x Retina canvas scale and renders all achieve
 
   // 1. Retina 2x 物理分辨率校验
   assert.equal(canvas.width, 720, "Canvas width must be 360 * 2 = 720 for Retina 2x");
-  assert.equal(canvas.height, 1160, "Canvas height must be 580 * 2 = 1160 for Retina 2x");
+  assert.strictEqual(canvas.height, 500 * 2, "Canvas height must be 500 * 2 = 1000 for Retina 2x");
 
   const scaleOp = canvas._operations.find((op) => op.op === "scale");
   assert.ok(scaleOp, "Must call ctx.scale");
@@ -99,7 +99,6 @@ test("drawGrowthPoster configures 2x Retina canvas scale and renders all achieve
   assert.ok(texts.includes("15"), "Must render stars count");
   assert.ok(texts.includes("晨读 20 分钟"), "Must render completed task 1");
   assert.ok(texts.includes("口算练习"), "Must render completed task 2");
-  assert.ok(texts.includes("每一份小小的坚持"), "Must render warm encouragement quote");
 
   // 3. 检查是否有使用外部网络图片（确保 0 CORS Taint 风险）
   const hasExternalImageCall = canvas._operations.some((op) => op.op === "drawImage");
