@@ -211,11 +211,11 @@ export function drawGrowthPoster(canvas, {
     : "点滴积累，每一份坚持都是成长的印记。";
   ctx.fillText(subText, 28, 94);
 
-  // 5. 达成环与核心成长面板
+  // 5. 【当日数据看板】（环形图 + 当日打卡进度 + 当日奖励）
   const ringBoxX = 28;
   const ringBoxY = 108;
   const ringBoxW = 304;
-  const ringBoxH = 104;
+  const ringBoxH = 92;
 
   ctx.beginPath();
   drawRoundedRect(ctx, ringBoxX, ringBoxY, ringBoxW, ringBoxH, 14);
@@ -225,96 +225,76 @@ export function drawGrowthPoster(canvas, {
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  // 环形进度圈 (中心 cx=78, cy=160, r=34)
-  drawActivityRing(ctx, 78, 160, 34, 7, completionRate / 100);
+  // 环形进度圈 (中心 cx=74, cy=154, r=32)
+  drawActivityRing(ctx, 74, 154, 32, 6.5, completionRate / 100);
 
   // 环形图中心文本
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = "700 17px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
+  ctx.font = "700 16px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textPrimary;
-  ctx.fillText(`${completionRate}%`, 78, 155);
+  ctx.fillText(`${completionRate}%`, 74, 149);
 
-  ctx.font = "500 9.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
+  ctx.font = "500 9px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
-  ctx.fillText("今日达成", 78, 172);
+  ctx.fillText("今日达成", 74, 165);
 
-  // 右侧核心信息（专注成长状态与徽章，绝不与下方三指标卡重复）
+  // 右侧：当日数据聚集 (纯当日)
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
 
-  // 行 1: 🔥 连续坚持记录
+  // 当日完成项数
   ctx.font = "700 13px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
-  ctx.fillStyle = APPLE_SYSTEM_COLORS.warmGold;
-  ctx.fillText(`🔥 连续自律：${streakDays} 天`, 130, 142);
-
-  ctx.font = "400 10px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
-  ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
-  ctx.fillText(streakDays >= 3 ? "自律好习惯正在持续巩固" : "坚持打卡即可点亮连胜徽章", 130, 158);
-
-  // 行 2: 🏅 今日成长段位/评价 (动态徽章，杜绝与下方的星星指标卡重复)
-  const badgeTitle = completionRate === 100
-    ? "🏅 今日表现：圆满达标"
-    : completionRate >= 50
-    ? "🚀 今日表现：渐入佳境"
-    : "🌱 今日表现：自律起航";
-  const badgeSub = completionRate === 100
-    ? "所有任务全部完成，太棒了！"
-    : completionRate >= 50
-    ? "已完成过半，继续冲刺！"
-    : "点滴行动，迈出自律第一步";
-
-  ctx.font = "700 13px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
-  ctx.fillStyle = completionRate === 100 ? APPLE_SYSTEM_COLORS.forestGreen : APPLE_SYSTEM_COLORS.appleBlue;
-  ctx.fillText(badgeTitle, 130, 180);
-
-  ctx.font = "400 10px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
-  ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
-  ctx.fillText(badgeSub, 130, 196);
-
-  // 6. 3 个关键指标卡 (三栏分别呈现独立且唯一的度量指标，零冗余)
-  const colW = 94;
-  const colH = 50;
-  const colY = 222;
-
-  // 卡 1: 当日完成项 (当日维度)
-  ctx.beginPath();
-  drawRoundedRect(ctx, 28, colY, colW, colH, 10);
-  ctx.fillStyle = APPLE_SYSTEM_COLORS.pureLightGray;
-  ctx.fill();
-  ctx.textAlign = "center";
-  ctx.font = "700 14px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.forestGreen;
-  ctx.fillText(`${completedCount} / ${totalCount} 项`, 28 + colW / 2, colY + 18);
-  ctx.font = "500 9.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
-  ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
-  ctx.fillText("当日完成", 28 + colW / 2, colY + 36);
+  ctx.fillText(`📋 今日打卡：已完成 ${completedCount} / ${totalCount} 项`, 122, 137);
 
-  // 卡 2: 当日获得星星 (当日增量维度)
+  // 当日获得星星
+  ctx.font = "700 13px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
+  ctx.fillStyle = APPLE_SYSTEM_COLORS.warmGold;
+  ctx.fillText(`⭐ 今日奖励：${starsToday > 0 ? `+${starsToday}` : "0"} 颗新星`, 122, 158);
+
+  // 当日鼓励小标语
+  ctx.font = "400 9.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
+  ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
+  const todayNote = completionRate === 100 ? "今日所有日常任务圆满达标！🎉" : "持之以恒，点滴进步看得见";
+  ctx.fillText(todayNote, 122, 178);
+
+  // 6. 【累计荣誉看板】（双栏并列：🔥 连续自律天数 + 💰 累计总星池）
+  const cumY = 210;
+  const cumCardW = 146;
+  const cumCardH = 48;
+
+  // 累计卡 1: 连续自律 (累计天数)
   ctx.beginPath();
-  drawRoundedRect(ctx, 133, colY, colW, colH, 10);
+  drawRoundedRect(ctx, 28, cumY, cumCardW, cumCardH, 10);
   ctx.fillStyle = APPLE_SYSTEM_COLORS.pureLightGray;
   ctx.fill();
+
   ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
   ctx.font = "700 14px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.warmGold;
-  ctx.fillText(starsToday > 0 ? `+${starsToday} 颗` : "0 颗", 133 + colW / 2, colY + 18);
+  ctx.fillText(`🔥 ${streakDays} 天`, 28 + cumCardW / 2, cumY + 17);
+
   ctx.font = "500 9.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
-  ctx.fillText("⭐ 当日奖励", 133 + colW / 2, colY + 36);
+  ctx.fillText("累计连胜天数", 28 + cumCardW / 2, cumY + 34);
 
-  // 卡 3: 累积总星池 (唯一累计总资产呈现处)
+  // 累计卡 2: 累计总星池 (累计资产)
   ctx.beginPath();
-  drawRoundedRect(ctx, 238, colY, colW, colH, 10);
+  drawRoundedRect(ctx, 186, cumY, cumCardW, cumCardH, 10);
   ctx.fillStyle = APPLE_SYSTEM_COLORS.pureLightGray;
   ctx.fill();
+
   ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
   ctx.font = "700 14px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.appleBlue;
-  ctx.fillText(`${Number(stars).toFixed(0)} 颗`, 238 + colW / 2, colY + 18);
+  ctx.fillText(`💰 ${Number(stars).toFixed(0)} 颗`, 186 + cumCardW / 2, cumY + 17);
+
   ctx.font = "500 9.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
-  ctx.fillText("💰 累计总星池", 238 + colW / 2, colY + 36);
+  ctx.fillText("累计总星池", 186 + cumCardW / 2, cumY + 34);
 
   // 7. 已完成任务清单 (勾选条目)
   ctx.textAlign = "left";

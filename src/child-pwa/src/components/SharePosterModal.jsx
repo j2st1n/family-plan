@@ -157,35 +157,14 @@ export default function SharePosterModal({
             </div>
           )}
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {canShare && (
-              <button
-                type="button"
-                className="ios-btn-primary"
-                onClick={handleShare}
-                disabled={isSharing || isGenerating}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  padding: "12px",
-                  fontSize: "0.95rem",
-                  fontWeight: 600,
-                  width: "100%",
-                }}
-              >
-                <ShareIcon size={18} color="#FFFFFF" />
-                <span>{isSharing ? "正在分享…" : "分享"}</span>
-              </button>
-            )}
-
+          <div style={{ display: "flex", gap: "10px", width: "100%" }}>
             <button
               type="button"
-              className={canShare ? "ios-btn-secondary" : "ios-btn-primary"}
-              onClick={handleDownload}
-              disabled={isGenerating}
+              className="ios-btn-primary"
+              onClick={handleShare}
+              disabled={isSharing || isGenerating}
               style={{
+                flex: 1,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -193,11 +172,30 @@ export default function SharePosterModal({
                 padding: "12px",
                 fontSize: "0.95rem",
                 fontWeight: 600,
-                width: "100%",
+              }}
+            >
+              <ShareIcon size={18} color="#FFFFFF" />
+              <span>{isSharing ? "正在分享…" : "分享"}</span>
+            </button>
+
+            <button
+              type="button"
+              className="ios-btn-secondary"
+              onClick={handleDownload}
+              disabled={isGenerating}
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                padding: "12px",
+                fontSize: "0.95rem",
+                fontWeight: 600,
               }}
             >
               <DownloadIcon size={18} />
-              <span>保存卡片到相册</span>
+              <span>保存</span>
             </button>
           </div>
         </div>
