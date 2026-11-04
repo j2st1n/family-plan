@@ -102,7 +102,7 @@ export default function SharePosterModal({
           </button>
         </div>
 
-        <div className="ios-sheet-body" style={{ textAlign: "center", padding: "16px 20px 24px" }}>
+        <div className="ios-sheet-body" style={{ textAlign: "center", padding: "16px 20px calc(24px + env(safe-area-inset-bottom, 16px))" }}>
           {/* Offscreen Canvas for Retina 2x Rendering */}
           <canvas ref={canvasRef} style={{ display: "none" }} />
 

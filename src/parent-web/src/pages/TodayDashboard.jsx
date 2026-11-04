@@ -537,8 +537,8 @@ export default function TodayDashboard({
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "32px",
-              height: "32px",
+              width: "36px",
+              height: "36px",
               borderRadius: "50%",
               backgroundColor: "rgba(0, 113, 227, 0.08)",
               border: "none",
@@ -547,7 +547,7 @@ export default function TodayDashboard({
               transition: "all 0.15s ease",
             }}
           >
-            <ShareIcon size={17} color="var(--accent)" />
+            <ShareIcon size={18} color="var(--accent)" />
           </button>
         </div>
       </div>

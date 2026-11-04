@@ -69,7 +69,7 @@ export default function SharePosterModal({
       const res = await shareOrDownloadPoster(canvasRef.current, {
         childName,
         dateStr,
-        title: `${childName}的今日自律成就卡`,
+        title: `${childName}的自律成长成就卡`,
         text: `看！这是 ${childName} 在 ${dateStr} 的自律成长成就卡，太棒啦！`,
       });
       if (res.method === "download") {
@@ -102,7 +102,7 @@ export default function SharePosterModal({
           </button>
         </div>
 
-        <div className="ios-sheet-body" style={{ textAlign: "center", padding: "16px 20px 24px" }}>
+        <div className="ios-sheet-body" style={{ textAlign: "center", padding: "16px 20px calc(24px + env(safe-area-inset-bottom, 16px))" }}>
           {/* Offscreen Canvas for Retina 2x Rendering */}
           <canvas ref={canvasRef} style={{ display: "none" }} />
 
