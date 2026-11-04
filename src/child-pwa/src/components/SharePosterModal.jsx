@@ -49,7 +49,7 @@ export default function SharePosterModal({
     } finally {
       setIsGenerating(false);
     }
-  }, [childName, dateStr, completionRate, completedCount, totalCount, streakDays, stars, tasks, quote]);
+  }, [childName, dateStr, completionRate, completedCount, totalCount, streakDays, stars, starsToday, tasks, quote]);
 
   useEffect(() => {
     if (open) {
