@@ -236,18 +236,33 @@ export default function TaskCopilotModal({
                 <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--accent)" }}>
                   💡 {result.raw_summary}
                 </span>
-                {result.is_degraded && (
+                {result.is_degraded ? (
                   <span
                     style={{
                       fontSize: "0.72rem",
-                      padding: "2px 6px",
+                      padding: "2px 8px",
                       borderRadius: "var(--radius-pill)",
                       backgroundColor: "var(--card-subtle)",
                       border: "1px solid var(--border)",
                       color: "var(--muted)",
                     }}
+                    title="模型响应超时或未开启，已由本地启发式规则毫秒级极速生成"
                   >
-                    离线极速模式
+                    本地规则兜底
+                  </span>
+                ) : (
+                  <span
+                    style={{
+                      fontSize: "0.72rem",
+                      padding: "2px 8px",
+                      borderRadius: "var(--radius-pill)",
+                      backgroundColor: "#E8F8ED",
+                      border: "1px solid #85E09B",
+                      color: "#1E7B34",
+                      fontWeight: 600,
+                    }}
+                  >
+                    AI 深度生成
                   </span>
                 )}
               </div>

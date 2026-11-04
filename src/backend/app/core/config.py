@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     ai_base_url: str = ""
     ai_api_key: str = ""
     ai_model: str = "deepseek-chat"
-    ai_timeout_seconds: float = 2.5
+    ai_timeout_seconds: float = 15.0
     ai_circuit_breaker_max_failures: int = 3
     ai_circuit_breaker_reset_timeout: float = 60.0
 

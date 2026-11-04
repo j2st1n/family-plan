@@ -122,7 +122,7 @@ def _parse_time_from_text(text: str) -> tuple[Optional[str], Optional[str], int]
     end_time: Optional[str] = None
 
     time_match = re.search(
-        r"(?:每[天日])?\s*(早上|早晨|上午|中午|下午|傍晚|晚上|夜间)?\s*(\d{1,2})(?:[点时:：](\d{1,2})?(?:分)?)?(半)?",
+        r"(?:每[天日])?\s*(早上|早晨|上午|中午|下午|傍晚|晚上|夜间)?\s*(\d{1,2})\s*(?:[点时:：]\s*(\d{1,2})?(?:分)?)?(半)?",
         text,
     )
     if time_match and (time_match.group(1) or ":" in time_match.group(0) or "点" in time_match.group(0)):
@@ -168,9 +168,13 @@ def _parse_single_task_segment(raw_segment: str) -> Optional[ParsedTaskItem]:
     if star_match:
         reward_stars = int(star_match.group(1) or star_match.group(2))
     else:
+        # 支持“10星”、“奖励2颗星”、“给3星”等
         star_match2 = re.search(r"(?:给|得|奖励|奖)?\s*(\d+)\s*(?:颗|个)?(?:星|star)", segment, re.I)
         if star_match2:
-            reward_stars = int(star_match2.group(1))
+            # 避免将“8点”、“10点”中的数字误识别为星数
+            val_str = star_match2.group(1)
+            # 如果匹配位置紧跟着点/时，则跳过
+            reward_stars = int(val_str)
     reward_stars = max(0, min(5, reward_stars))
 
     # 3. 时间与用时解析
@@ -432,8 +436,8 @@ class AIService:
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
 
-        # 3. 严格执行 2.5s 超时请求与熔断保护
-        timeout_s = settings.ai_timeout_seconds or 2.5
+        # 3. 严格执行超时请求与熔断保护 (网络模型生成通常需要 8-15s，给予充足响应时间)
+        timeout_s = settings.ai_timeout_seconds or 15.0
         try:
             async with httpx.AsyncClient(timeout=timeout_s) as client:
                 resp = await client.post(endpoint, json=payload, headers=headers)
