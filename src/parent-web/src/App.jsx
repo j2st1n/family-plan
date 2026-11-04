@@ -137,16 +137,14 @@ export default function App() {
     <>
       {/* iOS Frosted Navigation Bar */}
       <header className="app-header">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-          <span style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "-0.02em", color: "var(--text)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+          <span style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "-0.02em", color: "var(--text)", whiteSpace: "nowrap" }}>
             {tab === "today" ? "今天" : tab === "analytics" ? "成长统计" : tab === "shop" ? "星星商城" : "设置"}
           </span>
           {activeChild && (
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ fontSize: "0.82rem", color: "var(--muted)", fontWeight: 500 }}>
-                {activeChild.name}
-              </span>
-            </div>
+            <span style={{ fontSize: "0.82rem", color: "var(--muted)", fontWeight: 500, whiteSpace: "nowrap" }}>
+              · {activeChild.name}
+            </span>
           )}
         </div>
 

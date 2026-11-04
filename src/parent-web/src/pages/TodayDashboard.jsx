@@ -690,15 +690,15 @@ export default function TodayDashboard({
         </div>
       </div>
 
-      {/* 快捷操作入口条 */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
+      {/* 快捷操作入口条 (iOS 人机工程学尺寸，避免全宽劈叉拉伸) */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "16px", justifyContent: "flex-end" }}>
         <button
           type="button"
           onClick={() => setShowCopilot(true)}
           className="ios-btn-secondary"
-          style={{ flex: 1, padding: "10px 14px", fontSize: "0.88rem" }}
+          style={{ flex: "0 1 auto", padding: "8px 16px", fontSize: "0.85rem", whiteSpace: "nowrap" }}
         >
-          <SparklesIcon size={16} />
+          <SparklesIcon size={15} />
           <span>AI 建议建任务</span>
         </button>
 
@@ -706,9 +706,9 @@ export default function TodayDashboard({
           type="button"
           className="ios-btn-primary"
           onClick={openAddTaskModal}
-          style={{ flex: 1, padding: "10px 14px", fontSize: "0.88rem" }}
+          style={{ flex: "0 1 auto", padding: "8px 18px", fontSize: "0.85rem", whiteSpace: "nowrap" }}
         >
-          <PlusIcon size={16} />
+          <PlusIcon size={15} />
           <span>添加日常任务</span>
         </button>
       </div>

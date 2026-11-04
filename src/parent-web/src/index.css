@@ -260,11 +260,13 @@ h1, h2, h3, h4, .display-text {
     display: flex;
     gap: 6px;
     align-items: center;
+    flex-shrink: 0;
   }
 
   .desktop-nav-btn {
     position: relative;
     display: inline-flex;
+    flex-direction: row;
     align-items: center;
     gap: 6px;
     padding: 6px 14px;
@@ -275,7 +277,15 @@ h1, h2, h3, h4, .display-text {
     color: var(--muted);
     background: transparent;
     cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    line-height: 1;
     transition: all 0.15s ease;
+  }
+
+  .desktop-nav-btn span {
+    white-space: nowrap;
+    display: inline-block;
   }
 
   .desktop-nav-btn:hover {
