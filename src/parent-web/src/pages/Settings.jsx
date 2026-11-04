@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import api from "../api.js";
 import { useFeedback } from "../components/FeedbackContext.jsx";
 import WarmEmptyState from "../components/WarmEmptyState.jsx";
-import { UserGroupIcon, IpadIcon, RepeatIcon, ShieldFreezeIcon, ChevronRight } from "../components/Icons.jsx";
+import { UserGroupIcon, IpadIcon, RepeatIcon, ShieldFreezeIcon, ChevronRight, SparklesIcon, LockIcon, EyeIcon, EyeOffIcon } from "../components/Icons.jsx";
 
 const GRADE_OPTIONS = {
   幼儿园: ["小班", "中班", "大班"],
@@ -46,6 +46,33 @@ const WEEKDAYS = [
   { id: 5, label: "五" },
   { id: 6, label: "六" },
   { id: 7, label: "日" },
+];
+
+const AI_PRESETS = [
+  {
+    id: "deepseek",
+    label: "DeepSeek",
+    defaultBaseUrl: "https://api.deepseek.com/v1",
+    defaultModel: "deepseek-chat",
+  },
+  {
+    id: "openai",
+    label: "OpenAI",
+    defaultBaseUrl: "https://api.openai.com/v1",
+    defaultModel: "gpt-4o-mini",
+  },
+  {
+    id: "ollama",
+    label: "本地 Ollama",
+    defaultBaseUrl: "http://localhost:11434/v1",
+    defaultModel: "qwen2.5:7b",
+  },
+  {
+    id: "custom",
+    label: "自定义中转",
+    defaultBaseUrl: "",
+    defaultModel: "gpt-4o-mini",
+  },
 ];
 
 export default function Settings({
@@ -104,6 +131,117 @@ export default function Settings({
   const [freezeAdjustDelta, setFreezeAdjustDelta] = useState(null);
   const [freezeAdjustReason, setFreezeAdjustReason] = useState("");
   const [adjustingFreeze, setAdjustingFreeze] = useState(false);
+
+  // AI Settings state
+  const [aiSettings, setAiSettings] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [savingAiSettings, setSavingAiSettings] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [aiForm, setAiForm] = useState({
+    provider: "deepseek",
+    base_url: "https://api.deepseek.com/v1",
+    api_key: "",
+    model: "deepseek-chat",
+    is_enabled: true,
+  });
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+
+  const loadAiSettings = useCallback(async () => {
+    if (!token) return;
+    setAiLoading(true);
+    try {
+      const data = await api.fetchAiSettings(token);
+      setAiSettings(data);
+      setAiForm({
+        provider: data.provider || "deepseek",
+        base_url: data.base_url || "https://api.deepseek.com/v1",
+        api_key: "",
+        model: data.model || "deepseek-chat",
+        is_enabled: data.is_enabled ?? true,
+      });
+    } catch (err) {
+      console.warn("加载 AI 设置失败", err);
+    } finally {
+      setAiLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    loadAiSettings();
+  }, [loadAiSettings]);
+
+  const handleSelectAiProvider = (provId) => {
+    const preset = AI_PRESETS.find((p) => p.id === provId);
+    setAiForm((prev) => ({
+      ...prev,
+      provider: provId,
+      base_url: preset?.defaultBaseUrl ?? prev.base_url,
+      model: preset?.defaultModel ?? prev.model,
+    }));
+    setTestResult(null);
+  };
+
+  const handleSaveAiSettings = async () => {
+    if (!token) return;
+    setSavingAiSettings(true);
+    try {
+      const payload = {
+        provider: aiForm.provider,
+        base_url: aiForm.base_url.trim(),
+        model: aiForm.model.trim() || "deepseek-chat",
+        is_enabled: aiForm.is_enabled,
+      };
+      if (aiForm.api_key.trim()) {
+        payload.api_key = aiForm.api_key.trim();
+      }
+      const updated = await api.updateAiSettings(token, payload);
+      setAiSettings(updated);
+      setAiForm((prev) => ({
+        ...prev,
+        provider: updated.provider,
+        base_url: updated.base_url,
+        model: updated.model,
+        api_key: "",
+        is_enabled: updated.is_enabled,
+      }));
+      toast.success("AI 智能助手设置已保存");
+      setActiveDrawer(null);
+    } catch (err) {
+      toast.error("保存失败: " + (err.message || "未知错误"));
+    } finally {
+      setSavingAiSettings(false);
+    }
+  };
+
+  const handleTestAiConnection = async () => {
+    if (!token) return;
+    setTestingConnection(true);
+    setTestResult(null);
+    try {
+      const payload = {
+        provider: aiForm.provider,
+        base_url: aiForm.base_url.trim(),
+        model: aiForm.model.trim(),
+      };
+      if (aiForm.api_key.trim()) {
+        payload.api_key = aiForm.api_key.trim();
+      }
+      const res = await api.testAiConnection(token, payload);
+      setTestResult(res);
+      if (res.success) {
+        toast.success(`连接成功 (${res.latency_ms}ms)`);
+      } else {
+        toast.error(res.message || "探测失败");
+      }
+    } catch (err) {
+      const errRes = { success: false, message: err.message || "连接失败" };
+      setTestResult(errRes);
+      toast.error(errRes.message);
+    } finally {
+      setTestingConnection(false);
+    }
+  };
 
   const loadFreezeData = useCallback(async () => {
     if (!token || !freezeChildId) return;
@@ -483,6 +621,24 @@ export default function Settings({
             <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)" }}>连击保护卡</span>
             <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
               防断签护航 · 持有张数、兑换星数与月度补给
+            </span>
+          </div>
+          <ChevronRight size={16} />
+        </button>
+
+        {/* Item 5: AI 智能助手 */}
+        <button
+          type="button"
+          className="ios-list-row"
+          onClick={() => setActiveDrawer("aiSettings")}
+        >
+          <div className="ios-squircle-icon squircle-indigo">
+            <SparklesIcon size={18} />
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)" }}>✦ AI 智能助手</span>
+            <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
+              {aiSettings?.active_mode || "纯离线规则"} · 智能分词与任务解析
             </span>
           </div>
           <ChevronRight size={16} />
@@ -1197,6 +1353,243 @@ export default function Settings({
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          Drawer 5: AI 智能助手设置 (iOS Grouped Sheet)
+          ========================================================================= */}
+      {activeDrawer === "aiSettings" && (
+        <div className="ios-sheet-overlay" onClick={() => setActiveDrawer(null)}>
+          <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-handle-bar" />
+            <div className="ios-sheet-header">
+              <button
+                type="button"
+                className="ios-sheet-nav-btn"
+                onClick={() => setActiveDrawer(null)}
+              >
+                取消
+              </button>
+              <span className="ios-sheet-header-title">AI 智能助手</span>
+              <button
+                type="button"
+                className="ios-sheet-nav-action-btn"
+                disabled={savingAiSettings}
+                onClick={handleSaveAiSettings}
+              >
+                {savingAiSettings ? "保存中..." : "保存"}
+              </button>
+            </div>
+
+            <div className="ios-sheet-body">
+              {/* 模式状态横幅与说明 */}
+              <div style={{ marginBottom: "16px", padding: "0 4px" }}>
+                <div style={{ fontSize: "0.82rem", color: "var(--muted)", lineHeight: 1.5 }}>
+                  配置家长端大语言模型，用于一句话自然语言拆解任务与四维习惯分类。支持云端官方 API、自定义反向代理与本地局域网 Ollama 模型。
+                </div>
+              </div>
+
+              {/* 卡片 0: 启用开关 */}
+              <div className="ios-grouped-card" style={{ marginBottom: "16px" }}>
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: "0.92rem", fontWeight: 600, color: "var(--text)" }}>
+                      启用 AI 助手
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>
+                      关闭后将始终使用极速确定性离线规则解析任务
+                    </div>
+                  </div>
+                  <div
+                    className={`ios-switch ${aiForm.is_enabled ? "on" : ""}`}
+                    onClick={() => setAiForm((prev) => ({ ...prev, is_enabled: !prev.is_enabled }))}
+                    role="switch"
+                    aria-checked={aiForm.is_enabled}
+                  >
+                    <div className="ios-switch-thumb" />
+                  </div>
+                </div>
+              </div>
+
+              {/* 卡片 1: 服务商快捷分段器 */}
+              <div className="ios-grouped-card" style={{ marginBottom: "16px", padding: "14px 16px" }}>
+                <div style={{ fontSize: "0.82rem", color: "var(--muted)", fontWeight: 600, marginBottom: "10px" }}>
+                  服务商快捷选择
+                </div>
+                <div className="ios-segmented-control" style={{ width: "100%" }}>
+                  {AI_PRESETS.map((prov) => (
+                    <button
+                      key={prov.id}
+                      type="button"
+                      className={`ios-segment-item ${aiForm.provider === prov.id ? "active" : ""}`}
+                      onClick={() => handleSelectAiProvider(prov.id)}
+                    >
+                      {prov.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 卡片 2: Inset Grouped TableView 表单 (Base URL, API Key 带眼睛与加密锁, Model) */}
+              <div className="ios-grouped-card" style={{ marginBottom: "16px" }}>
+                {/* Row 1: Base URL */}
+                <div style={{ padding: "12px 16px" }}>
+                  <div style={{ fontSize: "0.78rem", color: "var(--muted)", fontWeight: 500, marginBottom: "4px" }}>
+                    接口地址 (Base URL)
+                  </div>
+                  <input
+                    type="text"
+                    value={aiForm.base_url}
+                    onChange={(e) => setAiForm({ ...aiForm, base_url: e.target.value })}
+                    placeholder="https://api.deepseek.com/v1"
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      fontSize: "0.95rem",
+                      color: "var(--text)",
+                      fontFamily: "inherit",
+                    }}
+                  />
+                </div>
+
+                <div className="ios-separator" />
+
+                {/* Row 2: API Key */}
+                <div style={{ padding: "12px 16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                    <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontWeight: 500 }}>
+                      API Key
+                    </span>
+                    {aiSettings?.has_api_key && !aiForm.api_key && (
+                      <span style={{ fontSize: "0.72rem", color: "#34C759", fontWeight: 500 }}>
+                        已配置并加密
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <input
+                      type={showApiKey ? "text" : "password"}
+                      value={aiForm.api_key}
+                      onChange={(e) => setAiForm({ ...aiForm, api_key: e.target.value })}
+                      placeholder={
+                        aiSettings?.has_api_key
+                          ? (aiSettings.api_key_masked || "sk-••••••••")
+                          : (aiForm.provider === "ollama" ? "本地 Ollama 无需 Key (可留空)" : "请输入 sk- 开头的 API Key")
+                      }
+                      style={{
+                        flex: 1,
+                        border: "none",
+                        outline: "none",
+                        background: "transparent",
+                        fontSize: "0.95rem",
+                        color: "var(--text)",
+                        fontFamily: "inherit",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "4px",
+                        color: "var(--muted)",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                      title={showApiKey ? "隐藏密码" : "查看明文"}
+                    >
+                      {showApiKey ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "6px" }}>
+                    <LockIcon size={12} color="var(--muted)" />
+                    <span style={{ fontSize: "0.72rem", color: "var(--muted)" }}>
+                      {aiSettings?.has_api_key && !aiForm.api_key
+                        ? `当前状态：已安全加密 (${aiSettings.api_key_masked})，留空提交将保持原配置`
+                        : "采用 AES-256-GCM 服务端密钥派生加密存储，绝不泄露明文"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="ios-separator" />
+
+                {/* Row 3: Model 名称 */}
+                <div style={{ padding: "12px 16px" }}>
+                  <div style={{ fontSize: "0.78rem", color: "var(--muted)", fontWeight: 500, marginBottom: "4px" }}>
+                    模型标识 (Model)
+                  </div>
+                  <input
+                    type="text"
+                    value={aiForm.model}
+                    onChange={(e) => setAiForm({ ...aiForm, model: e.target.value })}
+                    placeholder="deepseek-chat"
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      fontSize: "0.95rem",
+                      color: "var(--text)",
+                      fontFamily: "inherit",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* 卡片 3: 行内「测试连接」胶囊按钮，显示探测动画与绿色毫秒耗时/友好错误提示 */}
+              <div className="ios-grouped-card" style={{ marginBottom: "16px", padding: "13px 16px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--text)", marginBottom: "3px" }}>
+                      连通性测试
+                    </div>
+                    <div style={{ fontSize: "0.76rem", lineHeight: 1.35 }}>
+                      {testingConnection ? (
+                        <span style={{ color: "var(--accent)", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                          <span className="probe-spinner" /> 正在向端点发送轻量 ping 探测...
+                        </span>
+                      ) : testResult ? (
+                        testResult.success ? (
+                          <span style={{ color: "#34C759", fontWeight: 600 }}>
+                            ✓ {testResult.message}
+                          </span>
+                        ) : (
+                          <span style={{ color: "var(--danger)" }}>
+                            ✕ {testResult.message}
+                          </span>
+                        )
+                      ) : (
+                        <span style={{ color: "var(--muted)" }}>
+                          测试当前 Base URL 与 Key 是否能正常响应模型请求
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="capsule-btn capsule-accent"
+                    onClick={handleTestAiConnection}
+                    disabled={testingConnection}
+                    style={{ flexShrink: 0 }}
+                  >
+                    {testingConnection ? "探测中..." : "测试连接"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

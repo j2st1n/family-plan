@@ -528,9 +528,25 @@ textarea {
 .squircle-blue   { background-color: #007AFF; }
 .squircle-orange { background-color: #FF9500; }
 .squircle-purple { background-color: #AF52DE; }
+.squircle-indigo { background-color: #5856D6; }
 .squircle-teal   { background-color: #30B0C7; }
 .squircle-green  { background-color: #34C759; }
 .squircle-red    { background-color: #FF3B30; }
+
+@keyframes probeSpin {
+  to { transform: rotate(360deg); }
+}
+
+.probe-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(0, 113, 227, 0.25);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: probeSpin 0.7s linear infinite;
+  vertical-align: middle;
+}
 
 /* 5. iOS Primary & Secondary Buttons */
 .ios-btn-primary {

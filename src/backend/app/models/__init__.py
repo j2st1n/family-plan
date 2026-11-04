@@ -8,6 +8,7 @@ from app.models.child_streak_freeze_usage import ChildStreakFreezeUsage
 from app.models.child_vacation import ChildVacation
 from app.models.daily_task import DailyTask
 from app.models.parent import Parent
+from app.models.parent_ai_settings import ParentAISettings
 from app.models.plan import Plan
 from app.models.redemption import Redemption
 from app.models.reward_ledger import RewardLedger
@@ -26,6 +27,7 @@ __all__ = [
     "ChildVacation",
     "DailyTask",
     "Parent",
+    "ParentAISettings",
     "Plan",
     "Redemption",
     "RewardLedger",

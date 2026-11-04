@@ -330,14 +330,53 @@ class AIService:
         prompt: str,
         child_id: Optional[Any] = None,
         target_date: Optional[date] = None,
+        parent: Optional[Any] = None,
+        db: Optional[Any] = None,
     ) -> CopilotParseResult:
-        # 1. 检查 API Key 配置与熔断器状态
-        api_key = settings.ai_api_key.strip()
-        base_url = (settings.ai_base_url or "").rstrip("/")
+        # 1. 优先检查家长个性化模型配置，未配置则回退全局环境变量
+        parent_settings = None
+        if parent is not None:
+            if hasattr(parent, "ai_settings") and parent.ai_settings is not None:
+                parent_settings = parent.ai_settings
+            elif db is not None and hasattr(parent, "id"):
+                from app.models.parent_ai_settings import ParentAISettings
+                parent_settings = db.query(ParentAISettings).filter(ParentAISettings.parent_id == parent.id).first()
 
-        if not api_key or settings.ai_backend == "local_fallback":
-            logger.info("AI Service disabled or unconfigured. Using deterministic fallback.")
-            return heuristic_parse_tasks(prompt, target_date)
+        if parent_settings is not None:
+            if not parent_settings.is_enabled:
+                logger.info("AI Copilot is disabled in parent settings. Using deterministic fallback.")
+                return heuristic_parse_tasks(prompt, target_date)
+
+            provider = (parent_settings.provider or "deepseek").lower()
+            base_url = (parent_settings.base_url or "").strip().rstrip("/")
+            if not base_url:
+                if provider == "deepseek":
+                    base_url = "https://api.deepseek.com/v1"
+                elif provider == "openai":
+                    base_url = "https://api.openai.com/v1"
+                elif provider == "ollama":
+                    base_url = "http://localhost:11434/v1"
+                else:
+                    base_url = "https://api.deepseek.com/v1"
+
+            model = parent_settings.model or "deepseek-chat"
+            from app.core.ai_crypto import decrypt_ai_api_key
+            api_key = decrypt_ai_api_key(parent_settings.api_key_encrypted) or ""
+
+            # 本地 Ollama 无需 API Key；其他提供商如无 Key 则尝试系统 Key，最终回退离线规则
+            if provider != "ollama" and not api_key:
+                if settings.ai_api_key and settings.ai_backend != "local_fallback":
+                    api_key = settings.ai_api_key.strip()
+                else:
+                    logger.info("No AI API Key configured for parent. Downgrading to deterministic fallback.")
+                    return heuristic_parse_tasks(prompt, target_date)
+        else:
+            api_key = settings.ai_api_key.strip()
+            base_url = (settings.ai_base_url or "").rstrip("/")
+            model = settings.ai_model or "deepseek-chat"
+            if not api_key or settings.ai_backend == "local_fallback":
+                logger.info("AI Service disabled or unconfigured. Using deterministic fallback.")
+                return heuristic_parse_tasks(prompt, target_date)
 
         if not self.circuit_breaker.can_attempt():
             logger.warning("AI CircuitBreaker is OPEN. Skipping model call, invoking fallback.")
@@ -369,9 +408,16 @@ class AIService:
 
         user_content = f"家长录入内容：{prompt}\n当前基准日期：{today_date.isoformat()}"
 
-        endpoint = f"{base_url}/chat/completions" if base_url else "https://api.deepseek.com/v1/chat/completions"
+        clean_base = base_url.rstrip("/") if base_url else "https://api.deepseek.com/v1"
+        if clean_base.endswith("/chat/completions"):
+            endpoint = clean_base
+        elif clean_base.endswith("/v1"):
+            endpoint = f"{clean_base}/chat/completions"
+        else:
+            endpoint = f"{clean_base}/v1/chat/completions"
+
         payload = {
-            "model": settings.ai_model or "deepseek-chat",
+            "model": model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_content},
@@ -381,9 +427,10 @@ class AIService:
         }
 
         headers = {
-            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         }
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
 
         # 3. 严格执行 2.5s 超时请求与熔断保护
         timeout_s = settings.ai_timeout_seconds or 2.5

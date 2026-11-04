@@ -246,6 +246,26 @@ const api = {
   fetchAiHealth(token) {
     return request("/ai/health", { headers: h(token) });
   },
+
+  fetchAiSettings(token) {
+    return request("/ai/settings", { headers: h(token) });
+  },
+
+  updateAiSettings(token, data) {
+    return request("/ai/settings", {
+      method: "PUT",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
+  },
+
+  testAiConnection(token, data) {
+    return request("/ai/test-connection", {
+      method: "POST",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
+  },
 };
 
 export default api;
