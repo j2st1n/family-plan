@@ -239,34 +239,45 @@ export function drawGrowthPoster(canvas, {
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
   ctx.fillText("今日达成", 78, 172);
 
-  // 右侧核心勋章两行
+  // 右侧核心信息（专注成长状态与徽章，绝不与下方三指标卡重复）
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
 
-  // 行 1: 🔥 连胜勋章 (累计)
+  // 行 1: 🔥 连续坚持记录
   ctx.font = "700 13px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.warmGold;
-  ctx.fillText(`🔥 累计连胜：${streakDays} 天`, 130, 142);
+  ctx.fillText(`🔥 连续自律：${streakDays} 天`, 130, 142);
 
   ctx.font = "400 10px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
-  ctx.fillText("自律好习惯正在持续巩固", 130, 158);
+  ctx.fillText(streakDays >= 3 ? "自律好习惯正在持续巩固" : "坚持打卡即可点亮连胜徽章", 130, 158);
 
-  // 行 2: ⭐ 累积总星池 (累计)
+  // 行 2: 🏅 今日成长段位/评价 (动态徽章，杜绝与下方的星星指标卡重复)
+  const badgeTitle = completionRate === 100
+    ? "🏅 今日表现：圆满达标"
+    : completionRate >= 50
+    ? "🚀 今日表现：渐入佳境"
+    : "🌱 今日表现：自律起航";
+  const badgeSub = completionRate === 100
+    ? "所有任务全部完成，太棒了！"
+    : completionRate >= 50
+    ? "已完成过半，继续冲刺！"
+    : "点滴行动，迈出自律第一步";
+
   ctx.font = "700 13px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
-  ctx.fillStyle = APPLE_SYSTEM_COLORS.warmGold;
-  ctx.fillText(`⭐ 累计总星池：${Number(stars).toFixed(0)} 颗`, 130, 180);
+  ctx.fillStyle = completionRate === 100 ? APPLE_SYSTEM_COLORS.forestGreen : APPLE_SYSTEM_COLORS.appleBlue;
+  ctx.fillText(badgeTitle, 130, 180);
 
   ctx.font = "400 10px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
-  ctx.fillText(starsToday > 0 ? `今日已斩获 +${starsToday} 颗新星奖励` : "完成今日任务即可获得星星", 130, 196);
+  ctx.fillText(badgeSub, 130, 196);
 
-  // 6. 3 个关键指标卡 (清晰区分：当日进展 vs 长期累计)
+  // 6. 3 个关键指标卡 (三栏分别呈现独立且唯一的度量指标，零冗余)
   const colW = 94;
   const colH = 50;
   const colY = 222;
 
-  // 卡 1: 当日完成项 (当日)
+  // 卡 1: 当日完成项 (当日维度)
   ctx.beginPath();
   drawRoundedRect(ctx, 28, colY, colW, colH, 10);
   ctx.fillStyle = APPLE_SYSTEM_COLORS.pureLightGray;
@@ -279,7 +290,7 @@ export function drawGrowthPoster(canvas, {
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
   ctx.fillText("当日完成", 28 + colW / 2, colY + 36);
 
-  // 卡 2: 当日获得星星 (当日)
+  // 卡 2: 当日获得星星 (当日增量维度)
   ctx.beginPath();
   drawRoundedRect(ctx, 133, colY, colW, colH, 10);
   ctx.fillStyle = APPLE_SYSTEM_COLORS.pureLightGray;
@@ -292,7 +303,7 @@ export function drawGrowthPoster(canvas, {
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
   ctx.fillText("⭐ 当日奖励", 133 + colW / 2, colY + 36);
 
-  // 卡 3: 累积总星池 (累计)
+  // 卡 3: 累积总星池 (唯一累计总资产呈现处)
   ctx.beginPath();
   drawRoundedRect(ctx, 238, colY, colW, colH, 10);
   ctx.fillStyle = APPLE_SYSTEM_COLORS.pureLightGray;
