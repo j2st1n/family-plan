@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchToday, completeTask, createChildTask, scheduleChildTask, updateChildTask, deleteChildTask } from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
+import TaskShareDialog from "../../../shared-web/TaskShareDialog.jsx";
+import { isValidTaskDate } from "../../../shared-web/date.js";
+import { createChildTaskShareSnapshot } from "../utils/taskShareSnapshot.js";
 
 const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -21,44 +24,69 @@ export default function Today({ child, onExpired, active }) {
   const [scheduleForm, setScheduleForm] = useState({ start: "", end: "" });
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", minutes: "", stars: 1, start: "", end: "" });
+  const [shareSnapshot, setShareSnapshot] = useState(null);
+  const [savingTask, setSavingTask] = useState(false);
+  const mutationBusy = useRef(false);
+  const loadSequence = useRef(0);
 
   const load = useCallback(async () => {
+    const sequence = ++loadSequence.current;
     setLoading(true); setError("");
-    try { const result = await fetchToday(); setData(result); }
-    catch (err) { if (err.message === "token_expired") onExpired(); else setError("加载失败，请重试"); }
-    finally { setLoading(false); }
+    try { const result = await fetchToday(); if (sequence === loadSequence.current) setData(result); }
+    catch (err) { if (sequence === loadSequence.current) { if (err.message === "token_expired") onExpired(); else setError("加载失败，请重试"); } }
+    finally { if (sequence === loadSequence.current) setLoading(false); }
   }, [onExpired]);
 
   useEffect(() => { if (active) load(); }, [load, active]);
   useSseRefresh({ enabled: active, topics: ["tasks", "settings"], onRefresh: load, onExpired });
   useVisibilityRefresh({ enabled: active, onRefresh: load });
 
+  async function runTaskAction(action) {
+    if (mutationBusy.current) return;
+    mutationBusy.current = true; setSavingTask(true);
+    try { await action(); await load(); }
+    catch { setError("操作失败，请重试"); }
+    finally { mutationBusy.current = false; setSavingTask(false); }
+  }
+
   async function handleComplete(task) {
+    if (mutationBusy.current) return;
     setCompletingId(task.id);
-    try {
+    await runTaskAction(async () => {
       const result = await completeTask(task.id, "easy");
       setJustCompleted({ id: task.id, title: task.title, stars: result.stars_awarded });
-      setTimeout(() => setJustCompleted(null), 2500); load();
-    } catch { setError("操作失败"); } finally { setCompletingId(null); }
+      setTimeout(() => setJustCompleted(null), 2500);
+    });
+    setCompletingId(null);
   }
 
   async function handleCreateTask() {
     if (!newForm.title.trim() || !newForm.minutes || parseInt(newForm.minutes) < 1) return;
-    await createChildTask({ title: newForm.title.trim(), expected_minutes: parseInt(newForm.minutes), reward_stars: newForm.stars, scheduled_start: newForm.start || null, scheduled_end: newForm.end || null });
-    setNewForm({ title: "", minutes: "", stars: 1, start: "", end: "" }); setShowAdd(false); load();
+    await runTaskAction(async () => {
+      await createChildTask({ title: newForm.title.trim(), expected_minutes: parseInt(newForm.minutes), reward_stars: newForm.stars, scheduled_start: newForm.start || null, scheduled_end: newForm.end || null });
+      setNewForm({ title: "", minutes: "", stars: 1, start: "", end: "" }); setShowAdd(false);
+    });
   }
 
   async function handleSchedule(taskId) {
     if (!scheduleForm.start || !scheduleForm.end) return;
-    await scheduleChildTask(taskId, scheduleForm.start, scheduleForm.end);
-    setSchedulingId(null); setScheduleForm({ start: "", end: "" }); load();
+    await runTaskAction(async () => {
+      await scheduleChildTask(taskId, scheduleForm.start, scheduleForm.end);
+      setSchedulingId(null); setScheduleForm({ start: "", end: "" });
+    });
   }
 
   function startSchedule(task) { setSchedulingId(task.id); setScheduleForm({ start: task.scheduled_start || "", end: task.scheduled_end || "" }); }
 
   function startEdit(task) { setEditingId(task.id); setEditForm({ title: task.title, minutes: task.expected_minutes?.toString() || "", stars: task.reward_stars, start: task.scheduled_start || "", end: task.scheduled_end || "" }); }
-  async function handleSaveEdit() { if (!editingId || !editForm.title.trim() || !editForm.minutes || parseInt(editForm.minutes) < 1) return; await updateChildTask(editingId, { title: editForm.title.trim(), expected_minutes: parseInt(editForm.minutes), reward_stars: editForm.stars, scheduled_start: editForm.start || null, scheduled_end: editForm.end || null }); setEditingId(null); load(); }
-  async function handleDelete(taskId) { if (!window.confirm("删除这个任务？")) return; await deleteChildTask(taskId); load(); }
+  async function handleSaveEdit() { if (!editingId || !editForm.title.trim() || !editForm.minutes || parseInt(editForm.minutes) < 1) return; await runTaskAction(async () => { await updateChildTask(editingId, { title: editForm.title.trim(), expected_minutes: parseInt(editForm.minutes), reward_stars: editForm.stars, scheduled_start: editForm.start || null, scheduled_end: editForm.end || null }); setEditingId(null); }); }
+  async function handleDelete(taskId) { if (mutationBusy.current || !window.confirm("删除这个任务？")) return; await runTaskAction(() => deleteChildTask(taskId)); }
+
+  function openShare() {
+    if (loading || error || mutationBusy.current) return;
+    const snapshot = createChildTaskShareSnapshot(data, child?.name);
+    if (snapshot) setShareSnapshot(snapshot);
+  }
 
   function scheduleLabel(t) {
     if (t.scheduled_start) return `${t.scheduled_start}—${t.scheduled_end}`;
@@ -66,6 +94,7 @@ export default function Today({ child, onExpired, active }) {
   }
 
   const today = new Date();
+  if (isValidTaskDate(data?.date)) { const [year, month, day] = data.date.split("-").map(Number); today.setFullYear(year, month - 1, day); }
   const dayLabel = DAY_NAMES[today.getDay()];
   const dateStr = `${today.getMonth() + 1}月${today.getDate()}日 星期${dayLabel}`;
 
@@ -74,12 +103,20 @@ export default function Today({ child, onExpired, active }) {
   const completed = (data?.tasks || []).filter(t => t.status === "completed");
   const [showCompleted, setShowCompleted] = useState(false);
 
-  if (loading) return <div style={{ textAlign: "center", paddingTop: "40vh", color: "#73706b" }}>加载中…</div>;
-  if (error) return <div style={{ textAlign: "center", paddingTop: "40vh" }}><p style={{ color: "#c97070", marginBottom: "1rem" }}>{error}</p><button onClick={load} style={{ color: "#3d9e6b", fontSize: "1rem" }}>重试</button></div>;
+  const shareDialog = shareSnapshot && <TaskShareDialog snapshot={shareSnapshot} nameLabel="标题显示我的姓名" onClose={() => setShareSnapshot(null)} />;
+  if (loading) return <><div style={{ textAlign: "center", paddingTop: "40vh", color: "#73706b" }}>加载中…</div>{shareDialog}</>;
+  if (error) return <><div style={{ textAlign: "center", paddingTop: "40vh" }}><p style={{ color: "#c97070", marginBottom: "1rem" }}>{error}</p><button onClick={load} style={{ color: "#3d9e6b", fontSize: "1rem" }}>重试</button></div>{shareDialog}</>;
 
   return (
+    <>
     <div>
       <div style={{ marginBottom: "1.4rem" }}><h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>你好，{child?.name ?? "小朋友"}</h1><p style={{ color: "#73706b", marginTop: "0.3rem", fontSize: "0.95rem" }}>{dateStr}</p></div>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
+        <button type="button" onClick={openShare} disabled={savingTask || !isValidTaskDate(data?.date) || !Array.isArray(data?.tasks)}
+          style={{ padding: "0.5rem 0.9rem", borderRadius: "12px", color: "#367e5b", background: "#edf3e9", fontSize: "0.85rem", fontWeight: 600, opacity: savingTask ? 0.45 : 1 }}>
+          分享图片
+        </button>
+      </div>
       <div style={{ display: "flex", gap: "0.8rem", marginBottom: "1.4rem" }}>
         <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#c4912a" }}>⭐ {formatStars(data?.rewards?.stars_total ?? 0)}</p><p style={{ fontSize: "0.75rem", color: "#73706b" }}>星星</p></div>
         <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>🔥 {data?.rewards?.current_streak_days ?? 0}</p><p style={{ fontSize: "0.8rem", color: "#73706b" }}>连续天数</p></div>
@@ -123,6 +160,8 @@ export default function Today({ child, onExpired, active }) {
 
       {justCompleted && <div style={{ position: "fixed", bottom: "30px", left: "50%", transform: "translateX(-50%)", background: "#3d9e6b", color: "#fff", padding: "0.8rem 1.5rem", borderRadius: "20px", fontSize: "1rem", fontWeight: 600, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>✅ {justCompleted.title} 完成！+{justCompleted.stars}⭐</div>}
     </div>
+    {shareDialog}
+    </>
   );
 }
 

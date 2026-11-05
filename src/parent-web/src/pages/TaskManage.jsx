@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
+import { isValidTaskDate } from "../utils/date.js";
+import TaskShareDialog from "../components/TaskShareDialog.jsx";
+import { createRefreshQueue } from "../utils/refreshQueue.js";
 
 function parseLocal(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
 function fmtDate(d) { const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, "0"); const dd = String(d.getDate()).padStart(2, "0"); return `${y}-${m}-${dd}`; }
@@ -36,36 +39,89 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
   const [showCompleted, setShowCompleted] = useState(false);
   const [taskError, setTaskError] = useState("");
   const [savingTask, setSavingTask] = useState(false);
+  const [loadedTaskDate, setLoadedTaskDate] = useState(null);
+  const [taskLoadFailed, setTaskLoadFailed] = useState(false);
+  const [shareSnapshot, setShareSnapshot] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const taskLoadSequence = useRef(0);
+  const taskReads = useRef(null);
+  const planReads = useRef(null);
+  const displayedTaskKey = useRef(null);
+  const selectedPlanId = useRef(null);
+  const currentTaskKey = `${child.id}:${plan?.id || ""}:${date}`;
+  const desiredTaskKey = useRef(currentTaskKey);
+  desiredTaskKey.current = currentTaskKey;
+  const currentChildId = useRef(child.id);
+  currentChildId.current = child.id;
+  if (!taskReads.current) taskReads.current = createRefreshQueue();
+  if (!planReads.current) planReads.current = createRefreshQueue();
 
-  const loadTasks = useCallback(async () => {
-    if (!plan) return; setLoading(true);
-    try { const data = await api.fetchDailyTasks(token, plan.id, date); setTasks(data.tasks || []); setRewards(data.rewards || { stars_total: 0, current_streak_days: 0 }); }
-    catch (error) { setTaskError(`加载任务失败：${error.message}`); }
-    finally { setLoading(false); }
-  }, [token, plan, date]);
+  const loadTasks = useCallback((options = {}) => {
+    if (!plan || (plan.child_id && plan.child_id !== child.id) || !isValidTaskDate(date)) return Promise.resolve();
+    const key = `${child.id}:${plan.id}:${date}`;
+    return taskReads.current(key, async () => {
+      if (key !== desiredTaskKey.current) return false;
+      const sequence = ++taskLoadSequence.current;
+      setLoading(displayedTaskKey.current !== key); setSyncing(true);
+      try {
+        const data = await api.fetchDailyTasks(token, plan.id, date);
+        if (sequence !== taskLoadSequence.current || key !== desiredTaskKey.current) return false;
+        setTasks(data.tasks || []); setRewards(data.rewards || { stars_total: 0, current_streak_days: 0 }); setTaskError("");
+        displayedTaskKey.current = key;
+        setLoadedTaskDate(date); setTaskLoadFailed(false);
+        return true;
+      } catch (error) {
+        if (sequence === taskLoadSequence.current && key === desiredTaskKey.current) { setTaskError(`加载任务失败：${error.message}`); setTaskLoadFailed(true); }
+        return false;
+      } finally {
+        if (sequence === taskLoadSequence.current && key === desiredTaskKey.current) { setLoading(false); setSyncing(false); }
+      }
+    }, options);
+  }, [token, plan, date, child.id]);
 
-  const loadRoutines = useCallback(async () => {
+  function selectDate(value) {
+    if (isValidTaskDate(value)) setDate(value);
+  }
+
+  function openShare() {
+    if (loading || syncing || savingTask || taskLoadFailed || loadedTaskDate !== date) return;
+    setShareSnapshot({
+      date, childName: child.name, generatedAt: new Date().toISOString(),
+      tasks: tasks.map(task => ({
+        title: task.title, status: task.status, approved: task.approved,
+        expected_minutes: task.expected_minutes, reward_stars: task.reward_stars,
+        scheduled_start: task.scheduled_start, scheduled_end: task.scheduled_end,
+      })),
+    });
+  }
+
+  const loadRoutines = useCallback((options = {}) => planReads.current(`${token}:${child.id}`, async () => {
     try {
       const plans = await api.fetchPlans(token, child.id);
-      setRoutineTasks(plans.filter(item => item.status === "active").flatMap(item => (item.tasks || []).filter(task => task.status === "active")));
-    } catch (error) { setTaskError(`加载重复任务失败：${error.message}`); }
-  }, [token, child.id]);
-
-  const refreshAll = useCallback(() => { loadTasks(); loadRoutines(); }, [loadTasks, loadRoutines]);
-
-  useEffect(() => {
-    api.fetchPlans(token, child.id).then(list => {
-      if (list.length > 0) {
-        setPlan(list.find(item => item.status === "active") || list[0]);
-        setRoutineTasks(list.filter(item => item.status === "active").flatMap(item => (item.tasks || []).filter(task => task.status === "active")));
+      if (currentChildId.current !== child.id) return false;
+      if (!plans.some(item => item.id === selectedPlanId.current)) {
+        const chosen = plans.find(item => item.status === "active") || plans[0] || null;
+        selectedPlanId.current = chosen?.id || null;
+        setPlan(chosen);
       }
-    }).catch(error => setTaskError(`加载计划失败：${error.message}`));
-  }, [token, child.id]);
+      setRoutineTasks(plans.filter(item => item.status === "active").flatMap(item => (item.tasks || []).filter(task => task.status === "active")));
+      return true;
+    } catch (error) { if (currentChildId.current === child.id) setTaskError(`加载重复任务失败：${error.message}`); return false; }
+  }, options), [token, child.id]);
+
+  const refreshAll = useCallback((options = {}) => Promise.all([loadTasks(options), loadRoutines(options)]), [loadTasks, loadRoutines]);
+
+  useEffect(() => { loadRoutines(); }, [loadRoutines]);
   useEffect(() => { loadTasks(); }, [loadTasks]);
   useSseRefresh({ token, enabled: isActive, topics: ["tasks", "settings"], childId: child.id, onRefresh: refreshAll, onExpired });
   useVisibilityRefresh({ enabled: isActive, onRefresh: refreshAll });
+  const wasActive = useRef(isActive);
+  useEffect(() => {
+    if (isActive && !wasActive.current) refreshAll();
+    wasActive.current = isActive;
+  }, [isActive, refreshAll]);
 
-  async function createDefaultPlan() { const t = fmtDate(new Date()); const p = await api.createPlan(token, { child_id: child.id, title: `${child.name}的计划`, start_date: t }); setPlan(p); setRoutineTasks([]); }
+  async function createDefaultPlan() { const t = fmtDate(new Date()); const p = await api.createPlan(token, { child_id: child.id, title: `${child.name}的计划`, start_date: t }); selectedPlanId.current = p.id; setPlan(p); setRoutineTasks([]); }
 
   async function handleAddTask() {
     if (!newTask.title.trim()) return; if (!newTask.minutes || parseInt(newTask.minutes) < 1) return;
@@ -164,10 +220,17 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}><h2 style={{ fontSize: "1.3rem", fontWeight: 700 }}>{child.name}</h2><div style={{ fontSize: "0.9rem", color: "#73706b" }}>⭐{formatStars(rewards.stars_total)} 🔥{rewards.current_streak_days}</div></div>
       {!plan && <div style={{ textAlign: "center", paddingTop: "2rem" }}><p style={{ color: "#73706b", marginBottom: "1rem" }}>请先创建计划</p><button onClick={createDefaultPlan} style={s.btn}>创建计划</button></div>}
       {plan && (<>
-        <div style={{ display: "flex", gap: "0.3rem", marginBottom: "1.2rem", alignItems: "center" }}><button onClick={() => setDate(addDays(date, -1))} style={s.arr}>←</button><label style={s.dtLabel}><input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ width: "100%", padding: "0.4rem", fontSize: "0.85rem", border: "none", background: "transparent", textAlign: "center", cursor: "pointer", color: "inherit", fontFamily: "inherit", fontWeight: 600 }} /></label><button onClick={() => setDate(addDays(date, 1))} style={s.arr}>→</button></div>
+        <div style={{ display: "flex", gap: "0.3rem", marginBottom: "1.2rem", alignItems: "center" }}><button onClick={() => selectDate(addDays(date, -1))} style={s.arr}>←</button><label style={s.dtLabel}><input type="date" aria-label="任务日期" min="0001-01-01" max="9999-12-31" value={date} onChange={e => selectDate(e.target.value)} style={{ width: "100%", padding: "0.4rem", fontSize: "0.85rem", border: "none", background: "transparent", textAlign: "center", cursor: "pointer", color: "inherit", fontFamily: "inherit", fontWeight: 600 }} /></label><button onClick={() => selectDate(addDays(date, 1))} style={s.arr}>→</button></div>
         {!isToday && <div style={{ textAlign: "center", marginTop: "-0.6rem", marginBottom: "0.4rem" }}><button onClick={() => setDate(todayStr)} style={{ color: "#3d9e6b", fontSize: "0.75rem", background: "none", border: "none", cursor: "pointer" }}>回到今天</button></div>}
 
-        <div style={s.panel}>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.8rem" }}>
+          <button type="button" onClick={openShare} disabled={loading || syncing || taskLoadFailed || loadedTaskDate !== date || savingTask}
+            style={{ padding: "0.45rem 0.8rem", borderRadius: "10px", color: "#367e5b", background: "#edf3e9", fontSize: "0.8rem", fontWeight: 600, opacity: loading || taskLoadFailed || loadedTaskDate !== date ? 0.45 : 1 }}>
+            分享图片
+          </button>
+        </div>
+
+        <div style={s.panel} aria-busy={syncing}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}><h3 style={{ fontSize: "1rem", fontWeight: 700 }}>当日任务</h3><span style={{ fontSize: "0.8rem", color: "#73706b" }}>{tasks.length}项 · {completedCount}完成 · {totalStars}⭐</span></div>
           {loading && <p style={{ color: "#73706b", textAlign: "center" }}>加载中…</p>}
           {!loading && tasks.length === 0 && <p style={{ color: "#73706b", textAlign: "center", padding: "0.8rem 0" }}>当天暂无任务</p>}
@@ -283,6 +346,7 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
 
         <div style={{ ...s.panel, marginTop: "0.8rem" }}><h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.6rem" }}>访问码</h3>{accessCode ? <p style={{ fontSize: "1.8rem", fontWeight: 700, letterSpacing: "0.3em", color: "#3d9e6b", textAlign: "center" }}>{accessCode}</p> : <button onClick={generateCode} style={s.btn}>生成访问码</button>}{accessCode && <button onClick={generateCode} style={{ ...s.addBtn, marginTop: "0.4rem" }}>重新生成</button>}<p style={{ fontSize: "0.75rem", color: "#73706b", marginTop: "0.4rem", textAlign: "center" }}>在 iPad 上打开孩子端，输入此码绑定</p></div>
       </>)}
+      {shareSnapshot && <TaskShareDialog snapshot={shareSnapshot} onClose={() => setShareSnapshot(null)} />}
     </fieldset>
   );
 }

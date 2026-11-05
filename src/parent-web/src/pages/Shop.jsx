@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
+import { createRefreshQueue } from "../utils/refreshQueue.js";
 
 export default function Shop({ token, isActive, onExpired }) {
   const [items, setItems] = useState([]);
@@ -16,17 +17,22 @@ export default function Shop({ token, isActive, onExpired }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const reads = useRef(createRefreshQueue());
+  const hasLoaded = useRef(false);
+  const load = useCallback((options = {}) => reads.current(token, async () => {
+    setLoading(!hasLoaded.current);
     setError(null);
-    try { const list = await api.fetchShop(token); setItems(list); } catch (err) { setError("加载商品列表失败: " + (err.message || "未知错误")); }
-    try { const reds = await api.fetchRedemptions(token); setRedemptions(reds); } catch (err) { setError("加载兑换记录失败: " + (err.message || "未知错误")); }
+    let succeeded = true;
+    try { const list = await api.fetchShop(token); setItems(list); } catch (err) { succeeded = false; setError("加载商品列表失败: " + (err.message || "未知错误")); }
+    try { const reds = await api.fetchRedemptions(token); setRedemptions(reds); } catch (err) { succeeded = false; setError("加载兑换记录失败: " + (err.message || "未知错误")); }
+    hasLoaded.current = true;
     setLoading(false);
-  }, [token]);
+    return succeeded;
+  }, options), [token]);
 
-  useEffect(() => { load(); }, [load]);
   useSseRefresh({ token, enabled: isActive, topics: ["shop"], onRefresh: load, onExpired });
   useVisibilityRefresh({ enabled: isActive, onRefresh: load });
+  useEffect(() => { if (isActive) load(); }, [load, isActive]);
 
   async function handleAdd() {
     if (!form.title.trim() || !form.stars || Number(form.stars) < 0.01) return;

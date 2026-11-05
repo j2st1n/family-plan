@@ -1,3 +1,5 @@
+import { isValidTaskDate } from "./utils/date.js";
+
 const API = "/api/v1";
 
 const h = (token) => ({
@@ -12,6 +14,9 @@ async function request(url, opts = {}) {
     try {
       const body = await res.json();
       msg = body.error?.message || body.detail?.message || msg;
+      if (Array.isArray(body.detail) && body.detail.some(item => item.loc?.includes("task_date"))) {
+        msg = "日期无效，请重新选择日期";
+      }
     } catch (error) {
       console.warn("Failed to parse error response", error);
     }
@@ -99,7 +104,8 @@ const api = {
   },
 
   fetchDailyTasks(token, planId, taskDate) {
-    return request(`/plans/${planId}/daily-tasks?task_date=${taskDate}`, {
+    if (!isValidTaskDate(taskDate)) throw new Error("请选择有效的任务日期");
+    return request(`/plans/${planId}/daily-tasks?task_date=${encodeURIComponent(taskDate)}`, {
       headers: h(token),
     });
   },

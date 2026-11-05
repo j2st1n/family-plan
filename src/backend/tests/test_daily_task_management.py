@@ -1,11 +1,15 @@
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select, text
 
 from app.core.ratelimit import auth_limiter
 from app.models.daily_task import DailyTask
+from app.models.plan import Plan
+from app.models.streak import Streak
+from app.models.reward_ledger import RewardLedger
+from app.services.daily_tasks import _has_missed_task_day
 
 
 @pytest.fixture
@@ -199,3 +203,215 @@ def test_child_cannot_edit_or_delete_a_task_deleted_by_parent(client, family):
                             json={'title': 'revive', 'expected_minutes': 10})
     assert response.status_code == 404
     assert client.delete(f"/api/v1/child/tasks/{task['id']}", headers=child_headers).status_code == 404
+
+
+@pytest.mark.parametrize('existing_history', [False, True])
+def test_history_view_does_not_create_routines_or_break_streak(client, family, db_session, existing_history):
+    headers, child_headers, child_id, plans = family
+    assert client.get('/api/v1/child/today', headers=child_headers).status_code == 200
+    yesterday = date.today() - timedelta(days=1)
+    plan = db_session.get(Plan, UUID(plans[0]))
+    plan.start_date = date.today() - timedelta(days=7)
+    streak = db_session.scalar(select(Streak).where(Streak.child_id == UUID(child_id)))
+    streak.current_days = streak.longest_days = 5
+    streak.streak_updated_date = date.today() - timedelta(days=3)
+    historical_task = None
+    if existing_history:
+        historical_task = DailyTask(
+            child_id=UUID(child_id), plan_id=plan.id, task_date=yesterday,
+            title='recorded history', status='completed', approved=True,
+            created_at=datetime.combine(yesterday, time(12), UTC),
+        )
+        db_session.add(historical_task)
+    db_session.commit()
+    response = client.post(f'/api/v1/plans/{plans[0]}/task-templates', headers=headers,
+                           json={'title': 'new routine', 'expected_minutes': 10})
+    assert response.status_code == 201, response.text
+    for _ in range(2):
+        response = client.get(f'/api/v1/plans/{plans[0]}/daily-tasks', headers=headers,
+                              params={'task_date': str(yesterday)})
+        assert response.status_code == 200, response.text
+        expected_ids = [str(historical_task.id)] if historical_task else []
+        assert [task['id'] for task in response.json()['tasks']] == expected_ids
+        assert response.json()['rewards']['current_streak_days'] == 5
+    count = db_session.scalar(select(func.count()).select_from(DailyTask).where(
+        DailyTask.child_id == UUID(child_id), DailyTask.task_date == yesterday,
+    ))
+    assert count == int(existing_history)
+    today = client.get('/api/v1/child/today', headers=child_headers)
+    assert today.status_code == 200, today.text
+    assert len(today.json()['tasks']) == 1
+    assert today.json()['tasks'][0]['title'] == 'new routine'
+    response = client.patch(f"/api/v1/child/tasks/{today.json()['tasks'][0]['id']}/complete",
+                            headers=child_headers, json={})
+    assert response.status_code == 200, response.text
+    assert response.json()['current_streak_days'] == 6
+
+
+@pytest.mark.parametrize('assigned_total,assigned_done,expected_streak', [(0, 0, 5), (4, 4, 5), (4, 3, 0)])
+def test_legacy_backfilled_tasks_do_not_change_historical_rate(
+    client, family, db_session, assigned_total, assigned_done, expected_streak,
+):
+    headers, child_headers, child_id, plans = family
+    assert client.get('/api/v1/child/today', headers=child_headers).status_code == 200
+    yesterday = date.today() - timedelta(days=1)
+    streak = db_session.scalar(select(Streak).where(Streak.child_id == UUID(child_id)))
+    streak.current_days = streak.longest_days = 5
+    streak.streak_updated_date = date.today() - timedelta(days=3)
+    for i in range(assigned_total + 4):
+        on_time = i < assigned_total
+        db_session.add(DailyTask(
+            child_id=UUID(child_id), plan_id=UUID(plans[0]), task_date=yesterday,
+            title='historical fixture', approved=True,
+            status='completed' if i < assigned_done else 'pending',
+            created_at=datetime.combine(yesterday if on_time else date.today(), time(12), UTC),
+        ))
+    db_session.commit()
+    task = create_task(client, headers, plans[0])
+    response = client.get('/api/v1/child/today', headers=child_headers)
+    assert response.status_code == 200, response.text
+    assert response.json()['rewards']['current_streak_days'] == expected_streak
+    response = client.patch(f"/api/v1/child/tasks/{task['id']}/complete", headers=child_headers, json={})
+    assert response.status_code == 200, response.text
+    assert response.json()['current_streak_days'] == expected_streak + 1
+    db_session.refresh(streak)
+    assert streak.longest_days == max(5, expected_streak + 1)
+
+
+@pytest.mark.parametrize('created_next_day,expected_missed', [(False, True), (True, False)])
+def test_historical_assignment_cutoff_uses_utc_not_database_session_timezone(
+    family, db_session, created_next_day, expected_missed,
+):
+    _, _, child_id, plans = family
+    yesterday = date.today() - timedelta(days=1)
+    created_at = datetime.combine(date.today(), time.min, UTC) if created_next_day else datetime.combine(yesterday, time.max, UTC)
+    db_session.add(DailyTask(
+        child_id=UUID(child_id), plan_id=UUID(plans[0]), task_date=yesterday,
+        title='UTC boundary fixture', status='pending', approved=True, created_at=created_at,
+    ))
+    db_session.commit()
+    try:
+        db_session.execute(text("SET LOCAL TIME ZONE 'America/Los_Angeles'"))
+        assert _has_missed_task_day(db_session, UUID(child_id), yesterday - timedelta(days=1), date.today(), 80) is expected_missed
+    finally:
+        db_session.rollback()
+
+
+@pytest.mark.parametrize('other_missed_day', [False, True])
+def test_deleting_historical_surplus_recalculates_streak_and_keeps_real_breaks(
+    client, family, db_session, other_missed_day,
+):
+    headers, child_headers, child_id, plans = family
+    assert client.get('/api/v1/child/today', headers=child_headers).status_code == 200
+    today = date.today()
+    extra = None
+    for offset in [6, 3, 0]:
+        day = today - timedelta(days=offset)
+        db_session.add(DailyTask(
+            child_id=UUID(child_id), plan_id=UUID(plans[0]), task_date=day,
+            title='recorded completion', status='completed', approved=True,
+            created_at=datetime.combine(day, time(12), UTC),
+        ))
+        if offset == 3:
+            extra = DailyTask(
+                child_id=UUID(child_id), plan_id=UUID(plans[0]), task_date=day,
+                title='surplus pending', approved=True,
+                created_at=datetime.combine(day, time(12), UTC),
+            )
+            db_session.add(extra)
+    if other_missed_day:
+        day = today - timedelta(days=1)
+        db_session.add(DailyTask(
+            child_id=UUID(child_id), plan_id=UUID(plans[0]), task_date=day,
+            title='remaining missed day', approved=True,
+            created_at=datetime.combine(day, time(12), UTC),
+        ))
+    streak = db_session.scalar(select(Streak).where(Streak.child_id == UUID(child_id)))
+    streak.current_days = 1
+    streak.longest_days = 41
+    streak.streak_updated_date = today
+    db_session.commit()
+    rewards_before = db_session.scalar(select(func.count()).select_from(RewardLedger))
+    response = client.delete(f'/api/v1/plans/{plans[0]}/daily-tasks/{extra.id}', headers=headers)
+    assert response.status_code == 204, response.text
+    for _ in range(2):
+        response = client.get('/api/v1/child/today', headers=child_headers)
+        assert response.status_code == 200, response.text
+        assert response.json()['rewards']['current_streak_days'] == (1 if other_missed_day else 3)
+    db_session.refresh(streak)
+    assert streak.longest_days == 41
+    assert db_session.scalar(select(func.count()).select_from(RewardLedger)) == rewards_before
+
+
+@pytest.mark.parametrize('complete_before_summary', [False, True])
+def test_summary_reconciles_deletions_made_before_fix_without_counting_unfinished_today(
+    client, family, db_session, complete_before_summary,
+):
+    _, child_headers, child_id, plans = family
+    assert client.get('/api/v1/child/today', headers=child_headers).status_code == 200
+    today = date.today()
+    for offset in [5, 2]:
+        day = today - timedelta(days=offset)
+        db_session.add(DailyTask(
+            child_id=UUID(child_id), plan_id=UUID(plans[0]), task_date=day,
+            title='historical completion', status='completed', approved=True,
+            created_at=datetime.combine(day, time(12), UTC),
+        ))
+    yesterday = today - timedelta(days=1)
+    db_session.add(DailyTask(
+        child_id=UUID(child_id), plan_id=UUID(plans[0]), task_date=yesterday,
+        title='previously deleted', status='deleted', approved=True,
+        created_at=datetime.combine(yesterday, time(12), UTC), updated_at=datetime.now(UTC),
+    ))
+    today_task = DailyTask(
+        child_id=UUID(child_id), plan_id=UUID(plans[0]), task_date=today,
+        title='unfinished today', status='pending', approved=True,
+    )
+    db_session.add(today_task)
+    streak = db_session.scalar(select(Streak).where(Streak.child_id == UUID(child_id)))
+    streak.current_days = 0
+    streak.longest_days = 41
+    streak.streak_updated_date = today - timedelta(days=5)
+    streak.updated_at = datetime.now(UTC) - timedelta(hours=1)
+    db_session.commit()
+    if complete_before_summary:
+        response = client.patch(f'/api/v1/child/tasks/{today_task.id}/complete', headers=child_headers, json={})
+        assert response.status_code == 200, response.text
+        assert response.json()['current_streak_days'] == 3
+    for _ in range(2):
+        response = client.get('/api/v1/child/today', headers=child_headers)
+        assert response.status_code == 200, response.text
+        assert response.json()['rewards']['current_streak_days'] == (3 if complete_before_summary else 2)
+    db_session.refresh(streak)
+    assert streak.streak_updated_date == (today if complete_before_summary else today - timedelta(days=2))
+    assert streak.longest_days == 41
+
+
+@pytest.mark.parametrize('invalid_date', ['', 'NaN-NaN-NaN', '2026-02-30'])
+def test_invalid_history_date_is_rejected_without_creating_tasks(client, family, db_session, invalid_date):
+    headers, _, child_id, plans = family
+    before = db_session.scalar(select(func.count()).select_from(DailyTask).where(DailyTask.child_id == UUID(child_id)))
+    response = client.get(f'/api/v1/plans/{plans[0]}/daily-tasks', headers=headers, params={'task_date': invalid_date})
+    assert response.status_code == 422
+    assert db_session.scalar(select(func.count()).select_from(DailyTask).where(DailyTask.child_id == UUID(child_id))) == before
+
+
+@pytest.mark.parametrize('retroactive', [False, True])
+def test_deleting_ineligible_history_preserves_existing_legacy_credit(client, family, db_session, retroactive):
+    headers, child_headers, child_id, plans = family
+    assert client.get('/api/v1/child/today', headers=child_headers).status_code == 200
+    yesterday = date.today() - timedelta(days=1)
+    task = DailyTask(
+        child_id=UUID(child_id), plan_id=UUID(plans[0]), task_date=yesterday,
+        title='ineligible history', approved=retroactive,
+        created_at=datetime.combine(date.today() if retroactive else yesterday, time(12), UTC),
+    )
+    db_session.add(task)
+    streak = db_session.scalar(select(Streak).where(Streak.child_id == UUID(child_id)))
+    streak.current_days = streak.longest_days = 5
+    streak.streak_updated_date = yesterday - timedelta(days=1)
+    db_session.commit()
+    assert client.delete(f'/api/v1/plans/{plans[0]}/daily-tasks/{task.id}', headers=headers).status_code == 204
+    response = client.get('/api/v1/child/today', headers=child_headers)
+    assert response.status_code == 200, response.text
+    assert response.json()['rewards']['current_streak_days'] == 5

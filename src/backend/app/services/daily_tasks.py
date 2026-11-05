@@ -2,11 +2,12 @@ from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import CursorResult, func, select, update
+from sqlalchemy import CursorResult, Date, cast, func, select, update
 from sqlalchemy.orm import Session
 
 from app.core.errors import api_error
 from app.models.child import Child
+from app.models.child_reward_settings import ChildRewardSettings
 from app.models.daily_task import DailyTask
 from app.models.plan import Plan
 from app.models.reward_ledger import RewardLedger
@@ -49,6 +50,10 @@ def _has_missed_task_day(
             DailyTask.task_date < before_date,
             DailyTask.approved.is_(True),
             DailyTask.status != "deleted",
+            # Legacy history views could create tasks after their assigned day.
+            # Such rows must not retroactively turn a rest day into a missed day.
+            # Production uses UTC calendar dates; do not use the DB session zone.
+            cast(func.timezone("UTC", DailyTask.created_at), Date) <= DailyTask.task_date,
         )
     ).all()
 
@@ -64,6 +69,17 @@ def _has_missed_task_day(
         elif int((completed / len(statuses)) * 100) < threshold:
             return True
     return False
+
+
+def _has_new_historical_deletion(db: Session, streak: Streak) -> bool:
+    return db.scalar(select(DailyTask.id).where(
+        DailyTask.child_id == streak.child_id,
+        DailyTask.task_date < date.today(),
+        DailyTask.status == "deleted",
+        DailyTask.approved.is_(True),
+        cast(func.timezone("UTC", DailyTask.created_at), Date) <= DailyTask.task_date,
+        DailyTask.updated_at > streak.updated_at,
+    ).limit(1)) is not None
 
 
 def generate_todays_tasks(db: Session, child_id: UUID) -> list[DailyTask]:
@@ -116,6 +132,8 @@ def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | No
         raise api_error("conflict", "Task already completed", 409)
 
     streak = _get_or_create_streak(db, child_id)
+    if _has_new_historical_deletion(db, streak):
+        streak = _recalculate_streak_from_tasks(db, child_id)
     today = date.today()
 
     # Always track that a task was completed today (for get_reward_summary)
@@ -165,10 +183,56 @@ def get_reward_summary(db: Session, child_id: UUID) -> dict:
     effective_date = streak.streak_updated_date or streak.last_completed_date
     today = date.today()
     threshold = get_or_create_reward_settings(db, child_id).streak_threshold
-    if effective_date and _has_missed_task_day(db, child_id, effective_date, today, threshold):
+    if _has_new_historical_deletion(db, streak):
+        streak = _recalculate_streak_from_tasks(db, child_id)
+        db.commit()
+    elif effective_date and _has_missed_task_day(db, child_id, effective_date, today, threshold):
         streak.current_days = 0
         db.commit()
     return {"stars_total": stars_total, "current_streak_days": streak.current_days}
+
+
+def _recalculate_streak_from_tasks(db: Session, child_id: UUID) -> Streak:
+    """Rebuild corrected history atomically with its edit, without changing rewards."""
+    streak = db.scalar(select(Streak).where(Streak.child_id == child_id).with_for_update())
+    if streak is None:
+        streak = Streak(child_id=child_id, current_days=0, longest_days=0)
+        db.add(streak)
+        db.flush()
+    threshold = db.scalar(select(ChildRewardSettings.streak_threshold).where(
+        ChildRewardSettings.child_id == child_id,
+    ))
+    if threshold is None:
+        child = db.get(Child, child_id)
+        threshold = (child.streak_threshold or 80) if child else 80
+    today = date.today()
+    rows = db.execute(select(DailyTask.task_date, DailyTask.status).where(
+        DailyTask.child_id == child_id,
+        DailyTask.task_date <= today,
+        DailyTask.approved.is_(True),
+        DailyTask.status != "deleted",
+        cast(func.timezone("UTC", DailyTask.created_at), Date) <= DailyTask.task_date,
+    )).all()
+    days: dict[date, list[str]] = {}
+    for task_date, status in rows:
+        days.setdefault(task_date, []).append(status)
+    current = longest = 0
+    last_qualified = None
+    for task_date, statuses in sorted(days.items()):
+        completed = sum(status == "completed" for status in statuses)
+        qualifies = completed > 0 if threshold <= 0 else completed * 100 >= len(statuses) * threshold
+        if qualifies:
+            current += 1
+            longest = max(longest, current)
+            last_qualified = task_date
+        elif task_date < today:
+            current = 0
+    streak.current_days = current
+    streak.longest_days = max(streak.longest_days, longest)
+    streak.streak_updated_date = last_qualified
+    # Acknowledge corrections even when their resulting count is unchanged.
+    streak.updated_at = datetime.now(UTC)
+    return streak
 
 
 def create_manual_daily_tasks(
@@ -208,6 +272,7 @@ def update_daily_task(db: Session, task_id: UUID, plan: Plan, data: ManualTaskIt
         raise api_error("not_found", "Task not found", 404)
     if task.status == "completed":
         raise api_error("conflict", "Cannot edit completed task", 409)
+    was_approved = task.approved
     if data.approved is not None:
         task.approved = data.approved
     if task.created_by == "child" and not task.approved:
@@ -223,6 +288,9 @@ def update_daily_task(db: Session, task_id: UUID, plan: Plan, data: ManualTaskIt
         task.scheduled_start = _parse_time(data.scheduled_start)
     if "scheduled_end" in data.model_fields_set:
         task.scheduled_end = _parse_time(data.scheduled_end)
+    if task.approved != was_approved and task.task_date <= date.today() and task.created_at.astimezone(UTC).date() <= task.task_date:
+        db.flush()
+        _recalculate_streak_from_tasks(db, task.child_id)
     db.commit()
     db.refresh(task)
     return task
@@ -239,10 +307,16 @@ def delete_daily_task(db: Session, task_id: UUID, plan: Plan) -> None:
     if task.status == "completed":
         raise api_error("conflict", "Cannot delete completed task", 409)
     task.status = "deleted"
+    if task.approved and task.task_date <= date.today() and task.created_at.astimezone(UTC).date() <= task.task_date:
+        db.flush()
+        _recalculate_streak_from_tasks(db, task.child_id)
     db.commit()
 
 
 def _generate_tasks_for_date(db: Session, child_id: UUID, task_date: date) -> list[DailyTask]:
+    if task_date < date.today():
+        return _list_existing_tasks_for_date(db, child_id, task_date)
+
     weekday = task_date.isoweekday()
     existing_ids = set(
         db.scalars(
@@ -288,6 +362,10 @@ def _generate_tasks_for_date(db: Session, child_id: UUID, task_date: date) -> li
     if new_dailies:
         db.commit()
 
+    return _list_existing_tasks_for_date(db, child_id, task_date)
+
+
+def _list_existing_tasks_for_date(db: Session, child_id: UUID, task_date: date) -> list[DailyTask]:
     return list(
         db.scalars(
             select(DailyTask)

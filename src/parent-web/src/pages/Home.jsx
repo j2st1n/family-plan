@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
@@ -6,6 +6,7 @@ import ChildCreate from "./ChildCreate.jsx";
 import RewardSettings from "./RewardSettings.jsx";
 import TaskManage from "./TaskManage.jsx";
 import { formatStars } from "../utils/format.js";
+import { createRefreshQueue } from "../utils/refreshQueue.js";
 
 const AVATARS = ["#3d9e6b", "#c4912a", "#5b8fb9", "#c97070", "#8b6f9e", "#4b9c64"];
 
@@ -42,30 +43,36 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
   const [editingChild, setEditingChild] = useState(null);
   const [editForm, setEditForm] = useState({ name: "", stage: "", grade: "", threshold: "80" });
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const reads = useRef(createRefreshQueue());
+  const hasLoaded = useRef(false);
+  const load = useCallback((options = {}) => reads.current(token, async () => {
+    setLoading(!hasLoaded.current);
     setError(null);
     try {
       const list = await api.fetchChildren(token);
       setChildren(list);
       const ds = {};
+      let succeeded = true;
       await Promise.all(list.map(async (c) => { 
         try { 
           ds[c.id] = await api.fetchDashboard(token, c.id); 
         } catch (err) {
-          ds[c.id] = null;
+          succeeded = false;
           setError("加载" + c.name + "的仪表盘失败: " + (err.message || "未知错误"));
         }
       }));
-      setDashboards(ds);
+      setDashboards(previous => Object.fromEntries(list.map(c => [c.id, ds[c.id] ?? previous[c.id] ?? null])));
+      hasLoaded.current = true;
+      return succeeded;
     } catch (err) {
       setError("加载人员列表失败: " + (err.message || "未知错误"));
+      return false;
     } finally { setLoading(false); }
-  }, [token]);
+  }, options), [token]);
 
-  useEffect(() => { load(); }, [load]);
   useSseRefresh({ token, enabled: isActive && view === "home", topics: ["tasks", "children", "settings"], onRefresh: load, onExpired });
-  useVisibilityRefresh({ enabled: isActive, onRefresh: load });
+  useVisibilityRefresh({ enabled: isActive && view === "home", onRefresh: load });
+  useEffect(() => { if (isActive && view === "home") load(); }, [load, isActive, view]);
 
   function startEdit(c) {
     const { stage, grade } = parseGradeLabel(c.grade_label || "");
@@ -94,9 +101,9 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
     }
   }
 
-  if (view === "create-child") return <ChildCreate token={token} onDone={() => { setView("home"); load(); }} onCancel={() => setView("home")} />;
-  if (view === "task-manage" && selectedChild) return <TaskManage token={token} child={selectedChild} isActive={isActive} onExpired={onExpired} onBack={() => { setView("home"); load(); }} />;
-  if (view === "reward-settings" && selectedChild) return <RewardSettings token={token} child={selectedChild} onBack={() => { setView("home"); load(); }} />;
+  if (view === "create-child") return <ChildCreate token={token} onDone={() => setView("home")} onCancel={() => setView("home")} />;
+  if (view === "task-manage" && selectedChild) return <TaskManage token={token} child={selectedChild} isActive={isActive} onExpired={onExpired} onBack={() => setView("home")} />;
+  if (view === "reward-settings" && selectedChild) return <RewardSettings token={token} child={selectedChild} onBack={() => setView("home")} />;
 
   return (
     <div>
