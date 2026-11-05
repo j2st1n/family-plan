@@ -56,6 +56,89 @@
   --line-height-display: 1.25;
 }
 
+/* ==========================================================================
+   Apple iOS Dark Mode Token 体系规范 (Apple HIG 标准 - Child PWA)
+   ========================================================================== */
+html[data-theme="dark"],
+:root[data-theme="dark"] {
+  /* 1. 画布底色：Apple iOS System Background (Pure Black #000000 或 Elevated #121214) */
+  --bg: #000000;
+
+  /* 2. 卡片基底：Secondary System Background (#1C1C1E) 与 Tertiary System Background (#2C2C2E) */
+  --card: #1C1C1E;
+  --card-subtle: #2C2C2E;
+  --border: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --separator: rgba(255, 255, 255, 0.12);
+
+  /* 3. 文本层次：Label (#F5F5F7), Secondary Label (#98989D) */
+  --text: #F5F5F7;
+  --text-primary: #F5F5F7;
+  --muted: #98989D;
+  --muted-sage: #98989D;
+
+  /* 4. 品牌主动作色：Apple Dark Blue (#0A84FF) */
+  --accent: #0A84FF;
+  --accent-hover: #409CFF;
+  --accent-light: rgba(10, 132, 255, 0.18);
+  --accent-pill: rgba(10, 132, 255, 0.28);
+
+  /* 5. 状态语义色（Apple iOS Dark Mode 标准） */
+  --star: #FF9F0A;
+  --star-bg: rgba(255, 159, 10, 0.18);
+  --star-border: rgba(255, 159, 10, 0.35);
+  --flame: #FF453A;
+  --flame-bg: rgba(255, 69, 58, 0.18);
+  --flame-border: rgba(255, 69, 58, 0.35);
+  --protect: #64D2FF;
+  --protect-bg: rgba(100, 210, 255, 0.18);
+  --protect-border: rgba(100, 210, 255, 0.35);
+  --danger: #FF453A;
+  --danger-bg: rgba(255, 69, 58, 0.18);
+  --danger-border: rgba(255, 69, 58, 0.35);
+
+  /* Apple 经典深色微羽化弥散微投影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.65), 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-stamp: 0 4px 14px rgba(10, 132, 255, 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000;
+    --card: #1C1C1E;
+    --card-subtle: #2C2C2E;
+    --border: rgba(255, 255, 255, 0.12);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --separator: rgba(255, 255, 255, 0.12);
+    --text: #F5F5F7;
+    --text-primary: #F5F5F7;
+    --muted: #98989D;
+    --muted-sage: #98989D;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --accent-light: rgba(10, 132, 255, 0.18);
+    --accent-pill: rgba(10, 132, 255, 0.28);
+    --star: #FF9F0A;
+    --star-bg: rgba(255, 159, 10, 0.18);
+    --star-border: rgba(255, 159, 10, 0.35);
+    --flame: #FF453A;
+    --flame-bg: rgba(255, 69, 58, 0.18);
+    --flame-border: rgba(255, 69, 58, 0.35);
+    --protect: #64D2FF;
+    --protect-bg: rgba(100, 210, 255, 0.18);
+    --protect-border: rgba(100, 210, 255, 0.35);
+    --danger: #FF453A;
+    --danger-bg: rgba(255, 69, 58, 0.18);
+    --danger-border: rgba(255, 69, 58, 0.35);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.65), 0 2px 4px rgba(0, 0, 0, 0.5);
+    --shadow-stamp: 0 4px 14px rgba(10, 132, 255, 0.35);
+  }
+}
+
 *,
 *::before,
 *::after {
@@ -465,7 +548,8 @@ textarea {
 
 /* 2. iOS Inset Grouped Card */
 .ios-grouped-card {
-  background: #FFFFFF;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -477,7 +561,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  background: #FFFFFF;
+  background: var(--card);
   position: relative;
   transition: background-color 0.12s ease;
 }
@@ -489,7 +573,7 @@ textarea {
   left: 16px;
   right: 0;
   height: 0.5px;
-  background-color: var(--border);
+  background-color: var(--separator);
 }
 
 /* iOS Sheet Drawer */
@@ -733,7 +817,7 @@ textarea {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: #FFFFFF;
+  background: var(--card);
   color: var(--text);
   font-size: 0.9rem;
   outline: none;
@@ -755,3 +839,72 @@ textarea {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ==========================================================================
+   Apple iOS Dark Mode Component Styling & Trigger (Child PWA)
+   ========================================================================== */
+.ios-theme-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.ios-theme-trigger-btn:active {
+  transform: scale(0.92);
+}
+
+html[data-theme="dark"] .nav-tabs {
+  background: rgba(18, 18, 20, 0.88);
+  border-top-color: var(--border);
+}
+
+html[data-theme="dark"] .ios-sheet-content {
+  background: var(--bg);
+}
+
+html[data-theme="dark"] .ios-sheet-header {
+  background: var(--bg);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.12);
+}
+
+html[data-theme="dark"] .ios-sheet-body {
+  background: var(--bg);
+}
+
+html[data-theme="dark"] .ios-segmented-control {
+  background: rgba(118, 118, 128, 0.24);
+}
+
+html[data-theme="dark"] .ios-segmented-item.active {
+  background: #636366;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .ios-time-input {
+  background: rgba(118, 118, 128, 0.24);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .ios-switch {
+  background-color: rgba(120, 120, 128, 0.36);
+}
+
+html[data-theme="dark"] .ios-switch.on {
+  background-color: #30D158;
+}
+
+html[data-theme="dark"] .drawer-handle-bar {
+  background-color: #545458;
+}
+

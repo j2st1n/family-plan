@@ -14,8 +14,9 @@ import { formatStars } from "../utils/format.js";
 import { playTaskComplete, playTaskSubmitted, initAudioUnlock } from "../utils/soundFx.js";
 import FocusTimer from "../components/FocusTimer.jsx";
 import SharePosterModal from "../components/SharePosterModal.jsx";
-import { ShareIcon } from "../components/Icons.jsx";
+import { ShareIcon, SunIcon, MoonIcon } from "../components/Icons.jsx";
 import { childFeedback } from "../components/ChildFeedback.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -62,6 +63,7 @@ function fireCelebration(originX = 0.5, originY = 0.6) {
 }
 
 export default function Today({ child, onExpired, active }) {
+  const { preference: themePreference, effectiveTheme, cycleTheme } = useTheme();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -311,7 +313,7 @@ export default function Today({ child, onExpired, active }) {
                 width: "36px",
                 height: "36px",
                 borderRadius: "50%",
-                backgroundColor: "#FFFFFF",
+                backgroundColor: "var(--card)",
                 border: "1px solid var(--border)",
                 color: "var(--accent)",
                 cursor: "pointer",
@@ -321,6 +323,15 @@ export default function Today({ child, onExpired, active }) {
             >
               <ShareIcon size={18} color="var(--accent)" />
             </button>
+            <button
+              type="button"
+              className="ios-theme-trigger-btn"
+              onClick={cycleTheme}
+              title={`外观：${themePreference === "auto" ? "跟随系统 (" + (effectiveTheme === "dark" ? "深色" : "浅色") + ")" : themePreference === "dark" ? "深色模式" : "浅色模式"}，轻点切换`}
+              aria-label="切换明暗主题"
+            >
+              {effectiveTheme === "dark" ? <SunIcon size={18} color="var(--star)" /> : <MoonIcon size={18} color="var(--accent)" />}
+            </button>
           </div>
         </div>
       </div>
@@ -328,7 +339,8 @@ export default function Today({ child, onExpired, active }) {
       {/* 今日进度概览卡片 (Apple Fitness / Activity Ring 风格) */}
       <div
         style={{
-          backgroundColor: "#FFFFFF",
+          backgroundColor: "var(--card)",
+          border: "1px solid var(--border)",
           borderRadius: "16px",
           padding: "18px 20px",
           marginBottom: "20px",
@@ -394,7 +406,8 @@ export default function Today({ child, onExpired, active }) {
           style={{
             textAlign: "center",
             padding: "40px 16px",
-            background: "#FFFFFF",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
             borderRadius: "14px",
             boxShadow: "var(--shadow-sm)",
             color: "var(--muted)",
@@ -492,10 +505,10 @@ export default function Today({ child, onExpired, active }) {
             fontWeight: 600,
             color: "var(--accent)",
             borderRadius: "14px",
-            background: "#FFFFFF",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
             boxShadow: "var(--shadow-sm)",
             cursor: "pointer",
-            border: "none",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -969,8 +982,8 @@ function TaskCard({
                   minWidth: 36,
                   minHeight: 36,
                   borderRadius: "50%",
-                  border: isCompleted ? "none" : "2px solid #C7C7CC",
-                  backgroundColor: isCompleted ? "#34C759" : "#FFFFFF",
+                  border: isCompleted ? "none" : "2px solid var(--border)",
+                  backgroundColor: isCompleted ? "var(--cell-perfect)" : "var(--card)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -1041,7 +1054,8 @@ function RewardSelect({ value, onChange }) {
 
 const st = {
   tc: {
-    background: "#FFFFFF",
+    background: "var(--card)",
+    border: "1px solid var(--border)",
     borderRadius: "14px",
     padding: "14px 16px",
     marginBottom: "10px",

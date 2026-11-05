@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import api from "../api.js";
 import { useFeedback } from "../components/FeedbackContext.jsx";
 import WarmEmptyState from "../components/WarmEmptyState.jsx";
-import { UserGroupIcon, IpadIcon, RepeatIcon, ShieldFreezeIcon, ChevronRight, SparklesIcon, LockIcon, EyeIcon, EyeOffIcon } from "../components/Icons.jsx";
+import { UserGroupIcon, IpadIcon, RepeatIcon, ShieldFreezeIcon, ChevronRight, SparklesIcon, LockIcon, EyeIcon, EyeOffIcon, ThemeIcon } from "../components/Icons.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 const GRADE_OPTIONS = {
   幼儿园: ["小班", "中班", "大班"],
@@ -83,6 +84,7 @@ export default function Settings({
   onExpired,
 }) {
   const { toast, confirm } = useFeedback();
+  const { preference: themePreference, effectiveTheme, setTheme } = useTheme();
 
   // Active modal drawer: 'profiles' | 'accessCode' | 'routineTasks' | 'freeze' | null
   const [activeDrawer, setActiveDrawer] = useState(null);
@@ -673,6 +675,49 @@ export default function Settings({
           </div>
           <ChevronRight size={16} />
         </button>
+
+        {/* Item 6: 外观与主题 */}
+        <div
+          className="ios-list-row"
+          style={{ cursor: "default", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}
+        >
+          <div className="ios-squircle-icon squircle-theme">
+            <ThemeIcon size={18} />
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
+            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)" }}>外观与主题</span>
+            <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
+              {themePreference === "auto" ? "跟随系统 (" + (effectiveTheme === "dark" ? "深色" : "浅色") + ")" : themePreference === "dark" ? "深色模式" : "浅色模式"}
+            </span>
+          </div>
+          {/* iOS 三态分段选择器 (Segmented Control) */}
+          <div className="ios-segmented-control" role="group" aria-label="外观主题切换" style={{ flexShrink: 0, width: "190px" }}>
+            <button
+              type="button"
+              className={`ios-segment-item ${themePreference === "auto" ? "active" : ""}`}
+              onClick={() => setTheme("auto")}
+              title="跟随系统设置"
+            >
+              系统
+            </button>
+            <button
+              type="button"
+              className={`ios-segment-item ${themePreference === "light" ? "active" : ""}`}
+              onClick={() => setTheme("light")}
+              title="浅色模式"
+            >
+              浅色
+            </button>
+            <button
+              type="button"
+              className={`ios-segment-item ${themePreference === "dark" ? "active" : ""}`}
+              onClick={() => setTheme("dark")}
+              title="深色模式"
+            >
+              深色
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 账号退出操作区 */}

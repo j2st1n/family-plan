@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Family Plan - 家长端</title>
+    <script>
+      (function() {
+        try {
+          var pref = localStorage.getItem("family_plan_theme") || localStorage.getItem("theme") || "auto";
+          var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var effective = pref === "dark" || (pref === "auto" && prefersDark) ? "dark" : "light";
+          document.documentElement.setAttribute("data-theme", effective);
+          document.documentElement.setAttribute("data-theme-preference", pref);
+          if (document.documentElement.style) {
+            document.documentElement.style.colorScheme = effective;
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -479,7 +479,7 @@ export default function TaskCopilotModal({
             style={{
               padding: "12px 16px calc(12px + env(safe-area-inset-bottom, 0px))",
               borderTop: "0.5px solid var(--separator)",
-              backgroundColor: "#FFFFFF",
+              backgroundColor: "var(--card)",
             }}
           >
             <button

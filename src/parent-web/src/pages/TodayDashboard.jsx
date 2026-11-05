@@ -480,7 +480,8 @@ export default function TodayDashboard({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          backgroundColor: "#FFFFFF",
+          backgroundColor: "var(--card)",
+          border: "1px solid var(--border)",
           borderRadius: "10px",
           padding: "6px 14px",
           marginBottom: "16px",
@@ -656,7 +657,8 @@ export default function TodayDashboard({
       <div
         className="today-progress-card"
         style={{
-          backgroundColor: "#FFFFFF",
+          backgroundColor: "var(--card)",
+          border: "1px solid var(--border)",
           borderRadius: "14px",
           padding: "16px 20px",
           marginBottom: "16px",
@@ -762,7 +764,8 @@ export default function TodayDashboard({
             style={{
               textAlign: "center",
               padding: "40px 16px",
-              backgroundColor: "#FFFFFF",
+              backgroundColor: "var(--card)",
+              border: "1px solid var(--border)",
               borderRadius: "12px",
               boxShadow: "var(--shadow-sm)",
               color: "var(--muted)",

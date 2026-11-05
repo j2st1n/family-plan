@@ -6,7 +6,8 @@ import Shop from "./pages/Shop.jsx";
 import Settings from "./pages/Settings.jsx";
 import api from "./api.js";
 import useSseRefresh from "./hooks/useSseRefresh.js";
-import { TodayIcon, AnalyticsIcon, ShopIcon, SettingsIcon } from "./components/Icons.jsx";
+import { TodayIcon, AnalyticsIcon, ShopIcon, SettingsIcon, SunIcon, MoonIcon } from "./components/Icons.jsx";
+import { useTheme } from "./context/ThemeContext.jsx";
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem("parent_token"));
@@ -18,6 +19,7 @@ export default function App() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [activeChildId, setActiveChildId] = useState(() => localStorage.getItem("parent_active_child_id") || "");
   const [totalPending, setTotalPending] = useState(0);
+  const { preference: themePreference, effectiveTheme, toggleTheme } = useTheme();
 
   const clearSession = useCallback(() => {
     localStorage.removeItem("parent_token");
@@ -148,42 +150,54 @@ export default function App() {
           )}
         </div>
 
-        {/* 桌面端顶部导航链接（>=768px 显示，移动端由 CSS display:none 隐藏） */}
-        <nav className="desktop-nav-links" role="navigation">
+        {/* 桌面端顶部导航链接（>=768px 显示，移动端由 CSS display:none 隐藏）与一键日月切换 */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <nav className="desktop-nav-links" role="navigation">
+            <button
+              type="button"
+              className={`desktop-nav-btn ${tab === "today" ? "active" : ""}`}
+              onClick={() => handleTabChange("today")}
+            >
+              <TodayIcon size={18} filled={tab === "today"} />
+              <span>今天</span>
+              {totalPending > 0 && <span className="tab-badge">{totalPending}</span>}
+            </button>
+            <button
+              type="button"
+              className={`desktop-nav-btn ${tab === "analytics" ? "active" : ""}`}
+              onClick={() => handleTabChange("analytics")}
+            >
+              <AnalyticsIcon size={18} filled={tab === "analytics"} />
+              <span>统计</span>
+            </button>
+            <button
+              type="button"
+              className={`desktop-nav-btn ${tab === "shop" ? "active" : ""}`}
+              onClick={() => handleTabChange("shop")}
+            >
+              <ShopIcon size={18} filled={tab === "shop"} />
+              <span>商城</span>
+            </button>
+            <button
+              type="button"
+              className={`desktop-nav-btn ${tab === "settings" ? "active" : ""}`}
+              onClick={() => handleTabChange("settings")}
+            >
+              <SettingsIcon size={18} filled={tab === "settings"} />
+              <span>设置</span>
+            </button>
+          </nav>
+
           <button
             type="button"
-            className={`desktop-nav-btn ${tab === "today" ? "active" : ""}`}
-            onClick={() => handleTabChange("today")}
+            className="theme-quick-toggle-btn"
+            onClick={toggleTheme}
+            title={`当前主题：${themePreference === "auto" ? "跟随系统 (" + (effectiveTheme === "dark" ? "深色" : "浅色") + ")" : themePreference === "dark" ? "深色模式" : "浅色模式"}，轻点快速切换`}
+            aria-label="切换明暗主题"
           >
-            <TodayIcon size={18} filled={tab === "today"} />
-            <span>今天</span>
-            {totalPending > 0 && <span className="tab-badge">{totalPending}</span>}
+            {effectiveTheme === "dark" ? <SunIcon size={18} color="var(--star)" /> : <MoonIcon size={18} color="var(--accent)" />}
           </button>
-          <button
-            type="button"
-            className={`desktop-nav-btn ${tab === "analytics" ? "active" : ""}`}
-            onClick={() => handleTabChange("analytics")}
-          >
-            <AnalyticsIcon size={18} filled={tab === "analytics"} />
-            <span>统计</span>
-          </button>
-          <button
-            type="button"
-            className={`desktop-nav-btn ${tab === "shop" ? "active" : ""}`}
-            onClick={() => handleTabChange("shop")}
-          >
-            <ShopIcon size={18} filled={tab === "shop"} />
-            <span>商城</span>
-          </button>
-          <button
-            type="button"
-            className={`desktop-nav-btn ${tab === "settings" ? "active" : ""}`}
-            onClick={() => handleTabChange("settings")}
-          >
-            <SettingsIcon size={18} filled={tab === "settings"} />
-            <span>设置</span>
-          </button>
-        </nav>
+        </div>
       </header>
 
       {/* 4 大核心 Tab 主体内容区 */}

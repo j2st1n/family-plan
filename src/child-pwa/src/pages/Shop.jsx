@@ -4,6 +4,8 @@ import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
 import { childFeedback } from "../components/ChildFeedback.jsx";
+import { SunIcon, MoonIcon } from "../components/Icons.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 function fmtDate(s) {
   if (!s) return "";

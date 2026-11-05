@@ -77,6 +77,121 @@
   --line-height-display: 1.2;
 }
 
+/* ==========================================================================
+   Apple iOS Dark Mode Token 体系规范 (Apple HIG 标准)
+   ========================================================================== */
+html[data-theme="dark"],
+:root[data-theme="dark"] {
+  /* 1. 画布底色：Apple iOS System Background (Pure Black #000000 或 Elevated #121214) */
+  --bg: #000000;
+
+  /* 2. 卡片基底：Secondary System Background (#1C1C1E) 与 Tertiary System Background (#2C2C2E) */
+  --card: #1C1C1E;
+  --card-subtle: #2C2C2E;
+  --border: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --separator: rgba(255, 255, 255, 0.12);
+
+  /* 3. 文本层次：Label (#F5F5F7), Secondary Label (#98989D) */
+  --text: #F5F5F7;
+  --text-primary: #F5F5F7;
+  --text-secondary: #98989D;
+  --muted: #98989D;
+  --muted-sage: #98989D;
+
+  /* 4. 品牌主动作色：Apple Dark Blue (#0A84FF) */
+  --accent: #0A84FF;
+  --accent-hover: #409CFF;
+  --accent-light: rgba(10, 132, 255, 0.18);
+  --accent-pill: rgba(10, 132, 255, 0.28);
+
+  /* 5. 状态语义色（Apple iOS Dark Mode 标准） */
+  --cell-perfect: #30D158;
+  --cell-perfect-border: #248A3D;
+  --cell-qualified: rgba(48, 209, 88, 0.2);
+  --cell-qualified-border: rgba(48, 209, 88, 0.4);
+  --cell-missed: rgba(255, 69, 58, 0.2);
+  --cell-missed-border: rgba(255, 69, 58, 0.4);
+  --cell-frozen: rgba(100, 210, 255, 0.2);
+  --cell-frozen-border: #64D2FF;
+  --cell-vacation: rgba(255, 159, 10, 0.2);
+  --cell-vacation-border: #FF9F0A;
+  --cell-rest: #2C2C2E;
+  --cell-rest-border: #3A3A3C;
+
+  /* 奖励星星：暖橙 / Apple Gold #FF9F0A */
+  --star: #FF9F0A;
+  --star-bg: rgba(255, 159, 10, 0.18);
+  --star-border: rgba(255, 159, 10, 0.35);
+
+  /* 连胜火焰：火焰红 #FF453A */
+  --flame: #FF453A;
+  --flame-bg: rgba(255, 69, 58, 0.18);
+  --flame-border: rgba(255, 69, 58, 0.35);
+
+  /* 保护卡/冰霜：青蓝 #64D2FF */
+  --protect: #64D2FF;
+  --protect-bg: rgba(100, 210, 255, 0.18);
+  --protect-border: rgba(100, 210, 255, 0.35);
+
+  /* 危险/警告：火焰红 #FF453A */
+  --danger: #FF453A;
+  --danger-bg: rgba(255, 69, 58, 0.18);
+  --danger-border: rgba(255, 69, 58, 0.35);
+
+  /* Apple 经典深色微羽化弥散微投影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.65), 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000;
+    --card: #1C1C1E;
+    --card-subtle: #2C2C2E;
+    --border: rgba(255, 255, 255, 0.12);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --separator: rgba(255, 255, 255, 0.12);
+    --text: #F5F5F7;
+    --text-primary: #F5F5F7;
+    --text-secondary: #98989D;
+    --muted: #98989D;
+    --muted-sage: #98989D;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --accent-light: rgba(10, 132, 255, 0.18);
+    --accent-pill: rgba(10, 132, 255, 0.28);
+    --cell-perfect: #30D158;
+    --cell-perfect-border: #248A3D;
+    --cell-qualified: rgba(48, 209, 88, 0.2);
+    --cell-qualified-border: rgba(48, 209, 88, 0.4);
+    --cell-missed: rgba(255, 69, 58, 0.2);
+    --cell-missed-border: rgba(255, 69, 58, 0.4);
+    --cell-frozen: rgba(100, 210, 255, 0.2);
+    --cell-frozen-border: #64D2FF;
+    --cell-vacation: rgba(255, 159, 10, 0.2);
+    --cell-vacation-border: #FF9F0A;
+    --cell-rest: #2C2C2E;
+    --cell-rest-border: #3A3A3C;
+    --star: #FF9F0A;
+    --star-bg: rgba(255, 159, 10, 0.18);
+    --star-border: rgba(255, 159, 10, 0.35);
+    --flame: #FF453A;
+    --flame-bg: rgba(255, 69, 58, 0.18);
+    --flame-border: rgba(255, 69, 58, 0.35);
+    --protect: #64D2FF;
+    --protect-bg: rgba(100, 210, 255, 0.18);
+    --protect-border: rgba(100, 210, 255, 0.35);
+    --danger: #FF453A;
+    --danger-bg: rgba(255, 69, 58, 0.18);
+    --danger-border: rgba(255, 69, 58, 0.35);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.65), 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+}
+
 *,
 *::before,
 *::after {
@@ -488,7 +603,8 @@ textarea {
 
 /* 3. iOS Grouped Inset Card (Standard Settings & Lists) */
 .ios-grouped-card {
-  background: #FFFFFF;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -499,7 +615,7 @@ textarea {
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  background: #FFFFFF;
+  background: var(--card);
   border: none;
   width: 100%;
   text-align: left;
@@ -519,7 +635,7 @@ textarea {
 }
 
 .ios-list-row:active {
-  background-color: #F2F2F7;
+  background-color: var(--card-subtle);
 }
 
 /* 4. iOS Colorful Squircles (Icon Box in Settings) */
@@ -542,6 +658,7 @@ textarea {
 .squircle-teal   { background-color: #30B0C7; }
 .squircle-green  { background-color: #34C759; }
 .squircle-red    { background-color: #FF3B30; }
+.squircle-theme  { background-color: #0A84FF; }
 
 @keyframes probeSpin {
   to { transform: rotate(360deg); }
@@ -611,7 +728,7 @@ textarea {
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  background: #FFFFFF;
+  background: var(--card);
   position: relative;
   transition: background-color 0.12s ease;
 }
@@ -623,7 +740,7 @@ textarea {
   left: 48px;
   right: 0;
   height: 0.5px;
-  background-color: rgba(60, 60, 67, 0.15);
+  background-color: var(--separator);
 }
 
 .reminders-checkbox-btn {
@@ -681,7 +798,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   padding: 13px 16px;
-  background: #FFFFFF;
+  background: var(--card);
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -843,7 +960,7 @@ textarea {
   padding: 9px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: #FFFFFF;
+  background: var(--card);
   color: var(--text);
   font-size: 0.88rem;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -1259,3 +1376,116 @@ textarea {
   opacity: 0.65;
   padding: 14px 0 20px 0;
 }
+
+/* ==========================================================================
+   Apple iOS Dark Mode Component Styling & Quick Toggle
+   ========================================================================== */
+.theme-quick-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.theme-quick-toggle-btn:hover {
+  background-color: var(--card-subtle);
+  transform: scale(1.05);
+}
+
+.theme-quick-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+html[data-theme="dark"] .app-header {
+  background: rgba(18, 18, 20, 0.85);
+  border-bottom-color: var(--border);
+}
+
+html[data-theme="dark"] .bottom-tabbar {
+  background: rgba(18, 18, 20, 0.88);
+  border-top-color: var(--border);
+}
+
+html[data-theme="dark"] .desktop-nav-btn.active {
+  background: var(--card-subtle);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="dark"] .desktop-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="dark"] .ios-segmented-control {
+  background-color: rgba(118, 118, 128, 0.24);
+}
+
+html[data-theme="dark"] .ios-segment-item.active,
+html[data-theme="dark"] .ios-segmented-item.active {
+  background-color: #636366;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .ios-stepper {
+  background: var(--card-subtle);
+}
+
+html[data-theme="dark"] .stepper-btn,
+html[data-theme="dark"] .ios-stepper-btn {
+  background: var(--card);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .stepper-btn:active:not(:disabled),
+html[data-theme="dark"] .ios-stepper-btn:active {
+  background: var(--card-subtle);
+}
+
+html[data-theme="dark"] .pill-segment-group {
+  background: var(--card-subtle);
+}
+
+html[data-theme="dark"] .pill-segment-btn.active {
+  background: #636366;
+  color: #FFFFFF;
+}
+
+html[data-theme="dark"] .drawer-close-btn {
+  background: var(--card-subtle);
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+html[data-theme="dark"] .drawer-close-btn:hover {
+  background: #3A3A3C;
+  color: var(--text);
+}
+
+html[data-theme="dark"] .ios-time-input {
+  background: rgba(118, 118, 128, 0.24);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .ios-switch {
+  background-color: rgba(120, 120, 128, 0.36);
+}
+
+html[data-theme="dark"] .ios-switch.on {
+  background-color: #30D158;
+}
+
+html[data-theme="dark"] .drawer-handle-bar {
+  background-color: #545458;
+}
+

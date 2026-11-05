@@ -134,9 +134,9 @@ export function FeedbackProvider({ children }) {
                   gap: "8px",
                   boxShadow: "0 4px 14px rgba(80, 70, 60, 0.12)",
                   transition: "all 0.2s ease",
-                  backgroundColor: isSuccess ? "#EBF9EE" : isError ? "#FFF1F0" : "#FFFFFF",
-                  color: isSuccess ? "#248A3D" : isError ? "var(--danger, #FF3B30)" : "var(--text, #1D1D1F)",
-                  border: `1px solid ${isSuccess ? "#34C759" : isError ? "#FFD1CF" : "var(--border, #E5E5EA)"}`,
+                  backgroundColor: isSuccess ? "var(--cell-qualified)" : isError ? "var(--danger-bg)" : "var(--card)",
+                  color: isSuccess ? "var(--cell-perfect)" : isError ? "var(--danger)" : "var(--text)",
+                  border: `1px solid ${isSuccess ? "var(--cell-qualified-border)" : isError ? "var(--danger-border)" : "var(--border)"}`,
                 }}
               >
                 <span>{isSuccess ? "✓" : isError ? "⚠" : "ℹ"}</span>
@@ -166,11 +166,12 @@ export function FeedbackProvider({ children }) {
         >
           <div
             style={{
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              backgroundColor: "var(--card)",
+              border: "1px solid var(--border)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
               borderRadius: "16px",
-              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)",
+              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.25)",
               width: "100%",
               maxWidth: "290px",
               textAlign: "center",
@@ -265,11 +266,12 @@ export function FeedbackProvider({ children }) {
         >
           <div
             style={{
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              backgroundColor: "var(--card)",
+              border: "1px solid var(--border)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
               borderRadius: "16px",
-              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)",
+              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.25)",
               width: "100%",
               maxWidth: "290px",
               textAlign: "center",
