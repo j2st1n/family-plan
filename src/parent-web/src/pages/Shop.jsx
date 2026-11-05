@@ -1,90 +1,176 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
+import { createRefreshQueue } from "../utils/refreshQueue.js";
+import { useFeedback } from "../components/FeedbackContext.jsx";
+import WarmEmptyState from "../components/WarmEmptyState.jsx";
 
 export default function Shop({ token, isActive, onExpired }) {
+  const { toast, confirm } = useFeedback();
+
   const [items, setItems] = useState([]);
-  const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ title: "", stars: "", stock: "" });
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ title: "", stars: "", stock: "" });
-  const [approveStars, setApproveStars] = useState({});
   const [redemptions, setRedemptions] = useState([]);
   const [showFulfilledRedemptions, setShowFulfilledRedemptions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try { const list = await api.fetchShop(token); setItems(list); } catch (err) { setError("加载商品列表失败: " + (err.message || "未知错误")); }
-    try { const reds = await api.fetchRedemptions(token); setRedemptions(reds); } catch (err) { setError("加载兑换记录失败: " + (err.message || "未知错误")); }
-    setLoading(false);
-  }, [token]);
+  // Modal dialog for Add / Edit Goods (keeping shelf list steady and solid)
+  const [itemModal, setItemModal] = useState({ isOpen: false, mode: "create", itemId: null });
+  const [modalForm, setModalForm] = useState({ title: "", stars: "", stock: "" });
+  const [savingItem, setSavingItem] = useState(false);
 
-  useEffect(() => { load(); }, [load]);
+  // Wishes approve stars state
+  const [approveStars, setApproveStars] = useState({});
+
+  const reads = useRef(createRefreshQueue());
+  const hasLoaded = useRef(false);
+  const load = useCallback((options = {}) => reads.current(token, async () => {
+    setLoading(!hasLoaded.current);
+    setError(null);
+    let succeeded = true;
+    try { const list = await api.fetchShop(token); setItems(list); } catch (err) { succeeded = false; setError("加载商品列表失败: " + (err.message || "未知错误")); }
+    try { const reds = await api.fetchRedemptions(token); setRedemptions(reds); } catch (err) { succeeded = false; setError("加载兑换记录失败: " + (err.message || "未知错误")); }
+    hasLoaded.current = true;
+    setLoading(false);
+    return succeeded;
+  }, options), [token]);
+
   useSseRefresh({ token, enabled: isActive, topics: ["shop"], onRefresh: load, onExpired });
   useVisibilityRefresh({ enabled: isActive, onRefresh: load });
+  useEffect(() => { if (isActive) load(); }, [load, isActive]);
 
-  async function handleAdd() {
-    if (!form.title.trim() || !form.stars || Number(form.stars) < 0.01) return;
-    const stock = form.stock ? parseInt(form.stock) : null;
+  // Open Add Modal
+  const openAddModal = () => {
+    setModalForm({ title: "", stars: "", stock: "" });
+    setItemModal({ isOpen: true, mode: "create", itemId: null });
+  };
+
+  // Open Edit Modal
+  const openEditModal = (item) => {
+    setModalForm({
+      title: item.title,
+      stars: item.star_cost ? item.star_cost.toString() : "",
+      stock: item.stock != null ? item.stock.toString() : "",
+    });
+    setItemModal({ isOpen: true, mode: "edit", itemId: item.id });
+  };
+
+  const closeItemModal = () => {
+    setItemModal({ isOpen: false, mode: "create", itemId: null });
+    setModalForm({ title: "", stars: "", stock: "" });
+  };
+
+  // Save Add or Edit
+  const handleSaveModal = async () => {
+    if (!modalForm.title.trim() || !modalForm.stars || Number(modalForm.stars) < 0.01) {
+      toast.error("请填写正确的商品名称与所需星数");
+      return;
+    }
+    const stock = modalForm.stock ? parseInt(modalForm.stock) : null;
+    setSavingItem(true);
     try {
-      await api.createShopItem(token, { title: form.title.trim(), star_cost: Number(form.stars), stock });
-      setForm({ title: "", stars: "", stock: "" }); setShowAdd(false); load();
+      if (itemModal.mode === "create") {
+        await api.createShopItem(token, {
+          title: modalForm.title.trim(),
+          star_cost: Number(modalForm.stars),
+          stock,
+        });
+        toast.success("商品上架成功！");
+      } else {
+        await api.updateShopItem(token, itemModal.itemId, {
+          title: modalForm.title.trim(),
+          star_cost: Number(modalForm.stars),
+          stock,
+        });
+        toast.success("商品修改已保存！");
+      }
+      closeItemModal();
+      load();
     } catch (err) {
-      setError("添加商品失败: " + (err.message || "未知错误"));
+      toast.error((itemModal.mode === "create" ? "上架失败: " : "保存失败: ") + (err.message || "未知错误"));
+    } finally {
+      setSavingItem(false);
+    }
+  };
+
+  async function handleDelete(id) {
+    const ok = await confirm({
+      title: "下架商品",
+      message: "确定要下架此商品吗？下架后儿童端将无法继续兑换。",
+      confirmText: "下架",
+      cancelText: "取消",
+      isDestructive: true,
+    });
+    if (!ok) return;
+
+    try {
+      await api.deleteShopItem(token, id);
+      toast.success("商品已下架");
+      load();
+    } catch (err) {
+      toast.error("删除商品失败: " + (err.message || "未知错误"));
     }
   }
 
-  function startEdit(item) { setEditingId(item.id); setEditForm({ title: item.title, stars: item.star_cost.toString(), stock: item.stock?.toString() || "" }); }
-  async function saveEdit() {
-    if (!editForm.title.trim() || !editForm.stars || Number(editForm.stars) < 0.01) return;
-    const stock = editForm.stock ? parseInt(editForm.stock) : null;
+  async function handleFulfill(id) {
     try {
-      await api.updateShopItem(token, editingId, { title: editForm.title.trim(), star_cost: Number(editForm.stars), stock });
-      setEditingId(null); load();
+      await api.fulfillItem(token, id);
+      toast.success("已标记兑现！");
+      load();
     } catch (err) {
-      setError("保存商品失败: " + (err.message || "未知错误"));
+      toast.error("兑现商品失败: " + (err.message || "未知错误"));
     }
   }
 
-  async function handleDelete(id) { 
-  if (!window.confirm("下架此商品？")) return; 
-  try {
-    await api.deleteShopItem(token, id);
-    load();
-  } catch (err) {
-    setError("删除商品失败: " + (err.message || "未知错误"));
-  }
-}
-  async function handleFulfill(id) { 
-  try {
-    await api.fulfillItem(token, id);
-    load();
-  } catch (err) {
-    setError("兑现商品失败: " + (err.message || "未知错误"));
-  }
-}
-
-  async function handleApprove(id) {
+  async function handleApproveWish(id) {
     const stars = approveStars[id] || 10;
     try {
       await api.approveWish(token, id, Number(stars));
-      setApproveStars(p => { const n = { ...p }; delete n[id]; return n; }); load();
+      setApproveStars((p) => {
+        const n = { ...p };
+        delete n[id];
+        return n;
+      });
+      toast.success("已通过心愿上架！");
+      load();
     } catch (err) {
-      setError("审核许愿失败: " + (err.message || "未知错误"));
+      toast.error("审核许愿失败: " + (err.message || "未知错误"));
     }
   }
 
-  const wishes = items.filter(i => i.status === "pending");
-  const active = items.filter(i => i.status === "active");
-  const pendingRedemptions = redemptions.filter(r => r.redemption_status === "pending");
-  const fulfilledRedemptions = redemptions.filter(r => r.redemption_status === "fulfilled");
+  async function handleRejectWish(id) {
+    const ok = await confirm({
+      title: "退回心愿",
+      message: "确定要退回孩子提交的这个心愿吗？",
+      confirmText: "退回",
+      cancelText: "保留",
+      isDestructive: true,
+    });
+    if (!ok) return;
 
-  if (loading) return <p style={{ color: "#73706b", textAlign: "center", paddingTop: "2rem" }}>加载中…</p>;
+    try {
+      await api.deleteShopItem(token, id);
+      toast.success("已退回心愿");
+      load();
+    } catch (err) {
+      toast.error("退回失败: " + (err.message || "未知错误"));
+    }
+  }
+
+  const wishes = items.filter((i) => i.status === "pending");
+  const active = items.filter((i) => i.status === "active");
+  const pendingRedemptions = redemptions.filter((r) => r.redemption_status === "pending");
+  const fulfilledRedemptions = redemptions.filter((r) => r.redemption_status === "fulfilled");
+
+  if (loading && items.length === 0) {
+    return (
+      <div style={{ textAlign: "center", padding: "60px 16px", color: "var(--muted)" }}>
+        <p style={{ fontSize: "0.9rem", fontWeight: 600 }}>正在加载星星商城…</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -95,95 +181,288 @@ export default function Shop({ token, isActive, onExpired }) {
           <button onClick={() => setError(null)} style={s.errorClose}>✕</button>
         </div>
       )}
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1rem", fontFamily: "\"Noto Sans SC\", \"PingFang SC\", -apple-system, BlinkMacSystemFont, sans-serif", letterSpacing: "-0.01em" }}>星星商城</h2>
 
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+        <div>
+          <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.01em" }}>
+            星星商城
+          </h2>
+          <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: "2px" }}>
+            心愿奖励设置、孩子心愿审核与星星兑换记录
+          </p>
+        </div>
+        <button
+          type="button"
+          className="capsule-btn capsule-accent"
+          onClick={openAddModal}
+          style={{ padding: "6px 14px", fontSize: "0.82rem" }}
+        >
+          + 添加奖励
+        </button>
+      </div>
+
+      {/* Section 1: 心愿与奖励 (整洁稳固，弹窗增改) */}
       <div style={s.section}>
-        <div style={s.sectionHd}><h3 style={s.sh}>货架商品</h3><span style={{ fontSize: "0.8rem", color: "#73706b" }}>{active.length} 件</span></div>
-        {active.length === 0 && <p style={s.empty}>还没有上架商品</p>}
-        {active.map(item => (
-          <div key={item.id} style={s.row}>
-            {editingId === item.id ? (
-              <div style={{ flex: 1 }}>
-                <input value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} placeholder="名称" style={s.ei} autoFocus />
-                <div style={{ display: "flex", gap: "0.3rem" }}>
-                  <input type="number" value={editForm.stars} onChange={e => setEditForm({ ...editForm, stars: e.target.value })} placeholder="⭐" style={{ ...s.ei, flex: 1 }} />
-                  <input type="number" value={editForm.stock} onChange={e => setEditForm({ ...editForm, stock: e.target.value })} placeholder="库存" style={{ ...s.ei, flex: 1 }} />
-                </div>
-                <button onClick={saveEdit} style={s.act}>保存</button><button onClick={() => setEditingId(null)} style={s.del}>取消</button>
-              </div>
-            ) : (
-              <>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{item.title}</p>
-                  {item.stock != null && <p style={{ fontSize: "0.72rem", color: "#c97070", marginTop: 2 }}>库存 {item.stock}</p>}
-                </div>
-                <span style={{ fontSize: "0.8rem", color: "#c4912a", whiteSpace: "nowrap" }}>⭐{formatStars(item.star_cost)}</span>
-                <button onClick={() => startEdit(item)} style={s.ib}>✎</button>
-                <button onClick={() => handleDelete(item.id)} style={s.ib}>✕</button>
-              </>
-            )}
-          </div>
-        ))}
-        {!showAdd ? (
-          <button onClick={() => setShowAdd(true)} style={s.addBtn}>+ 上架商品</button>
+        <div style={s.sectionHd}>
+          <h3 style={s.sh}>奖励清单</h3>
+          <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{active.length} 项可选</span>
+        </div>
+
+        {active.length === 0 ? (
+          <WarmEmptyState
+            icon="box"
+            title="暂无奖励清单"
+            description="添加孩子心仪的奖励物品或体验，激发好习惯坚持动力！"
+            actionText="+ 添加第一件奖励"
+            onAction={openAddModal}
+          />
         ) : (
-          <div style={s.formBox}>
-            <input placeholder="名称" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} style={s.ei} autoFocus />
-            <div style={{ display: "flex", gap: "0.3rem" }}>
-              <input type="number" placeholder="⭐" value={form.stars} onChange={e => setForm({ ...form, stars: e.target.value })} style={{ ...s.ei, flex: 1 }} />
-              <input type="number" placeholder="库存(选填)" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} style={{ ...s.ei, flex: 1 }} />
-            </div>
-            <div style={{ display: "flex", gap: "0.3rem" }}>
-              <button onClick={handleAdd} style={s.act}>上架</button>
-              <button onClick={() => setShowAdd(false)} style={s.del}>取消</button>
-            </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {active.map((item) => (
+              <div key={item.id} style={s.row}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontWeight: 650, fontSize: "0.92rem", color: "var(--text)" }}>{item.title}</p>
+                  {item.stock != null && (
+                    <p style={{ fontSize: "0.74rem", color: "var(--danger)", marginTop: 2 }}>
+                      提供余量 {item.stock} 份
+                    </p>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+                  <span style={{ fontSize: "0.86rem", color: "var(--star)", fontWeight: 700, whiteSpace: "nowrap" }}>
+                    ⭐ {formatStars(item.star_cost)}
+                  </span>
+                  {/* 雅致的胶囊微按钮：替换原本单字符 ✎ 和 ✕ */}
+                  <button
+                    type="button"
+                    onClick={() => openEditModal(item)}
+                    className="capsule-btn capsule-muted"
+                  >编辑</button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(item.id)}
+                    className="capsule-btn capsule-danger"
+                  >下架</button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
+      {/* Section 2: 心愿审核 */}
       {wishes.length > 0 && (
         <div style={s.section}>
-          <div style={s.sectionHd}><h3 style={s.sh}>许愿审核</h3><span style={{ fontSize: "0.8rem", color: "#c97070" }}>{wishes.length} 条待审</span></div>
-          {wishes.map(w => (
-            <div key={w.id} style={s.row}>
-              <div style={{ flex: 1 }}><p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{w.title}</p></div>
-              <input type="number" placeholder="星星" value={approveStars[w.id] || ""} onChange={e => setApproveStars({ ...approveStars, [w.id]: e.target.value })} style={{ width: "3.5rem", padding: "0.25rem", fontSize: "0.85rem", border: "1px solid #e8e4df", borderRadius: "8px", textAlign: "center" }} />
-              <button onClick={() => handleApprove(w.id)} style={s.act}>✓</button>
-              <button onClick={() => handleDelete(w.id)} style={s.del}>✕</button>
-            </div>
-          ))}
+          <div style={s.sectionHd}>
+            <h3 style={s.sh}>孩子许愿审核</h3>
+            <span style={{ fontSize: "0.78rem", color: "var(--flame)", fontWeight: 700 }}>
+              {wishes.length} 条待审核
+            </span>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {wishes.map((w) => (
+              <div key={w.id} style={s.row}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontWeight: 650, fontSize: "0.92rem", color: "var(--text)" }}>{w.title}</p>
+                  {w.description && (
+                    <p style={{ fontSize: "0.76rem", color: "var(--muted)", marginTop: 2 }}>{w.description}</p>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                    <span style={{ fontSize: "0.76rem", color: "var(--muted)" }}>定价</span>
+                    <input
+                      type="number"
+                      placeholder="10"
+                      value={approveStars[w.id] || ""}
+                      onChange={(e) => setApproveStars({ ...approveStars, [w.id]: e.target.value })}
+                      className="form-input-journal"
+                      style={{
+                        width: "56px",
+                        padding: "4px 6px",
+                        fontSize: "0.82rem",
+                        textAlign: "center",
+                      }}
+                    />
+                    <span style={{ fontSize: "0.76rem", color: "var(--star)" }}>⭐</span>
+                  </div>
+
+                  {/* 雅致的胶囊微按钮：替换裸露的 ✓ 与 ✕ */}
+                  <button
+                    type="button"
+                    onClick={() => handleApprove(w.id)}
+                    className="capsule-btn capsule-accent"
+                  >通过</button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(w.id)}
+                    className="capsule-btn capsule-danger"
+                  >退回</button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
+      {/* Section 3: 已兑换 */}
       {redemptions.length > 0 && (
         <div style={s.section}>
           <div style={s.sectionHd}>
-            <h3 style={s.sh}>已兑换</h3>
-            <span style={{ fontSize: "0.8rem", color: "#73706b" }}>待兑现 {pendingRedemptions.length} · 已兑现 {fulfilledRedemptions.length}</span>
+            <h3 style={s.sh}>兑换记录</h3>
+            <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
+              待兑现 {pendingRedemptions.length} · 已兑现 {fulfilledRedemptions.length}
+            </span>
           </div>
-          {pendingRedemptions.map(r => (
-            <div key={r.id} style={{ ...s.row }}>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{r.title}</p>
-                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>{redemptionPrice(r)}{r.child_id ? " · 孩子兑换" : ""}</p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {pendingRedemptions.map((r) => (
+              <div key={r.id} style={s.row}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontWeight: 650, fontSize: "0.9rem", color: "var(--text)" }}>{r.title}</p>
+                  <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 2 }}>
+                    {redemptionPrice(r)}
+                    {r.child_id ? " · 孩子发起" : ""}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleFulfill(r.redemption_id)}
+                  className="capsule-btn capsule-accent"
+                >
+                  兑现
+                </button>
               </div>
-              <button onClick={() => handleFulfill(r.redemption_id)} style={s.act}>兑现</button>
-            </div>
-          ))}
+            ))}
+          </div>
+
           {fulfilledRedemptions.length > 0 && (
-            <button onClick={() => setShowFulfilledRedemptions(v => !v)} style={s.foldBtn}>
+            <button
+              type="button"
+              onClick={() => setShowFulfilledRedemptions((v) => !v)}
+              style={s.foldBtn}
+            >
               {showFulfilledRedemptions ? "收起已兑现记录" : `展开已兑现记录 (${fulfilledRedemptions.length})`}
             </button>
           )}
-          {showFulfilledRedemptions && fulfilledRedemptions.map(r => (
-            <div key={r.id} style={{ ...s.row, background: "#fafafa" }}>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>{r.title}</p>
-                <p style={{ fontSize: "0.75rem", color: "#73706b" }}>{redemptionPrice(r)}{r.child_id ? " · 孩子兑换" : ""}</p>
-              </div>
-              <span style={{ fontSize: "0.78rem", color: "#4b9c64", fontWeight: 600 }}>已兑现</span>
+
+          {showFulfilledRedemptions && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "6px" }}>
+              {fulfilledRedemptions.map((r) => (
+                <div key={r.id} style={{ ...s.row, opacity: 0.85 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 650, fontSize: "0.9rem", color: "var(--text)" }}>{r.title}</p>
+                    <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 2 }}>
+                      {redemptionPrice(r)}
+                      {r.child_id ? " · 孩子发起" : ""}
+                    </p>
+                  </div>
+                  <span style={{ fontSize: "0.76rem", color: "var(--accent)", fontWeight: 650 }}>
+                    已兑现
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+        </div>
+      )}
+
+      {/* =========================================================================
+          iOS 标准底部抽屉 Sheet：添加与编辑心愿奖励
+          ========================================================================= */}
+      {itemModal.isOpen && (
+        <div className="ios-sheet-overlay" onClick={closeItemModal}>
+          <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-handle-bar" />
+            <div className="ios-sheet-header">
+              <button
+                type="button"
+                className="ios-sheet-nav-btn"
+                onClick={closeItemModal}
+              >
+                取消
+              </button>
+              <span className="ios-sheet-header-title">
+                {itemModal.mode === "create" ? "添加心愿奖励" : "编辑奖励"}
+              </span>
+              <button
+                type="button"
+                className="ios-sheet-nav-action-btn"
+                disabled={savingItem || !modalForm.title.trim()}
+                onClick={handleSaveModal}
+              >
+                {itemModal.mode === "create" ? "添加" : "保存"}
+              </button>
+            </div>
+
+            <div className="ios-sheet-body">
+              <div className="ios-grouped-card" style={{ marginBottom: "20px" }}>
+                {/* Row 1: 奖励名称 (Borderless input) */}
+                <div style={{ padding: "12px 16px" }}>
+                  <input
+                    type="text"
+                    placeholder="奖励名称，如：看动画片30分钟、乐高积木..."
+                    value={modalForm.title}
+                    onChange={(e) => setModalForm({ ...modalForm, title: e.target.value })}
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      fontSize: "1.02rem",
+                      color: "var(--text)",
+                      fontFamily: "inherit",
+                    }}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="ios-separator" />
+
+                {/* Row 2: 所需星星 */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                    所需星星
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ color: "var(--star)", fontWeight: 700 }}>⭐</span>
+                    <input
+                      type="number"
+                      min="0.1"
+                      step="0.5"
+                      placeholder="如：10"
+                      value={modalForm.stars}
+                      onChange={(e) => setModalForm({ ...modalForm, stars: e.target.value })}
+                      className="ios-time-input"
+                      style={{ width: "80px", textAlign: "right" }}
+                    />
+                  </div>
+                </div>
+
+                <div className="ios-separator" />
+
+                {/* Row 3: 提供数量 (选填) */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                    提供数量 (选填)
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="留空为不限"
+                    value={modalForm.stock}
+                    onChange={(e) => setModalForm({ ...modalForm, stock: e.target.value })}
+                    className="ios-time-input"
+                    style={{ width: "110px", textAlign: "right" }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -191,33 +470,60 @@ export default function Shop({ token, isActive, onExpired }) {
 }
 
 function redemptionPrice(r) {
-  if (r.final_star_cost == null) return `⭐${formatStars(r.star_cost)}`;
+  if (r.final_star_cost == null) return `⭐ ${formatStars(r.star_cost)}`;
   return `原价 ${formatStars(r.original_star_cost ?? r.star_cost)}⭐ · 支付 ${r.redemption_discount_percent ?? 100}% · 实付 ${formatStars(r.final_star_cost)}⭐`;
 }
 
 const s = {
-  section: { background: "#fff", borderRadius: "14px", padding: "1rem", marginBottom: "0.8rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
-  sectionHd: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" },
-  sh: { fontSize: "0.95rem", fontWeight: 700 },
-  empty: { color: "#73706b", textAlign: "center", padding: "1rem 0", fontSize: "0.88rem" },
-  row: { display: "flex", alignItems: "center", gap: "0.4rem", background: "#f8f8fb", borderRadius: "10px", padding: "0.5rem 0.7rem", marginBottom: "0.3rem" },
-  ib: { width: "1.4rem", height: "1.4rem", borderRadius: "50%", fontSize: "0.7rem", fontWeight: 600, color: "#73706b", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
-  ei: { padding: "0.3rem 0.4rem", fontSize: "0.85rem", border: "1px solid #e8e4df", borderRadius: "8px", outline: "none", background: "#fff", marginBottom: "0.3rem", display: "block", width: "100%" },
-  act: { padding: "0.25rem 0.5rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", border: "none", cursor: "pointer" },
-  del: { padding: "0.25rem 0.5rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 600, color: "#c97070", background: "#fef0f0", border: "none", cursor: "pointer" },
-  addBtn: { width: "100%", padding: "0.5rem", fontSize: "0.9rem", color: "#3d9e6b", border: "1px dashed #3d9e6b", borderRadius: "10px", background: "transparent", cursor: "pointer", marginTop: "0.4rem" },
-  foldBtn: { width: "100%", padding: "0.45rem", fontSize: "0.82rem", color: "#73706b", border: "1px dashed #d6d0c8", borderRadius: "10px", background: "transparent", cursor: "pointer", margin: "0.2rem 0 0.4rem" },
-  formBox: { background: "#f8f8fb", borderRadius: "10px", padding: "0.5rem", marginTop: "0.4rem" },
+  section: {
+    background: "var(--card)",
+    borderRadius: "var(--radius)",
+    padding: "1.1rem",
+    marginBottom: "0.85rem",
+    border: "1px solid var(--border)",
+    boxShadow: "var(--shadow-card)",
+  },
+  sectionHd: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "0.8rem",
+  },
+  sh: {
+    fontSize: "0.95rem",
+    fontWeight: 700,
+    color: "var(--text)",
+  },
+  row: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    background: "var(--card-subtle)",
+    border: "1px solid var(--border-subtle)",
+    borderRadius: "10px",
+    padding: "0.65rem 0.85rem",
+  },
+  foldBtn: {
+    width: "100%",
+    padding: "0.45rem",
+    fontSize: "0.82rem",
+    color: "var(--muted)",
+    border: "1px solid var(--border-subtle)",
+    borderRadius: "10px",
+    background: "transparent",
+    cursor: "pointer",
+    margin: "0.5rem 0 0.2rem",
+  },
   errorBanner: {
-    background: "#fef0f0",
-    border: "1px solid #f8d0d0",
+    background: "var(--danger-bg)",
+    border: "1px solid var(--danger-border)",
     borderRadius: "10px",
     padding: "0.8rem 1rem",
     marginBottom: "0.8rem",
     display: "flex",
     alignItems: "center",
     gap: "0.6rem",
-    color: "#c97070",
+    color: "var(--danger)",
     fontSize: "0.85rem",
   },
   errorIcon: {
@@ -227,7 +533,7 @@ const s = {
   errorClose: {
     marginLeft: "auto",
     fontSize: "0.9rem",
-    color: "#c97070",
+    color: "var(--danger)",
     background: "transparent",
     border: "none",
     cursor: "pointer",

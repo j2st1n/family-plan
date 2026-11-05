@@ -173,6 +173,10 @@ All daily task responses include `plan_id`. The parent daily list is aggregated 
 
 Deleting a pending daily task retains an internal `deleted` instance to prevent the routine generator recreating it on refresh. Deleted tasks are excluded from both clients, dashboards and streak calculations and cannot be edited, scheduled or completed. Other dates still generate their routine instances. Editing or deleting a completed task returns 409 and preserves its reward history. Omitted optional fields on parent task edits remain unchanged.
 
+Reading a past date returns existing instances only; it does not generate routines retroactively. Today and future dates retain routine generation. Historical streak rates exclude instances created after the end of their task date, using the existing production UTC calendar independently of the PostgreSQL session timezone. This also excludes rows produced by older history views, while keeping them visible in history. Dates with no eligible instances are rest days; eligible tasks below the configured completion threshold still break the streak. Excluding retroactive instances does not delete tasks or rewrite reward history; eligible historical corrections recalculate counters as described below.
+
+Deleting a task that participates in the current or historical completion rate recalculates the current streak from remaining verifiable instances in the same transaction. Past approval changes also recalculate it. Historical eligible deletions newer than the cached streak are reconciled on summary reads and before the next completion is counted. Rest dates and unfinished today do not break the previous run; genuine past missed dates do. Historical longest counts never decrease, and reward entries are not rewritten. This can restore continuity across a corrected missed day, but does not invent missing legacy credits.
+
 ### GET /child/today
 
 Child PWA gets today's tasks. Auth: child device token.

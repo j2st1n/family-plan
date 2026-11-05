@@ -18,6 +18,8 @@ class DailyTaskItem(BaseModel):
     reward_stars: int
     sort_order: int
     status: str
+    require_approval: bool = False
+    submitted_at: datetime | None = None
     scheduled_start: str | None = None
     scheduled_end: str | None = None
     created_by: str = "parent"
@@ -37,6 +39,8 @@ class DailyTaskItem(BaseModel):
 class RewardSummary(BaseModel):
     stars_total: Decimal
     current_streak_days: int
+    streak_freeze_count: int = 0
+    is_on_vacation: bool = False
 
 
 class ChildTodayResponse(BaseModel):
@@ -62,6 +66,7 @@ class ManualTaskItem(BaseModel):
     description: str | None = Field(default=None, max_length=2000)
     expected_minutes: int | None = Field(default=None, ge=1)
     reward_stars: int = Field(default=1, ge=0, le=5)
+    require_approval: bool = False
     scheduled_start: str | None = None
     scheduled_end: str | None = None
     approved: bool | None = None

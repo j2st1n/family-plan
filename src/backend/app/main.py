@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException
 
 from app.core.config import settings
+from app.routes.ai import router as ai_router
 from app.routes.auth import router as auth_router
 from app.routes.children import router as children_router
 from app.routes.daily_tasks import parent_router as parent_daily_router, router as daily_tasks_router
@@ -50,6 +51,7 @@ def create_app() -> FastAPI:
     app.include_router(parent_daily_router, prefix="/api/v1")
     app.include_router(shop_router, prefix="/api/v1")
     app.include_router(child_shop_router, prefix="/api/v1")
+    app.include_router(ai_router, prefix="/api/v1")
 
     if os.path.isdir("/app/static-built/assets"):
         app.mount("/assets", StaticFiles(directory="/app/static-built/assets"), name="assets")

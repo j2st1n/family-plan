@@ -11,6 +11,7 @@ class TaskTemplateCreate(BaseModel):
     weekdays: list[int] = Field(default_factory=list)
     sort_order: int = Field(default=0)
     reward_stars: int = Field(default=1, ge=0)
+    require_approval: bool = False
 
 
 class TaskTemplateResponse(BaseModel):
@@ -24,6 +25,7 @@ class TaskTemplateResponse(BaseModel):
     weekdays: list[int] = []
     sort_order: int
     reward_stars: int
+    require_approval: bool = False
     status: str
     created_at: datetime
     updated_at: datetime

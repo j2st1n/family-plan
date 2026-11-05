@@ -1,9 +1,14 @@
 import { useEffect, useRef } from "react";
+import { nextRefreshOrder } from "../utils/refreshQueue.js";
 
 export default function useSseRefresh({ token, enabled = true, topics = [], childId, onRefresh, onExpired }) {
   const refreshRef = useRef(onRefresh);
   const timerRef = useRef(null);
+  const expiredRef = useRef(onExpired);
   refreshRef.current = onRefresh;
+  expiredRef.current = onExpired;
+
+  const topicsKey = topics.slice().sort().join("|");
 
   useEffect(() => {
     if (!enabled || !token) return undefined;
@@ -11,8 +16,9 @@ export default function useSseRefresh({ token, enabled = true, topics = [], chil
     const allowed = new Set(topics);
 
     function scheduleRefresh() {
+      const observedAt = nextRefreshOrder();
       if (timerRef.current) window.clearTimeout(timerRef.current);
-      timerRef.current = window.setTimeout(() => refreshRef.current?.(), 600);
+      timerRef.current = window.setTimeout(() => refreshRef.current?.({ observedAt }), 600);
     }
 
     function handlePayload(payload) {
@@ -26,13 +32,13 @@ export default function useSseRefresh({ token, enabled = true, topics = [], chil
       }
     }
 
-    readSseStream("/api/v1/events/parent", token, controller.signal, handlePayload, scheduleRefresh, onExpired);
+    readSseStream("/api/v1/events/parent", token, controller.signal, handlePayload, scheduleRefresh, () => expiredRef.current?.());
 
     return () => {
       controller.abort();
       if (timerRef.current) window.clearTimeout(timerRef.current);
     };
-  }, [token, enabled, topics.join("|"), childId, onExpired]);
+  }, [token, enabled, topicsKey, childId]);
 }
 
 async function readSseStream(url, token, signal, onPayload, onOpen, onExpired) {

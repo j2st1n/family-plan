@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -340,6 +340,7 @@ class TestStreakThreshold:
                 plan_id=current_task.plan_id,
                 task_date=date.today() - timedelta(days=1),
                 title="Unapproved child task",
+                created_at=datetime.now(UTC) - timedelta(days=1),
                 reward_stars=1,
                 sort_order=0,
                 created_by="child",
@@ -378,6 +379,7 @@ class TestStreakThreshold:
                 plan_id=current_task.plan_id,
                 task_date=date.today() - timedelta(days=1),
                 title="Missed parent task",
+                created_at=datetime.now(UTC) - timedelta(days=1),
                 reward_stars=1,
                 sort_order=0,
                 approved=True,

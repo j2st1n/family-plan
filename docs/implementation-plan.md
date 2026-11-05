@@ -100,7 +100,7 @@ Done when:
 
 - AI suggestions.
 - Push notifications.
-- Social sharing.
+- Social sharing (outside the original MVP; parent task image sharing is added in the later work below).
 - Teacher accounts.
 - Complex recurrence rules.
 - Native iOS App.
@@ -114,3 +114,9 @@ Done when:
 4. Rewards and dashboard.
 
 This order exposes the riskiest UX issue early: whether the iPad child experience is simple enough.
+
+## 后续功能与优化（2026-10-30）
+
+- [x] 家长任务页后台静默同步：2026-10-30 随 0.3.29 上线。首次/换日加载与后台同步分离，合并 focus/visibility 触发，按事件顺序减少重复查询，保留断线补拉，离开首页后停止其多余刷新；编辑文字、光标及滚动保留经合成浏览器回归验证。
+- [x] 家长任务页分享图片：2026-10-30 随 0.3.28 上线。生成当前选中日期的任务、完成状态和已完成奖励，支持预览、保存及浏览器支持的系统分享；不混入其他日期或当前累计余额。
+- [x] 孩子端今日任务分享图片：2026-10-30 随 0.3.30 上线。包含完整任务、完成状态、认可进度与完成奖励，支持姓名隐藏、保存及系统分享，任务操作/失败/无效日期保护；本机、正式构建、隔离真实API适配及家长端回归通过，用户接受人工复核边界后发布。
