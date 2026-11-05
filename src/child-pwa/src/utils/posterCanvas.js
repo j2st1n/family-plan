@@ -149,19 +149,42 @@ export function drawGrowthPoster(canvas, {
   const completedList = (tasks || []).filter((t) => t.status === "completed");
   const maxVisible = 3;
   const visibleTasks = completedList.slice(0, maxVisible);
-  const itemHeight = 32;
+  const itemRowH = 32;
+  const taskBoxPadX = 16;
+  const taskBoxPadY = 12;
+  const overflowNoteH = 20;
 
-  // 1. 动态计算任务列表高度与整张海报高度（杜绝死区与断层）
+  // 1. 动态计算任务列表高度与整张海报物理高度（彻底消除底部尴尬空白死区）
   const taskBoxH = completedList.length > 0
-    ? Math.max(50, visibleTasks.length * itemHeight + 12 + (completedList.length > maxVisible ? 18 : 0))
+    ? taskBoxPadY * 2 + visibleTasks.length * itemRowH + (completedList.length > maxVisible ? overflowNoteH : 0)
     : 54;
 
   const logicalWidth = 360;
-  // 顶部卡片各模块定高 + 任务框高 + 底部留白
-  // header(106) + dailyBox(88) + gap(12) + cumBox(48) + gap(18) + title(16) + gap(8) + taskBoxH + gap(24) + footer(16) + bottomPad(20)
-  const taskBoxY = 292;
-  const footerY = taskBoxY + taskBoxH + 26;
-  const logicalHeight = footerY + 28;
+  const cardPad = 12;
+  const cardX = cardPad;
+  const cardY = cardPad;
+  const cardW = logicalWidth - cardPad * 2;
+
+  // 严格垂直流式几何布局：
+  // 顶部卡片各模块定高：header(106) + dailyBox(88) + gap(10) + cumBox(46) = 250
+  const cumBottomY = 250;
+  const gapBeforeTitle = 16;
+  const listTitleTopY = cumBottomY + gapBeforeTitle; // 266
+  const listTitleFontHeight = 16;
+  const listTitleCenterY = listTitleTopY + listTitleFontHeight / 2; // 274
+  const listTitleBottomY = listTitleTopY + listTitleFontHeight; // 282
+
+  // 【致命切字重叠修复】：标题文字高度 + 10px 清晰呼吸间距，严禁任何负边距或硬编码重叠！
+  const listTitleGap = 10;
+  const taskBoxY = listTitleBottomY + listTitleGap; // 292
+  const taskBoxBottomY = taskBoxY + taskBoxH;
+
+  // 【自适应画布物理高度】：任务框下方距离底部落款保持黄金比例 24px
+  const footerGap = 24;
+  const footerY = taskBoxBottomY + footerGap;
+  const cardBottomPad = 20;
+  const cardH = (footerY + cardBottomPad) - cardY;
+  const logicalHeight = footerY + cardBottomPad + cardPad;
   const dpr = 2;
 
   canvas.width = logicalWidth * dpr;
@@ -179,12 +202,7 @@ export function drawGrowthPoster(canvas, {
   ctx.fillStyle = APPLE_SYSTEM_COLORS.pureLightGray;
   ctx.fill();
 
-  // 3. 核心内卡片（高质感白卡 + 细边框）
-  const cardPad = 12;
-  const cardX = cardPad;
-  const cardY = cardPad;
-  const cardW = logicalWidth - cardPad * 2;
-  const cardH = logicalHeight - cardPad * 2;
+  // 3. 核心内卡片（高质感白卡 + 细边框，动态高度 cardH 自适应紧致包裹）
   ctx.beginPath();
   drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 16);
   ctx.fillStyle = APPLE_SYSTEM_COLORS.cardBg;
@@ -253,26 +271,30 @@ export function drawGrowthPoster(canvas, {
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
   ctx.fillText("今日达成", 72, 161);
 
-  // 右侧：当日数据聚集 (左边距严格统一对齐)
-  const dailyTextLeft = 118;
+  // 【文本缩进与对齐规范】：
+  // 概览卡片右侧第 3 行激励语缩进，与前两行的文字正文（而非图标边缘）垂直对齐
+  const iconLeft = 118;
+  const textBodyLeft = 138; // 20px 缩进，使第 3 行正文与第 1、2 行图标后的文字正文严格垂线对齐
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
 
   // 当日完成项数
   ctx.font = "700 12.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.forestGreen;
-  ctx.fillText(`📋 今日打卡：已完成 ${completedCount} / ${totalCount} 项`, dailyTextLeft, 134);
+  ctx.fillText("📋", iconLeft, 134);
+  ctx.fillText(`今日打卡：已完成 ${completedCount} / ${totalCount} 项`, textBodyLeft, 134);
 
   // 当日获得星星
   ctx.font = "700 12.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.warmGold;
-  ctx.fillText(`⭐ 今日奖励：${starsToday > 0 ? `+${starsToday}` : "0"} 颗新星`, dailyTextLeft, 153);
+  ctx.fillText("⭐", iconLeft, 153);
+  ctx.fillText(`今日奖励：${starsToday > 0 ? `+${starsToday}` : "0"} 颗新星`, textBodyLeft, 153);
 
-  // 当日鼓励小标语（左对齐，带微缩进与上方文字正文呼应）
+  // 当日鼓励小标语（严格垂直对齐文字正文 textBodyLeft，而非图标边缘）
   ctx.font = "400 9.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
   const todayNote = completionRate === 100 ? "今日所有日常任务圆满达标！🎉" : "持之以恒，点滴进步看得见";
-  ctx.fillText(todayNote, dailyTextLeft, 171);
+  ctx.fillText(todayNote, textBodyLeft, 171);
 
   // 6. 【累计荣誉看板】（双栏并列：🔥 连续自律天数 + ⭐ 累计总星池）
   const cumY = 204;
@@ -311,20 +333,19 @@ export function drawGrowthPoster(canvas, {
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
   ctx.fillText("累计总星池", 186 + cumCardW / 2, cumY + 32);
 
-  // 7. 已完成任务清单 (标题与下方白盒保持清晰垂直流，彻底杜绝切字)
-  const titleY = 274;
+  // 7. 已完成任务清单 (严格流式布局：标题文字高度 + 10px 清晰呼吸间距，杜绝切字)
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.font = "700 12.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textPrimary;
-  ctx.fillText("今日自律清单", 26, titleY);
+  ctx.fillText("今日自律清单", 26, listTitleCenterY);
 
   ctx.textAlign = "right";
   ctx.font = "600 11px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.forestGreen;
-  ctx.fillText(`已达成 ${completedCount} 项`, 334, titleY);
+  ctx.fillText(`已达成 ${completedCount} 项`, 334, listTitleCenterY);
 
-  // 任务容器白盒 (taskBoxY = 292，与 titleY=274 留出充足的 18px 垂直安全间距)
+  // 任务容器白盒
   const taskBoxX = 26;
   const taskBoxW = 308;
 
@@ -337,27 +358,38 @@ export function drawGrowthPoster(canvas, {
   ctx.stroke();
 
   if (completedList.length > 0) {
+    const checkRadius = 7;
+    // 任务白框内部 padding 左右对称（各 16px）
+    // 左边对勾圆心位于 taskBoxX + 16 + checkRadius，确保圆弧左边缘距离外框恰为 16px
+    const checkCx = taskBoxX + taskBoxPadX + checkRadius;
+    const taskTitleX = checkCx + checkRadius + 9;
+    // 右边星星奖励右对齐于 taskBoxX + taskBoxW - 16，确保右边缘距离外框恰为 16px
+    const starsRightX = taskBoxX + taskBoxW - taskBoxPadX;
+
     visibleTasks.forEach((t, i) => {
-      const itemY = taskBoxY + 18 + i * itemHeight;
+      // 完美垂直居中：每个条目垂直中心精准位于该行中线
+      const itemCenterY = taskBoxY + taskBoxPadY + i * itemRowH + itemRowH / 2;
 
-      // 纯矢量绿底白勾徽章
-      drawCheckmark(ctx, taskBoxX + 16, itemY, 6.5, APPLE_SYSTEM_COLORS.forestGreen);
+      // 纯矢量绿底白勾徽章（完美垂直居中）
+      drawCheckmark(ctx, checkCx, itemCenterY, checkRadius, APPLE_SYSTEM_COLORS.forestGreen);
 
-      // 任务标题
+      // 任务标题（完美垂直居中）
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       ctx.font = "500 11.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
       ctx.fillStyle = APPLE_SYSTEM_COLORS.textPrimary;
-      ctx.fillText(truncateText(t.title, 14), taskBoxX + 28, itemY);
+      ctx.fillText(truncateText(t.title, 14), taskTitleX, itemCenterY);
 
-      // 右侧星星奖励 (右对齐，对称内边距 14px)
+      // 右侧星星奖励（完美垂直居中，右边距对称 16px）
       ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
       ctx.font = "600 10.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
       ctx.fillStyle = APPLE_SYSTEM_COLORS.warmGold;
-      ctx.fillText(`⭐ +${t.reward_stars || 1}`, taskBoxX + taskBoxW - 14, itemY);
+      ctx.fillText(`⭐ +${t.reward_stars || 1}`, starsRightX, itemCenterY);
     });
 
     if (completedList.length > maxVisible) {
+      const overflowY = taskBoxY + taskBoxPadY + visibleTasks.length * itemRowH + overflowNoteH / 2;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = "500 9.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
@@ -365,11 +397,11 @@ export function drawGrowthPoster(canvas, {
       ctx.fillText(
         `… 还有 ${completedList.length - maxVisible} 项任务已完美打卡达成 ✨`,
         taskBoxX + taskBoxW / 2,
-        taskBoxY + taskBoxH - 10
+        overflowY
       );
     }
   } else {
-    // 任务暂未完成提示
+    // 任务暂未完成提示（完美垂直与水平居中）
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = "400 11px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
@@ -377,7 +409,7 @@ export function drawGrowthPoster(canvas, {
     ctx.fillText("今日自律行动进行中，完成任务即可点亮清单！🌱", taskBoxX + taskBoxW / 2, taskBoxY + taskBoxH / 2);
   }
 
-  // 8. 底部简洁品牌落款 (单行居中，基于内容真实高度动态计算)
+  // 8. 底部简洁品牌落款 (单行居中，保持黄金比例 24px，无截切与死区)
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.font = "500 9.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";

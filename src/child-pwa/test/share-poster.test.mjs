@@ -87,6 +87,72 @@ test("Child PWA posterCanvas adheres to Apple System Colors & 2x Retina renderin
   assert.ok(texts.includes("整理书包"), "Must render task item");
 });
 
+test("Child PWA drawGrowthPoster eliminates title overlap, enforces 10px breathing gap, dynamic height & alignment", async () => {
+  const { drawGrowthPoster } = await import("../src/utils/posterCanvas.js");
+
+  // 1. 单任务场景自适应高度紧凑收拢验证
+  const canvas1 = createMockCanvas();
+  drawGrowthPoster(canvas1, {
+    childName: "天天",
+    completedCount: 1,
+    totalCount: 1,
+    tasks: [{ id: "t1", title: "整理书包", reward_stars: 1, status: "completed" }],
+  });
+
+  // 1 任务逻辑高度 404，物理 808
+  assert.equal(canvas1.width, 720);
+  assert.equal(canvas1.height, 808, "1 task poster height should be adaptively compacted to 808px");
+
+  // 3 任务场景自适应高度扩展验证
+  const canvas3 = createMockCanvas();
+  drawGrowthPoster(canvas3, {
+    childName: "天天",
+    completedCount: 3,
+    totalCount: 3,
+    tasks: [
+      { id: "t1", title: "整理书包", reward_stars: 1, status: "completed" },
+      { id: "t2", title: "练习跳绳", reward_stars: 2, status: "completed" },
+      { id: "t3", title: "自主阅读", reward_stars: 1, status: "completed" },
+    ],
+  });
+  assert.equal(canvas3.height, 936, "3 tasks poster height should expand to 936px");
+
+  // 2. 检查标题与白框的垂直间距（杜绝切字）
+  const titleOp = canvas3._operations.find((op) => op.op === "fillText" && op.text === "今日自律清单");
+  assert.ok(titleOp, "Must render '今日自律清单' title");
+  const titleBottom = titleOp.y + 8;
+
+  // 找到任务容器白框 roundRect 操作
+  const taskBoxOp = canvas3._operations.find(
+    (op) => op.op === "roundRect" && op.w === 308 && op.x === 26 && op.y >= 280
+  );
+  assert.ok(taskBoxOp, "Must render taskBox roundRect");
+  assert.ok(
+    taskBoxOp.y - titleBottom >= 10,
+    `taskBox top (${taskBoxOp.y}) must have >= 10px breathing gap from title bottom (${titleBottom})`
+  );
+
+  // 3. 检查概览卡片第 3 行激励语缩进与前两行正文对齐（而非图标边缘）
+  const line1Op = canvas3._operations.find((op) => op.op === "fillText" && String(op.text).includes("今日打卡"));
+  const line2Op = canvas3._operations.find((op) => op.op === "fillText" && String(op.text).includes("今日奖励"));
+  const line3Op = canvas3._operations.find(
+    (op) => op.op === "fillText" && (String(op.text).includes("圆满达标") || String(op.text).includes("持之以恒"))
+  );
+  assert.ok(line1Op && line2Op && line3Op, "All 3 lines in daily card must be rendered");
+  assert.equal(line1Op.x, 138, "Line 1 body text should start at x=138");
+  assert.equal(line2Op.x, 138, "Line 2 body text should start at x=138");
+  assert.equal(line3Op.x, 138, "Line 3 quote text should be indented to x=138, aligning with body text");
+
+  // 4. 任务白框内部 padding 左右对称（各 16px）与垂直居中
+  const starOp = canvas3._operations.find((op) => op.op === "fillText" && String(op.text).includes("+1"));
+  assert.ok(starOp, "Must render task star reward");
+  assert.equal(starOp.x, 26 + 308 - 16, "Stars text right margin must be 16px from box edge (318)");
+
+  const checkArcOp = canvas3._operations.find((op) => op.op === "arc" && op.cx === 26 + 16 + 7);
+  assert.ok(checkArcOp, "Checkmark circle left edge must be 16px from box edge (cx=49, r=7)");
+  assert.equal(checkArcOp.cy, starOp.y, "Checkmark and star text must be vertically centered on same line");
+});
+
 test("Child PWA posterCanvas handles Web Share API and download fallback safely", async () => {
   const { shareOrDownloadPoster } = await import("../src/utils/posterCanvas.js");
   const canvas = createMockCanvas();
