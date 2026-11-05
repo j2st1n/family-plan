@@ -5,6 +5,8 @@ import pytest
 from sqlalchemy import func, select, text
 
 from app.core.ratelimit import auth_limiter
+from app.models.child_vacation import ChildVacation
+from app.models.child_streak_freeze_usage import ChildStreakFreezeUsage
 from app.models.daily_task import DailyTask
 from app.models.plan import Plan
 from app.models.streak import Streak
@@ -297,9 +299,10 @@ def test_historical_assignment_cutoff_uses_utc_not_database_session_timezone(
         db_session.rollback()
 
 
+@pytest.mark.parametrize('protection', ['none', 'vacation', 'frozen'])
 @pytest.mark.parametrize('other_missed_day', [False, True])
 def test_deleting_historical_surplus_recalculates_streak_and_keeps_real_breaks(
-    client, family, db_session, other_missed_day,
+    client, family, db_session, other_missed_day, protection,
 ):
     headers, child_headers, child_id, plans = family
     assert client.get('/api/v1/child/today', headers=child_headers).status_code == 200
@@ -326,6 +329,10 @@ def test_deleting_historical_surplus_recalculates_streak_and_keeps_real_breaks(
             title='remaining missed day', approved=True,
             created_at=datetime.combine(day, time(12), UTC),
         ))
+    if other_missed_day and protection == 'vacation':
+        db_session.add(ChildVacation(child_id=UUID(child_id), start_date=day, end_date=day))
+    if other_missed_day and protection == 'frozen':
+        db_session.add(ChildStreakFreezeUsage(child_id=UUID(child_id), used_date=day))
     streak = db_session.scalar(select(Streak).where(Streak.child_id == UUID(child_id)))
     streak.current_days = 1
     streak.longest_days = 41
@@ -337,10 +344,11 @@ def test_deleting_historical_surplus_recalculates_streak_and_keeps_real_breaks(
     for _ in range(2):
         response = client.get('/api/v1/child/today', headers=child_headers)
         assert response.status_code == 200, response.text
-        assert response.json()['rewards']['current_streak_days'] == (1 if other_missed_day else 3)
+        assert response.json()['rewards']['current_streak_days'] == (1 if other_missed_day and protection == 'none' else 3)
     db_session.refresh(streak)
     assert streak.longest_days == 41
     assert db_session.scalar(select(func.count()).select_from(RewardLedger)) == rewards_before
+    assert db_session.scalar(select(func.count()).select_from(ChildStreakFreezeUsage).where(ChildStreakFreezeUsage.child_id == UUID(child_id))) == int(other_missed_day and protection == 'frozen')
 
 
 @pytest.mark.parametrize('complete_before_summary', [False, True])
