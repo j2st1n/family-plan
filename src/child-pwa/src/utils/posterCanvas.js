@@ -289,8 +289,8 @@ export function drawGrowthPoster(canvas, {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.font = "700 14px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
-  ctx.fillStyle = APPLE_SYSTEM_COLORS.appleBlue;
-  ctx.fillText(`💰 ${Number(stars).toFixed(0)} 颗`, 186 + cumCardW / 2, cumY + 17);
+  ctx.fillStyle = APPLE_SYSTEM_COLORS.warmGold;
+  ctx.fillText(`⭐ ${Number(stars).toFixed(0)} 颗`, 186 + cumCardW / 2, cumY + 17);
 
   ctx.font = "500 9.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textSecondary;
@@ -309,9 +309,18 @@ export function drawGrowthPoster(canvas, {
 
   // 任务容器白盒
   const taskBoxX = 28;
-  const taskBoxY = 304;
+  const taskBoxY = 296;
   const taskBoxW = 304;
-  const taskBoxH = 118;
+
+  const completedList = (tasks || []).filter((t) => t.status === "completed");
+  const maxVisible = 3;
+  const visibleTasks = completedList.slice(0, maxVisible);
+  const itemHeight = 32;
+  // 紧凑自适应高度：单任务时不留冗余空洞
+  const taskBoxH = completedList.length > 0
+    ? Math.max(54, visibleTasks.length * itemHeight + 10 + (completedList.length > maxVisible ? 20 : 0))
+    : 64;
+
   ctx.beginPath();
   drawRoundedRect(ctx, taskBoxX, taskBoxY, taskBoxW, taskBoxH, 12);
   ctx.fillStyle = "#FAFAFA";
@@ -320,14 +329,9 @@ export function drawGrowthPoster(canvas, {
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  const completedList = (tasks || []).filter((t) => t.status === "completed");
-
   if (completedList.length > 0) {
-    const maxVisible = 3;
-    const visibleTasks = completedList.slice(0, maxVisible);
-
     visibleTasks.forEach((t, i) => {
-      const itemY = taskBoxY + 18 + i * 28;
+      const itemY = taskBoxY + 18 + i * itemHeight;
 
       // 纯矢量绿底白勾徽章
       drawCheckmark(ctx, taskBoxX + 16, itemY, 6.5, APPLE_SYSTEM_COLORS.forestGreen);
@@ -354,7 +358,7 @@ export function drawGrowthPoster(canvas, {
       ctx.fillText(
         `… 还有 ${completedList.length - maxVisible} 项任务已完美打卡达成 ✨`,
         taskBoxX + taskBoxW / 2,
-        taskBoxY + 104
+        taskBoxY + taskBoxH - 10
       );
     }
   } else {
@@ -366,11 +370,13 @@ export function drawGrowthPoster(canvas, {
     ctx.fillText("今日自律行动进行中，完成任务即可点亮清单！🌱", taskBoxX + taskBoxW / 2, taskBoxY + taskBoxH / 2);
   }
 
-  ctx.fillText("家庭成长自律计划 · 陪伴孩子走好每一步", logicalWidth / 2, 452);
-
-  ctx.font = "400 8.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
-  ctx.fillStyle = "#C7C7CC";
-  ctx.fillText("Apple iOS HIG 设计 · 2x Retina 高清纯净生成", logicalWidth / 2, 468);
+  // 8. 底部简洁品牌落款 (单行居中，彻底去除技术字眼与裁切隐患)
+  const footerY = Math.min(468, Math.max(446, taskBoxY + taskBoxH + 30));
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "500 10px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
+  ctx.fillStyle = APPLE_SYSTEM_COLORS.textTertiary;
+  ctx.fillText("家庭成长自律计划 · 陪伴孩子走好每一步", logicalWidth / 2, footerY);
 
   ctx.restore();
 }
