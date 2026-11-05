@@ -7,8 +7,17 @@ class Settings(BaseSettings):
     app_name: str = "Family Plan API"
     database_url: str = "postgresql+psycopg://family_plan:family_plan@127.0.0.1:5433/family_plan"
     jwt_secret: str = ""
+    ai_encryption_key: str = ""
     access_token_expire_days: int = 7
     child_access_code_ttl_minutes: int = 15
+
+    ai_backend: str = "deepseek"
+    ai_base_url: str = ""
+    ai_api_key: str = ""
+    ai_model: str = "deepseek-chat"
+    ai_timeout_seconds: float = 15.0
+    ai_circuit_breaker_max_failures: int = 3
+    ai_circuit_breaker_reset_timeout: float = 60.0
 
 
 settings = Settings()

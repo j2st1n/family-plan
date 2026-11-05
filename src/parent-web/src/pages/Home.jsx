@@ -7,8 +7,9 @@ import RewardSettings from "./RewardSettings.jsx";
 import TaskManage from "./TaskManage.jsx";
 import { formatStars } from "../utils/format.js";
 import { createRefreshQueue } from "../utils/refreshQueue.js";
+import { useFeedback } from "../components/FeedbackContext.jsx";
 
-const AVATARS = ["#3d9e6b", "#c4912a", "#5b8fb9", "#c97070", "#8b6f9e", "#4b9c64"];
+const AVATARS = ["#0071E3", "#34C759", "#FF9500", "#FF3B30", "#00C7BE", "#5856D6"];
 
 const GRADE_OPTIONS = {
   幼儿园: ["小班", "中班", "大班"],
@@ -34,6 +35,7 @@ function composeGradeLabel(stage, grade) {
 }
 
 export default function Home({ token, isActive, onLogout, onExpired }) {
+  const { toast, confirm } = useFeedback();
   const [children, setChildren] = useState([]);
   const [dashboards, setDashboards] = useState({});
   const [view, setView] = useState("home");
@@ -92,9 +94,17 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
   }
 
   async function handleDelete(childId) {
-    if (!window.confirm("确定要删除吗？")) return;
+    const ok = await confirm({
+      title: "删除人员",
+      message: "确定要删除该人员档案吗？此操作不可逆。",
+      confirmText: "删除",
+      cancelText: "取消",
+      isDestructive: true,
+    });
+    if (!ok) return;
     try {
       await api.deleteChild(token, childId);
+      toast.success("已删除人员档案");
       load();
     } catch (err) {
       setError("删除人员失败: " + (err.message || "未知错误"));
@@ -115,16 +125,17 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
         </div>
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.2rem" }}>
-        <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>Family Plan</h1>
-        <button onClick={onLogout} style={{ color: "#73706b", fontSize: "0.85rem" }}>退出</button>
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "var(--accent)", letterSpacing: "-0.015em" }}>Family Plan</h1>
+        <button onClick={onLogout} style={{ color: "var(--muted)", fontSize: "0.85rem", cursor: "pointer" }}>退出</button>
       </div>
 
-      {loading && <p style={{ color: "#73706b", textAlign: "center", paddingTop: "2rem" }}>加载中…</p>}
+      {loading && <p style={{ color: "var(--muted)", textAlign: "center", paddingTop: "2rem" }}>加载中…</p>}
 
       {!loading && children.length === 0 && (
-        <div style={{ textAlign: "center", paddingTop: "3rem" }}>
-          <p style={{ color: "#73706b", marginBottom: "1rem" }}>还没有添加人员</p>
-          <button onClick={() => setView("create-child")} style={{ color: "#3d9e6b", fontSize: "1rem", fontWeight: 600 }}>+ 添加</button>
+        <div style={{ textAlign: "center", paddingTop: "3rem", paddingBottom: "2rem", background: "var(--card)", borderRadius: "var(--radius)", border: "1px solid var(--border-subtle)" }}>
+          <span style={{ fontSize: "2.2rem", display: "block", marginBottom: "0.4rem" }}>🌱</span>
+          <p style={{ color: "var(--muted)", marginBottom: "1rem" }}>还没有添加人员</p>
+          <button onClick={() => setView("create-child")} className="btn-primary">+ 添加孩子</button>
         </div>
       )}
 
@@ -135,30 +146,70 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
         const stars = d?.rewards?.stars_total ?? 0;
         const streak = d?.rewards?.current_streak_days ?? 0;
         const rate = total > 0 ? Math.round((completed / total) * 100) : null;
+        const submitted = d?.submitted_tasks ?? d?.today?.submitted_tasks ?? 0;
 
         return (
           <div key={c.id} style={styles.card}>
             {editingChild === c.id ? (
-              <div>
-                <label style={styles.el}>名字</label>
-                <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} style={styles.ei} autoFocus />
-                <label style={styles.el}>学段</label>
-                <select value={editForm.stage} onChange={e => setEditForm({ ...editForm, stage: e.target.value, grade: "" })} style={styles.ei}>
-                  <option value="">不填</option>
-                  {Object.keys(GRADE_OPTIONS).map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+              <div className="ios-grouped-card" style={{ padding: "12px", margin: "6px 0" }}>
+                <input
+                  placeholder="孩子姓名"
+                  value={editForm.name}
+                  onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                  style={{ width: "100%", border: "none", outline: "none", fontSize: "1rem", color: "var(--text)", marginBottom: "8px" }}
+                  autoFocus
+                />
+                <div className="ios-separator" />
+                <div style={{ padding: "8px 0" }}>
+                  <div style={{ fontSize: "0.82rem", color: "var(--muted)", marginBottom: "6px" }}>学段</div>
+                  <div className="ios-segmented-control">
+                    {Object.keys(GRADE_OPTIONS).map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        className={`ios-segmented-item ${editForm.stage === s ? "active" : ""}`}
+                        onClick={() => setEditForm({ ...editForm, stage: s, grade: (GRADE_OPTIONS[s] || [])[0] || "" })}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {editForm.stage && (
                   <>
-                    <label style={styles.el}>年级</label>
-                    <select value={editForm.grade} onChange={e => setEditForm({ ...editForm, grade: e.target.value })} style={styles.ei}>
-                      <option value="">请选择</option>
-                      {GRADE_OPTIONS[editForm.stage].map(g => <option key={g} value={g}>{g}</option>)}
-                    </select>
+                    <div className="ios-separator" />
+                    <div style={{ padding: "8px 0" }}>
+                      <div style={{ fontSize: "0.82rem", color: "var(--muted)", marginBottom: "6px" }}>年级</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                        {(GRADE_OPTIONS[editForm.stage] || []).map(g => (
+                          <button
+                            key={g}
+                            type="button"
+                            className={`pill-segment-btn ${editForm.grade === g ? "active" : ""}`}
+                            onClick={() => setEditForm({ ...editForm, grade: g })}
+                            style={{ padding: "4px 10px", fontSize: "0.8rem", borderRadius: "8px" }}
+                          >
+                            {g}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </>
                 )}
-                <label style={styles.el}>完成当日 X% 的任务 → 打卡次数 +1</label>
-                <input value={editForm.threshold} onChange={e => setEditForm({ ...editForm, threshold: e.target.value })} type="number" min="0" max="100" style={styles.ei} />
-                <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.4rem" }}>
+                <div className="ios-separator" />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0" }}>
+                  <span style={{ fontSize: "0.85rem", color: "var(--text)" }}>每日连胜达标标准 (%)</span>
+                  <input
+                    value={editForm.threshold}
+                    onChange={e => setEditForm({ ...editForm, threshold: e.target.value })}
+                    type="number"
+                    min="50"
+                    max="100"
+                    className="ios-time-input"
+                    style={{ width: "64px", textAlign: "right" }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: "0.6rem", marginTop: "10px" }}>
                   <button onClick={saveEdit} style={styles.sb}>保存</button>
                   <button onClick={() => setEditingChild(null)} style={styles.cb}>取消</button>
                 </div>
@@ -166,30 +217,75 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
             ) : (
               <>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                  <div className="child-avatar" style={{ background: AVATARS[c.id.charCodeAt?.(0) % AVATARS.length || 0] }}>{c.name[0]}</div>
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <div className="child-avatar" style={{ background: AVATARS[c.id.charCodeAt?.(0) % AVATARS.length || 0] }}>{c.name[0]}</div>
+                    {submitted > 0 && (
+                      <span
+                        title={`${submitted} 项待审核任务`}
+                        style={{
+                          position: "absolute",
+                          top: "-4px",
+                          right: "-4px",
+                          minWidth: "18px",
+                          height: "18px",
+                          padding: "0 4px",
+                          borderRadius: "999px",
+                          background: "var(--flame)",
+                          color: "#FFFFFF",
+                          fontSize: "0.68rem",
+                          fontWeight: 750,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "2px solid var(--card)",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                        }}
+                      >
+                        {submitted}
+                      </span>
+                    )}
+                  </div>
                   <div onClick={() => { setSelectedChild(c); setView("task-manage"); }} style={{ cursor: "pointer", flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", flexWrap: "wrap", marginBottom: 2 }}>
-                      <span style={{ fontSize: "1rem", fontWeight: 700, fontFamily: "\"Noto Sans SC\", \"PingFang SC\", -apple-system, BlinkMacSystemFont, sans-serif" }}>{c.name}</span>
-                      {c.grade_label && <span style={{ fontSize: "0.78rem", color: "#73706b" }}>{c.grade_label}</span>}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", marginBottom: 2 }}>
+                      <span style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text)" }}>{c.name}</span>
+                      {c.grade_label && <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>{c.grade_label}</span>}
+                      {submitted > 0 && (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "2px",
+                            padding: "2px 8px",
+                            fontSize: "0.72rem",
+                            fontWeight: 700,
+                            borderRadius: "var(--radius-pill)",
+                            background: "var(--star-bg)",
+                            color: "var(--star)",
+                            border: "1px solid var(--star-border)",
+                          }}
+                        >
+                          ⏳ 待点赞 {submitted}
+                        </span>
+                      )}
                     </div>
                     <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
                       <span className="stat-chip">⭐ {formatStars(stars)}</span>
-                      <span className="stat-chip green">🔥 {streak}</span>
-                      <span style={{ fontSize: "0.72rem", color: "#9e948a" }}>达标线 {c.streak_threshold ?? 80}%</span>
+                      <span className="stat-chip flame">🔥 {streak}</span>
+                      <span style={{ fontSize: "0.72rem", color: "var(--muted)" }}>达标线 {c.streak_threshold ?? 80}%</span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: "0.2rem", alignItems: "center", flexShrink: 0 }}>
-                    <button onClick={() => startEdit(c)} style={styles.ib}>✎</button>
+                  <div style={{ display: "flex", gap: "0.3rem", alignItems: "center", flexShrink: 0 }}>
+                    <button onClick={() => startEdit(c)} style={styles.ib} title="编辑">✎</button>
                     <button onClick={() => { setSelectedChild(c); setView("reward-settings"); }} style={styles.settingsBtn}>奖励设置</button>
-                    <button onClick={() => handleDelete(c.id)} style={styles.ib}>✕</button>
+                    <button onClick={() => handleDelete(c.id)} style={styles.ib} title="删除">✕</button>
                   </div>
                 </div>
                 {rate !== null && (
-                  <div style={{ marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px solid #f0ece6", display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                  <div style={{ marginTop: "0.6rem", paddingTop: "0.6rem", borderTop: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", gap: "0.7rem" }}>
                     <ProgressRing percent={rate} />
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: "0.85rem", fontWeight: 650, letterSpacing: "-0.01em" }}>{completed}/{total} 项完成</p>
-                      <p style={{ fontSize: "0.72rem", color: "#73706b", marginTop: "0.05rem" }}>当日进度</p>
+                      <p style={{ fontSize: "0.85rem", fontWeight: 650, letterSpacing: "-0.01em", color: "var(--text)" }}>{completed}/{total} 项完成</p>
+                      <p style={{ fontSize: "0.72rem", color: "var(--muted)", marginTop: "0.05rem" }}>当日进度</p>
                     </div>
                   </div>
                 )}
@@ -200,7 +296,7 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
       })}
 
       {children.length > 0 && (
-        <button onClick={() => setView("create-child")} style={styles.ab}>+ 添加</button>
+        <button onClick={() => setView("create-child")} style={styles.ab}>+ 添加孩子</button>
       )}
     </div>
   );
@@ -213,38 +309,38 @@ function ProgressRing({ percent, size = 52 }) {
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} viewBox="0 0 52 52" style={{ transform: "rotate(-90deg)" }}>
-        <circle cx="26" cy="26" r={r} fill="none" stroke="#e8e4df" strokeWidth="4" />
-        <circle cx="26" cy="26" r={r} fill="none" stroke="#3d9e6b" strokeWidth="4"
+        <circle cx="26" cy="26" r={r} fill="none" stroke="var(--border)" strokeWidth="4" />
+        <circle cx="26" cy="26" r={r} fill="none" stroke="var(--accent)" strokeWidth="4"
           strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round"
           style={{ transition: "stroke-dashoffset 0.5s ease" }} />
       </svg>
       <div style={{
         position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "0.75rem", fontWeight: 700, fontFamily: "SF Mono, ui-monospace, Menlo, monospace", color: "#2d2b28"
+        fontSize: "0.75rem", fontWeight: 700, fontVariantNumeric: "tabular-nums", color: "var(--text)"
       }}>{percent}%</div>
     </div>
   );
 }
 
 const styles = {
-  card: { background: "#fff", borderRadius: "14px", padding: "0.9rem 1rem", marginBottom: "0.7rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
-  ib: { width: "1.6rem", height: "1.6rem", borderRadius: "50%", fontSize: "0.75rem", fontWeight: 600, color: "#73706b", background: "transparent", border: "none", cursor: "pointer" },
-  settingsBtn: { padding: "0.24rem 0.55rem", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 700, color: "#fff", background: "#3d9e6b", border: "none", cursor: "pointer", whiteSpace: "nowrap" },
-  ei: { width: "100%", padding: "0.4rem 0.6rem", fontSize: "0.95rem", border: "1px solid #e8e4df", borderRadius: "8px", outline: "none", marginBottom: "0.3rem", display: "block" },
-  el: { display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#4a4540", marginBottom: "0.15rem", marginTop: "0.3rem" },
-  sb: { flex: 1, padding: "0.35rem", fontSize: "0.85rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "8px" },
-  cb: { flex: 1, padding: "0.35rem", fontSize: "0.85rem", fontWeight: 600, color: "#73706b", background: "#efece8", borderRadius: "8px" },
-  ab: { width: "100%", padding: "0.7rem", fontSize: "0.95rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "12px", marginTop: "0.6rem" },
+  card: { background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "1rem 1.15rem", marginBottom: "0.85rem", boxShadow: "var(--shadow-card)" },
+  ib: { width: "1.8rem", height: "1.8rem", borderRadius: "50%", fontSize: "0.8rem", fontWeight: 600, color: "var(--muted)", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
+  settingsBtn: { padding: "0.26rem 0.65rem", borderRadius: "var(--radius-pill)", fontSize: "0.74rem", fontWeight: 650, color: "var(--accent)", background: "var(--accent-light)", border: "1px solid var(--accent-pill)", cursor: "pointer", whiteSpace: "nowrap" },
+  ei: { width: "100%", padding: "0.45rem 0.65rem", fontSize: "0.95rem", border: "1px solid var(--border)", borderRadius: "8px", outline: "none", marginBottom: "0.35rem", display: "block", background: "var(--card)", color: "var(--text)", fontVariantNumeric: "tabular-nums" },
+  el: { display: "block", fontSize: "0.78rem", fontWeight: 650, color: "var(--muted)", marginBottom: "0.15rem", marginTop: "0.35rem" },
+  sb: { flex: 1, padding: "0.45rem", fontSize: "0.85rem", fontWeight: 650, color: "#FFFFFF", background: "var(--accent)", borderRadius: "8px", border: "none", cursor: "pointer", boxShadow: "0 2px 6px rgba(67, 106, 84, 0.2)" },
+  cb: { flex: 1, padding: "0.45rem", fontSize: "0.85rem", fontWeight: 600, color: "var(--muted)", background: "#F0ECE4", border: "1px solid var(--border)", borderRadius: "8px", cursor: "pointer" },
+  ab: { width: "100%", padding: "0.75rem", fontSize: "0.95rem", fontWeight: 650, color: "#FFFFFF", background: "var(--accent)", borderRadius: "12px", marginTop: "0.8rem", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(67, 106, 84, 0.2)" },
   errorBanner: {
-    background: "#fef0f0",
-    border: "1px solid #f8d0d0",
+    background: "var(--danger-bg)",
+    border: "1px solid var(--danger-border)",
     borderRadius: "10px",
     padding: "0.8rem 1rem",
     marginBottom: "0.8rem",
     display: "flex",
     alignItems: "center",
     gap: "0.6rem",
-    color: "#c97070",
+    color: "var(--danger)",
     fontSize: "0.85rem",
   },
   errorIcon: {
@@ -254,7 +350,7 @@ const styles = {
   errorClose: {
     marginLeft: "auto",
     fontSize: "0.9rem",
-    color: "#c97070",
+    color: "var(--danger)",
     background: "transparent",
     border: "none",
     cursor: "pointer",

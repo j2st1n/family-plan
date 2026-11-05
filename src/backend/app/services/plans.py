@@ -1,7 +1,7 @@
 from datetime import date as dt_date
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.errors import api_error
@@ -42,6 +42,7 @@ def create_plan(db: Session, parent_id: UUID, data: PlanCreate) -> Plan:
             weekdays=task_data.weekdays,
             sort_order=task_data.sort_order,
             reward_stars=task_data.reward_stars,
+            require_approval=task_data.require_approval,
         )
         db.add(template)
 
@@ -88,6 +89,7 @@ def add_task_template(db: Session, plan: Plan, data: TaskTemplateCreate) -> Task
         weekdays=data.weekdays,
         sort_order=data.sort_order,
         reward_stars=data.reward_stars,
+        require_approval=data.require_approval,
     )
     db.add(template)
     db.commit()
@@ -109,9 +111,21 @@ def get_child_dashboard(db: Session, child_id: UUID, parent_id: UUID) -> dict:
         )
     )
     completed = sum(1 for t in tasks_today if t.status == "completed")
+    submitted = sum(1 for t in tasks_today if t.status == "submitted")
+    total_submitted = db.scalar(
+        select(func.count(DailyTask.id)).where(
+            DailyTask.child_id == child_id,
+            DailyTask.status == "submitted",
+        )
+    ) or 0
     summary = get_reward_summary(db, child_id)
     return {
-        "today": {"total_tasks": len(tasks_today), "completed_tasks": completed},
+        "today": {
+            "total_tasks": len(tasks_today),
+            "completed_tasks": completed,
+            "submitted_tasks": submitted,
+        },
+        "submitted_tasks": total_submitted,
         "rewards": summary,
     }
 
@@ -126,6 +140,8 @@ def update_task_template(db: Session, plan: Plan, template_id: UUID, data: TaskT
     template.expected_minutes = data.expected_minutes
     template.weekdays = data.weekdays
     template.reward_stars = data.reward_stars
+    if "require_approval" in data.model_fields_set:
+        template.require_approval = data.require_approval
     db.commit()
     db.refresh(template)
     today = dt_date.today()

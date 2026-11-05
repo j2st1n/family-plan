@@ -142,6 +142,22 @@ const api = {
     return request(`/plans/${planId}/daily-tasks/${taskId}`, { method: "DELETE", headers: h(token) });
   },
 
+  approveTask(token, taskId) {
+    return request(`/plans/tasks/${taskId}/approve`, { method: "POST", headers: h(token) });
+  },
+
+  checkTask(token, taskId) {
+    return request(`/plans/tasks/${taskId}/check`, { method: "POST", headers: h(token) });
+  },
+
+  rejectTask(token, taskId) {
+    return request(`/plans/tasks/${taskId}/reject`, { method: "POST", headers: h(token) });
+  },
+
+  revokeTask(token, taskId) {
+    return request(`/plans/tasks/${taskId}/revoke`, { method: "POST", headers: h(token) });
+  },
+
   updateRoutineTask(token, planId, templateId, data) {
     return request(`/plans/${planId}/task-templates/${templateId}`, {
       method: "PATCH",
@@ -180,6 +196,89 @@ const api = {
 
   fulfillItem(token, redemptionId) {
     return request(`/shop/redemptions/${redemptionId}/fulfill`, { method: "PATCH", headers: h(token) });
+  },
+
+  fetchAnalytics(token, childId, days = 30) {
+    return request(`/plans/children/${childId}/analytics?days=${days}`, { headers: h(token) });
+  },
+
+  fetchVacations(token, childId) {
+    return request(`/plans/children/${childId}/vacations`, { headers: h(token) });
+  },
+
+  createVacation(token, childId, data) {
+    return request(`/plans/children/${childId}/vacations`, {
+      method: "POST",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
+  },
+
+  deleteVacation(token, childId, vacationId) {
+    return request(`/plans/children/${childId}/vacations/${vacationId}`, {
+      method: "DELETE",
+      headers: h(token),
+    });
+  },
+
+  fetchChildFreeze(token, childId) {
+    return request(`/shop/children/${childId}/freeze`, { headers: h(token) });
+  },
+
+  adjustChildFreeze(token, childId, delta, reason = "") {
+    return request(`/shop/children/${childId}/freeze/adjust`, {
+      method: "PATCH",
+      headers: h(token),
+      body: JSON.stringify({ delta, reason }),
+    });
+  },
+
+  updateFreezeSettings(token, childId, data) {
+    return request(`/shop/children/${childId}/freeze/settings`, {
+      method: "PUT",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
+  },
+
+  parseCopilotTasks(token, data) {
+    return request("/ai/copilot/parse-tasks", {
+      method: "POST",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
+  },
+
+  fetchAiHealth(token) {
+    return request("/ai/health", { headers: h(token) });
+  },
+
+  fetchAiSettings(token) {
+    return request("/ai/settings", { headers: h(token) });
+  },
+
+  updateAiSettings(token, data) {
+    return request("/ai/settings", {
+      method: "PUT",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
+  },
+
+  testAiConnection(token, data) {
+    return request("/ai/test-connection", {
+      method: "POST",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
+  },
+
+  fetchAiModels(token, data) {
+    return request("/ai/fetch-models", {
+      method: "POST",
+      headers: h(token),
+      body: JSON.stringify(data),
+    });
   },
 };
 

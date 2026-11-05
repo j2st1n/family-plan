@@ -8,6 +8,8 @@ export default function useSseRefresh({ token, enabled = true, topics = [], chil
   refreshRef.current = onRefresh;
   expiredRef.current = onExpired;
 
+  const topicsKey = topics.slice().sort().join("|");
+
   useEffect(() => {
     if (!enabled || !token) return undefined;
     const controller = new AbortController();
@@ -36,7 +38,7 @@ export default function useSseRefresh({ token, enabled = true, topics = [], chil
       controller.abort();
       if (timerRef.current) window.clearTimeout(timerRef.current);
     };
-  }, [token, enabled, topics.join("|"), childId]);
+  }, [token, enabled, topicsKey, childId]);
 }
 
 async function readSseStream(url, token, signal, onPayload, onOpen, onExpired) {

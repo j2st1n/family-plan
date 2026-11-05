@@ -1,21 +1,142 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+/* ==========================================================================
+   Apple / iOS 现代极简设计系统 Tokens (Child PWA)
+   规范参照：OpenDesign 官方 design-systems/apple/DESIGN.md & Apple HIG
+   ========================================================================== */
 
 :root {
-  --bg: #f7f7f6;
-  --card: #fff;
-  --text: #2d2b28;
-  --muted: #73706b;
-  --accent: #3d9e6b;
-  --accent-hover: #2f7d53;
-  --positive: #4b9c64;
-  --star: #c4912a;
-  --star-bg: #fdf6e3;
-  --danger: #c97070;
-  --danger-bg: #fdf0f0;
-  --border: #e8e4df;
+  /* 1. 画布底色：Apple 经典超浅冷灰/云白画布 */
+  --bg: #F5F5F7;
+
+  /* 2. 卡片质感：纯净白底，1px 极细微边框，超柔羽化弥散微投影 */
+  --card: #FFFFFF;
+  --card-subtle: #F5F5F7;
+  --border: #E5E5EA;
+  --border-subtle: #F2F2F7;
+
+  /* 3. 字体与字阶：主文本采用 Apple Near-Black Ink，次级说明文字采用 Secondary Neutral Gray */
+  --text: #1D1D1F;
+  --text-primary: #1D1D1F;
+  --muted: #86868B;
+  --muted-sage: #86868B;
+
+  /* 4. 品牌主动作色：纯正 Apple Action Blue */
+  --accent: #0071E3;
+  --accent-hover: #0077ED;
+  --accent-light: #F0F6FD;
+  --accent-pill: #E1EFFF;
+
+  /* 5. 状态语义色（Apple Health/Fitness 标准） */
+  --star: #FF9500;
+  --star-bg: #FFF7EB;
+  --star-border: #FFE5B5;
+  --flame: #FF3B30;
+  --flame-bg: #FFF1F0;
+  --flame-border: #FFD1CF;
+  --protect: #00C7BE;
+  --protect-bg: #E5F9F8;
+  --protect-border: #B2F0EC;
+  --danger: #FF3B30;
+  --danger-bg: #FFF1F0;
+  --danger-border: #FFD1CF;
+
+  /* 儿童触控友好大圆角 */
+  --radius-sm: 8px;
   --radius: 18px;
-  --accent-light: #e8f5ec;
-  --accent-pill: #d4e8da;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  /* Apple 经典超柔羽化弥散微投影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-stamp: 0 4px 14px rgba(0, 113, 227, 0.18);
+
+  /* 排版黄金比例 */
+  --line-height-body: 1.5;
+  --line-height-display: 1.25;
+}
+
+/* ==========================================================================
+   Apple iOS Dark Mode Token 体系规范 (Apple HIG 标准 - Child PWA)
+   ========================================================================== */
+html[data-theme="dark"],
+:root[data-theme="dark"] {
+  /* 1. 画布底色：Apple iOS System Background (Pure Black #000000 或 Elevated #121214) */
+  --bg: #000000;
+
+  /* 2. 卡片基底：Secondary System Background (#1C1C1E) 与 Tertiary System Background (#2C2C2E) */
+  --card: #1C1C1E;
+  --card-subtle: #2C2C2E;
+  --border: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --separator: rgba(255, 255, 255, 0.12);
+
+  /* 3. 文本层次：Label (#F5F5F7), Secondary Label (#98989D) */
+  --text: #F5F5F7;
+  --text-primary: #F5F5F7;
+  --muted: #98989D;
+  --muted-sage: #98989D;
+
+  /* 4. 品牌主动作色：Apple Dark Blue (#0A84FF) */
+  --accent: #0A84FF;
+  --accent-hover: #409CFF;
+  --accent-light: rgba(10, 132, 255, 0.18);
+  --accent-pill: rgba(10, 132, 255, 0.28);
+
+  /* 5. 状态语义色（Apple iOS Dark Mode 标准） */
+  --star: #FF9F0A;
+  --star-bg: rgba(255, 159, 10, 0.18);
+  --star-border: rgba(255, 159, 10, 0.35);
+  --flame: #FF453A;
+  --flame-bg: rgba(255, 69, 58, 0.18);
+  --flame-border: rgba(255, 69, 58, 0.35);
+  --protect: #64D2FF;
+  --protect-bg: rgba(100, 210, 255, 0.18);
+  --protect-border: rgba(100, 210, 255, 0.35);
+  --danger: #FF453A;
+  --danger-bg: rgba(255, 69, 58, 0.18);
+  --danger-border: rgba(255, 69, 58, 0.35);
+
+  /* Apple 经典深色微羽化弥散微投影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.65), 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-stamp: 0 4px 14px rgba(10, 132, 255, 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000;
+    --card: #1C1C1E;
+    --card-subtle: #2C2C2E;
+    --border: rgba(255, 255, 255, 0.12);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --separator: rgba(255, 255, 255, 0.12);
+    --text: #F5F5F7;
+    --text-primary: #F5F5F7;
+    --muted: #98989D;
+    --muted-sage: #98989D;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --accent-light: rgba(10, 132, 255, 0.18);
+    --accent-pill: rgba(10, 132, 255, 0.28);
+    --star: #FF9F0A;
+    --star-bg: rgba(255, 159, 10, 0.18);
+    --star-border: rgba(255, 159, 10, 0.35);
+    --flame: #FF453A;
+    --flame-bg: rgba(255, 69, 58, 0.18);
+    --flame-border: rgba(255, 69, 58, 0.35);
+    --protect: #64D2FF;
+    --protect-bg: rgba(100, 210, 255, 0.18);
+    --protect-border: rgba(100, 210, 255, 0.35);
+    --danger: #FF453A;
+    --danger-bg: rgba(255, 69, 58, 0.18);
+    --danger-border: rgba(255, 69, 58, 0.35);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.65), 0 2px 4px rgba(0, 0, 0, 0.5);
+    --shadow-stamp: 0 4px 14px rgba(10, 132, 255, 0.35);
+  }
 }
 
 *,
@@ -27,66 +148,137 @@
 }
 
 html {
-  font-size: 20px;
+  font-size: 16px;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  font-family: "Noto Sans SC", "PingFang SC", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   font-weight: 400;
+  line-height: var(--line-height-body);
   background: var(--bg);
   color: var(--text);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.012em;
+}
+
+h1, h2, h3, h4, .display-text {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", sans-serif;
+  line-height: var(--line-height-display);
+  letter-spacing: -0.022em;
+  font-weight: 700;
+  color: var(--text);
 }
 
 #root {
   width: 100%;
   max-width: 680px;
   margin: 0 auto;
-  padding: 28px 24px calc(80px + env(safe-area-inset-bottom, 0px));
+  padding: 24px 20px calc(80px + env(safe-area-inset-bottom, 0px));
 }
 
 @media (min-width: 600px) {
   #root {
-    padding: 36px 36px calc(100px + env(safe-area-inset-bottom, 0px));
+    padding: 32px 32px calc(96px + env(safe-area-inset-bottom, 0px));
   }
 }
 
 .nav-tabs {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  display: flex; justify-content: center; gap: 8px;
-  padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px));
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid var(--border);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: rgba(249, 249, 249, 0.88);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 0.5px solid rgba(60, 60, 67, 0.2);
   z-index: 200;
 }
+
 .nav-tab {
-  flex: 1; max-width: 160px;
-  padding: 12px 18px; text-align: center; font-size: 0.95rem; font-weight: 650;
-  font-family: "Noto Sans SC", "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
-  letter-spacing: -0.01em;
-  color: var(--muted); background: transparent;
-  border-radius: var(--radius); border: none; cursor: pointer;
-  transition: all 0.18s ease;
+  flex: none;
+  width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  padding-top: 2px;
 }
-.nav-tab.on { background: var(--accent-light); color: var(--accent); }
+
+.nav-tab:active {
+  opacity: 0.65;
+}
+
+.nav-tab.on {
+  color: var(--accent);
+  background: transparent;
+  font-weight: 600;
+}
 
 .brand-icon {
-  width: 64px; height: 64px; border-radius: 20px;
-  background: var(--accent); display: flex; align-items: center; justify-content: center;
-  font-size: 1.8rem; color: #fff; margin: 0 auto 14px;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  color: #FFFFFF;
+  margin: 0 auto 14px;
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.22);
 }
 
 .stat-chip {
-  display: inline-flex; align-items: center; gap: 2px;
-  padding: 3px 12px; font-size: 0.8rem; font-weight: 650;
-  border-radius: 999px;
-  background: var(--star-bg); color: var(--star);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 650;
+  border-radius: var(--radius-pill);
+  background: var(--star-bg);
+  color: var(--star);
+  border: 1px solid var(--star-border);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
-.stat-chip.green { background: var(--accent-light); color: var(--accent); }
+
+.stat-chip.green {
+  background: var(--accent-light);
+  color: var(--accent);
+  border-color: var(--accent-pill);
+}
+
+.stat-chip.flame {
+  background: var(--flame-bg);
+  color: var(--flame);
+  border-color: var(--flame-border);
+}
+
+.stat-chip.protect {
+  background: var(--protect-bg);
+  color: var(--protect);
+  border-color: var(--protect-border);
+}
 
 button {
   font: inherit;
@@ -95,6 +287,624 @@ button {
   background: none;
 }
 
-input {
+input,
+select,
+textarea {
   font: inherit;
+  font-variant-numeric: tabular-nums;
 }
+
+/* ==========================================================================
+   Apple iOS Child Ergonomic Touch Target (44x44pt HIG Standard, width: 72px; height: 72px; touch buffer)
+   ========================================================================== */
+.task-check-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 113, 227, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.task-check-btn:active:not(:disabled) {
+  transform: scale(0.96);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.task-check-btn.completed {
+  background: #34C759;
+  border-color: #34C759;
+  color: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(52, 199, 89, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  cursor: default;
+}
+
+.task-check-btn.submitted {
+  background: var(--star-bg);
+  border: 2px solid var(--star);
+  color: var(--star);
+  box-shadow: 0 3px 10px rgba(255, 149, 0, 0.2);
+  cursor: default;
+}
+
+.task-submitted-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--star-bg);
+  border: 1px solid var(--star-border);
+  color: var(--star);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.task-check-btn.spring-pop {
+  animation: stampSpringPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes stampSpringPop {
+  0% { transform: scale(0.92); }
+  50% { transform: scale(1.08); }
+  75% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+.task-check-btn:disabled {
+  cursor: not-allowed;
+}
+
+.task-check-btn.completed:disabled {
+  cursor: default;
+}
+
+.task-focus-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  min-height: 40px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-light);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.15s ease;
+}
+
+.task-focus-btn:hover {
+  background: #E1EFFF;
+}
+
+.task-focus-btn:active {
+  transform: scale(0.96);
+}
+
+/* 按钮通用层级规范 (Primary, Secondary, Ghost, Outline) */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 14px;
+  background: var(--accent);
+  color: #FFFFFF;
+  font-weight: 650;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.25);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: manipulation;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: manipulation;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--card-subtle);
+  border-color: #D2D2D7;
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text);
+}
+
+.ios-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: var(--accent);
+  color: #FFFFFF;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 113, 227, 0.2);
+}
+
+.ios-btn-primary:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.ios-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ios-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: rgba(118, 118, 128, 0.12);
+  color: var(--accent);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ios-btn-secondary:active {
+  background-color: rgba(118, 118, 128, 0.2);
+}
+
+/* ==========================================================================
+   Apple iOS HIG Standard Components
+   ========================================================================== */
+
+/* 1. iOS Large Page Title */
+.ios-large-title {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.ios-page-subtitle {
+  font-size: 0.88rem;
+  color: var(--muted);
+  font-weight: 400;
+  margin-bottom: 16px;
+}
+
+/* 2. iOS Inset Grouped Card */
+.ios-grouped-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+}
+
+.reminders-task-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--card);
+  position: relative;
+  transition: background-color 0.12s ease;
+}
+
+.reminders-task-row:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 16px;
+  right: 0;
+  height: 0.5px;
+  background-color: var(--separator);
+}
+
+/* iOS Sheet Drawer */
+.ios-sheet-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100dvh;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: var(--keyboard-height, 0px);
+  animation: fadeIn 0.18s ease;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .ios-sheet-overlay {
+    align-items: center;
+    padding: 24px;
+  }
+}
+
+.ios-sheet-content {
+  background: #F2F2F7;
+  width: 100%;
+  max-width: 540px;
+  max-height: 88dvh;
+  height: auto;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+  animation: slideUpSheet 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 768px) {
+  .ios-sheet-content {
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.drawer-handle-bar {
+  width: 38px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: #D2D2D7;
+  margin: 10px auto 2px auto;
+  flex-shrink: 0;
+}
+
+.ios-sheet-header {
+  position: relative;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: #F2F2F7;
+  border-bottom: 0.5px solid rgba(60, 60, 67, 0.2);
+  flex-shrink: 0;
+}
+
+.ios-sheet-header-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  pointer-events: none;
+}
+
+.ios-sheet-nav-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 6px 4px;
+  z-index: 1;
+}
+
+.ios-sheet-nav-action-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 650;
+  cursor: pointer;
+  padding: 6px 4px;
+  z-index: 1;
+  transition: opacity 0.15s ease;
+}
+
+.ios-sheet-nav-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ios-sheet-close-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 6px 4px;
+  z-index: 1;
+}
+
+.ios-sheet-body {
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 16px));
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+  background: #F2F2F7;
+}
+
+.ios-separator {
+  height: 0.5px;
+  background-color: rgba(60, 60, 67, 0.15);
+  margin-left: 16px;
+}
+
+.ios-group-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0 0 6px 16px;
+}
+
+.ios-stepper-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(118, 118, 128, 0.12);
+  border: none;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.ios-stepper-btn:active {
+  background: rgba(118, 118, 128, 0.22);
+}
+
+.ios-segmented-control {
+  display: inline-flex;
+  background: rgba(118, 118, 128, 0.12);
+  padding: 2px;
+  border-radius: 8px;
+}
+
+.ios-segmented-item {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ios-segmented-item.active {
+  background: #FFFFFF;
+  color: var(--text);
+  font-weight: 650;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.ios-time-input {
+  border: none;
+  background: rgba(118, 118, 128, 0.12);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+/* iOS Standard Switch (51x31px Apple Standard) */
+.ios-switch {
+  position: relative;
+  width: 51px;
+  height: 31px;
+  background-color: #E9E9EB;
+  border-radius: 31px;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+  user-select: none;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.ios-switch.on {
+  background-color: #34C759;
+}
+
+.ios-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  background-color: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16);
+  transition: transform 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.ios-switch.on .ios-switch-thumb {
+  transform: translateX(20px);
+}
+
+/* iOS Standard Input */
+.form-input-journal {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input-journal:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+
+@keyframes slideUpSheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ==========================================================================
+   Apple iOS Dark Mode Component Styling & Trigger (Child PWA)
+   ========================================================================== */
+.ios-theme-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.ios-theme-trigger-btn:active {
+  transform: scale(0.92);
+}
+
+html[data-theme="dark"] .nav-tabs {
+  background: rgba(18, 18, 20, 0.88);
+  border-top-color: var(--border);
+}
+
+html[data-theme="dark"] .ios-sheet-content {
+  background: var(--bg);
+}
+
+html[data-theme="dark"] .ios-sheet-header {
+  background: var(--bg);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.12);
+}
+
+html[data-theme="dark"] .ios-sheet-body {
+  background: var(--bg);
+}
+
+html[data-theme="dark"] .ios-segmented-control {
+  background: rgba(118, 118, 128, 0.24);
+}
+
+html[data-theme="dark"] .ios-segmented-item.active {
+  background: #636366;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .ios-time-input {
+  background: rgba(118, 118, 128, 0.24);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .ios-switch {
+  background-color: rgba(120, 120, 128, 0.36);
+}
+
+html[data-theme="dark"] .ios-switch.on {
+  background-color: #30D158;
+}
+
+html[data-theme="dark"] .drawer-handle-bar {
+  background-color: #545458;
+}
+

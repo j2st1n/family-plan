@@ -1,22 +1,78 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { fetchToday, completeTask, createChildTask, scheduleChildTask, updateChildTask, deleteChildTask } from "../api.js";
+import confetti from "canvas-confetti";
+import {
+  fetchToday,
+  completeTask,
+  createChildTask,
+  scheduleChildTask,
+  updateChildTask,
+  deleteChildTask,
+} from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
+import { playTaskComplete, playTaskSubmitted, initAudioUnlock } from "../utils/soundFx.js";
+import FocusTimer from "../components/FocusTimer.jsx";
+import SharePosterModal from "../components/SharePosterModal.jsx";
+import { ShareIcon, SunIcon, MoonIcon } from "../components/Icons.jsx";
+import { childFeedback } from "../components/ChildFeedback.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
+
 import TaskShareDialog from "../../../shared-web/TaskShareDialog.jsx";
 import { isValidTaskDate } from "../../../shared-web/date.js";
 import { createChildTaskShareSnapshot } from "../utils/taskShareSnapshot.js";
 
 const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
 
-function pad(n) { return String(n).padStart(2, "0"); }
-function minutesToTime(m) { return `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`; }
+function pad(n) {
+  return String(n).padStart(2, "0");
+}
+function minutesToTime(m) {
+  return `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`;
+}
+
+/**
+ * 触发高性能五彩礼花粒子与飞星动画
+ * 适配 iPad Retina 高分屏：控制粒子数量在 75-80 颗左右，保障 60/120fps 丝滑渲染
+ */
+function fireCelebration(originX = 0.5, originY = 0.6) {
+  try {
+    // 1. 五彩礼花粒子（自然手账温润色系：森林绿、琥珀金、陶土橙、青瓷蓝）
+    confetti({
+      particleCount: 55,
+      spread: 70,
+      origin: { x: originX, y: originY },
+      colors: ["#0071E3", "#34C759", "#FF9500", "#FF3B30", "#00C7BE", "#5856D6"],
+      disableForReducedMotion: true,
+      ticks: 200,
+      gravity: 1.1,
+      scalar: 1.0,
+    });
+
+    // 2. 飞星粒子动画（温润琥珀金阶）
+    confetti({
+      particleCount: 22,
+      spread: 90,
+      shapes: ["star"],
+      colors: ["#9A6700", "#D4A373", "#F3D794", "#E8C547"],
+      origin: { x: originX, y: originY },
+      disableForReducedMotion: true,
+      ticks: 180,
+      gravity: 0.9,
+      scalar: 1.3,
+    });
+  } catch (err) {
+    console.warn("[fireCelebration] Confetti error:", err);
+  }
+}
 
 export default function Today({ child, onExpired, active }) {
+  const { preference: themePreference, effectiveTheme, cycleTheme } = useTheme();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [completingId, setCompletingId] = useState(null);
+  const [completingIds, setCompletingIds] = useState(new Set());
+  const [poppingId, setPoppingId] = useState(null);
   const [justCompleted, setJustCompleted] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [newForm, setNewForm] = useState({ title: "", minutes: "", stars: 1, start: "", end: "" });
@@ -24,68 +80,193 @@ export default function Today({ child, onExpired, active }) {
   const [scheduleForm, setScheduleForm] = useState({ start: "", end: "" });
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", minutes: "", stars: 1, start: "", end: "" });
-  const [shareSnapshot, setShareSnapshot] = useState(null);
-  const [savingTask, setSavingTask] = useState(false);
-  const mutationBusy = useRef(false);
-  const loadSequence = useRef(0);
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [focusingTask, setFocusingTask] = useState(null);
 
-  const load = useCallback(async () => {
+  // 1s 防抖记录：记录每个任务上一次点击完成的时间戳
+  const lastCompleteTimeRef = useRef(new Map());
+  // 正在请求完成的任务集合引用，杜绝快速多点触控状态相互覆盖
+  const inFlightIdsRef = useRef(new Set());
+  const hasLoadedRef = useRef(false);
+  const loadSequence = useRef(0);
+  const pendingMutations = useRef(0);
+  const [savingTask, setSavingTask] = useState(false);
+  const [shareSnapshot, setShareSnapshot] = useState(null);
+
+  const load = useCallback(async (forceLoading = false) => {
     const sequence = ++loadSequence.current;
-    setLoading(true); setError("");
-    try { const result = await fetchToday(); if (sequence === loadSequence.current) setData(result); }
-    catch (err) { if (sequence === loadSequence.current) { if (err.message === "token_expired") onExpired(); else setError("加载失败，请重试"); } }
-    finally { if (sequence === loadSequence.current) setLoading(false); }
+    if (forceLoading || !hasLoadedRef.current) {
+      setLoading(true);
+    }
+    setError("");
+    try {
+      const result = await fetchToday();
+      if (sequence === loadSequence.current) { setData(result); hasLoadedRef.current = true; }
+    } catch (err) {
+      if (sequence !== loadSequence.current) return;
+      if (err.message === "token_expired") onExpired();
+      else setError("加载失败，请重试");
+    } finally {
+      if (sequence === loadSequence.current) setLoading(false);
+    }
   }, [onExpired]);
 
-  useEffect(() => { if (active) load(); }, [load, active]);
+  useEffect(() => {
+    if (active) load();
+    initAudioUnlock();
+  }, [load, active]);
+
   useSseRefresh({ enabled: active, topics: ["tasks", "settings"], onRefresh: load, onExpired });
   useVisibilityRefresh({ enabled: active, onRefresh: load });
 
-  async function runTaskAction(action) {
-    if (mutationBusy.current) return;
-    mutationBusy.current = true; setSavingTask(true);
-    try { await action(); await load(); }
-    catch { setError("操作失败，请重试"); }
-    finally { mutationBusy.current = false; setSavingTask(false); }
+  /**
+   * 任务完成处理：支持 72px 复选钮与番茄钟完成调用
+   * 具备 1s 防抖、Web Audio 纯前端和弦音、Canvas Confetti 飞星礼花
+   */
+  async function runTaskAction(operation) {
+    pendingMutations.current += 1;
+    ++loadSequence.current;
+    setSavingTask(true);
+    try { const result = await operation(); await load(); return result; }
+    finally { pendingMutations.current -= 1; setSavingTask(pendingMutations.current > 0); }
   }
 
-  async function handleComplete(task) {
-    if (mutationBusy.current) return;
-    setCompletingId(task.id);
-    await runTaskAction(async () => {
-      const result = await completeTask(task.id, "easy");
-      setJustCompleted({ id: task.id, title: task.title, stars: result.stars_awarded });
+  function openTaskShare() {
+    if (loading || error || pendingMutations.current) return;
+    const snapshot = createChildTaskShareSnapshot(data, child?.name);
+    if (snapshot) setShareSnapshot(snapshot);
+  }
+
+  async function handleComplete(task, event) {
+    if (!task || task.status === "completed" || task.status === "submitted") return;
+
+    const now = Date.now();
+    const lastTime = lastCompleteTimeRef.current.get(task.id) || 0;
+
+    // 1秒防抖与并发防护 (单任务独立追踪，防止快速双击或多指并发撞车)
+    if (inFlightIdsRef.current.has(task.id) || now - lastTime < 1000) {
+      return;
+    }
+    inFlightIdsRef.current.add(task.id);
+    lastCompleteTimeRef.current.set(task.id, now);
+    setCompletingIds((prev) => new Set(prev).add(task.id));
+
+    // 触发弹性弹跳动画
+    setPoppingId(task.id);
+    setTimeout(() => setPoppingId(null), 500);
+
+    // 触发音效：需要家长确认的任务播放温暖提醒音，直发任务播放上升和弦音
+    if (task.require_approval) {
+      playTaskSubmitted();
+    } else {
+      playTaskComplete();
+    }
+
+    // 计算礼花起点位置
+    let originX = 0.5;
+    let originY = 0.6;
+    if (event && event.clientX && event.clientY) {
+      originX = Math.max(0.1, Math.min(0.9, event.clientX / (window.innerWidth || 1)));
+      originY = Math.max(0.1, Math.min(0.9, event.clientY / (window.innerHeight || 1)));
+    } else if (event?.currentTarget) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      originX = Math.max(0.1, Math.min(0.9, (rect.left + rect.width / 2) / (window.innerWidth || 1)));
+      originY = Math.max(0.1, Math.min(0.9, (rect.top + rect.height / 2) / (window.innerHeight || 1)));
+    }
+    fireCelebration(originX, originY);
+
+    try {
+      const result = await runTaskAction(() => completeTask(task.id, "easy"));
+      if (result.status === "submitted") {
+        setJustCompleted({ id: task.id, title: task.title, stars: 0, isSubmitted: true });
+      } else {
+        setJustCompleted({ id: task.id, title: task.title, stars: result.stars_awarded, isSubmitted: false });
+      }
       setTimeout(() => setJustCompleted(null), 2500);
-    });
-    setCompletingId(null);
+    } catch {
+      setError("操作失败");
+    } finally {
+      inFlightIdsRef.current.delete(task.id);
+      setCompletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(task.id);
+        return next;
+      });
+    }
   }
 
   async function handleCreateTask() {
+    try { await runTaskAction(async () => {
     if (!newForm.title.trim() || !newForm.minutes || parseInt(newForm.minutes) < 1) return;
-    await runTaskAction(async () => {
-      await createChildTask({ title: newForm.title.trim(), expected_minutes: parseInt(newForm.minutes), reward_stars: newForm.stars, scheduled_start: newForm.start || null, scheduled_end: newForm.end || null });
-      setNewForm({ title: "", minutes: "", stars: 1, start: "", end: "" }); setShowAdd(false);
+    await createChildTask({
+      title: newForm.title.trim(),
+      expected_minutes: parseInt(newForm.minutes),
+      reward_stars: newForm.stars,
+      scheduled_start: newForm.start || null,
+      scheduled_end: newForm.end || null,
     });
+    setNewForm({ title: "", minutes: "", stars: 1, start: "", end: "" });
+    setShowAdd(false);
+
+    }); } catch { setError("操作失败，请重试"); }
   }
 
   async function handleSchedule(taskId) {
+    try { await runTaskAction(async () => {
     if (!scheduleForm.start || !scheduleForm.end) return;
-    await runTaskAction(async () => {
-      await scheduleChildTask(taskId, scheduleForm.start, scheduleForm.end);
-      setSchedulingId(null); setScheduleForm({ start: "", end: "" });
+    await scheduleChildTask(taskId, scheduleForm.start, scheduleForm.end);
+    setSchedulingId(null);
+    setScheduleForm({ start: "", end: "" });
+
+    }); } catch { setError("操作失败，请重试"); }
+  }
+
+  function startSchedule(task) {
+    setSchedulingId(task.id);
+    setScheduleForm({ start: task.scheduled_start || "", end: task.scheduled_end || "" });
+  }
+
+  function startEdit(task) {
+    setEditingId(task.id);
+    setEditForm({
+      title: task.title,
+      minutes: task.expected_minutes?.toString() || "",
+      stars: task.reward_stars,
+      start: task.scheduled_start || "",
+      end: task.scheduled_end || "",
     });
   }
 
-  function startSchedule(task) { setSchedulingId(task.id); setScheduleForm({ start: task.scheduled_start || "", end: task.scheduled_end || "" }); }
+  async function handleSaveEdit() {
+    try { await runTaskAction(async () => {
+    if (!editingId || !editForm.title.trim() || !editForm.minutes || parseInt(editForm.minutes) < 1)
+      return;
+    await updateChildTask(editingId, {
+      title: editForm.title.trim(),
+      expected_minutes: parseInt(editForm.minutes),
+      reward_stars: editForm.stars,
+      scheduled_start: editForm.start || null,
+      scheduled_end: editForm.end || null,
+    });
+    setEditingId(null);
 
-  function startEdit(task) { setEditingId(task.id); setEditForm({ title: task.title, minutes: task.expected_minutes?.toString() || "", stars: task.reward_stars, start: task.scheduled_start || "", end: task.scheduled_end || "" }); }
-  async function handleSaveEdit() { if (!editingId || !editForm.title.trim() || !editForm.minutes || parseInt(editForm.minutes) < 1) return; await runTaskAction(async () => { await updateChildTask(editingId, { title: editForm.title.trim(), expected_minutes: parseInt(editForm.minutes), reward_stars: editForm.stars, scheduled_start: editForm.start || null, scheduled_end: editForm.end || null }); setEditingId(null); }); }
-  async function handleDelete(taskId) { if (mutationBusy.current || !window.confirm("删除这个任务？")) return; await runTaskAction(() => deleteChildTask(taskId)); }
+    }); } catch { setError("操作失败，请重试"); }
+  }
 
-  function openShare() {
-    if (loading || error || mutationBusy.current) return;
-    const snapshot = createChildTaskShareSnapshot(data, child?.name);
-    if (snapshot) setShareSnapshot(snapshot);
+  async function handleDelete(taskId) {
+    try { await runTaskAction(async () => {
+    const ok = await childFeedback.confirm({
+      title: "删除任务",
+      message: "确定删除这个任务吗？",
+      confirmText: "删除",
+      cancelText: "保留",
+      icon: "🗑️",
+    });
+    if (!ok) return;
+    await deleteChildTask(taskId);
+
+    }); } catch { setError("操作失败，请重试"); }
   }
 
   function scheduleLabel(t) {
@@ -98,122 +279,791 @@ export default function Today({ child, onExpired, active }) {
   const dayLabel = DAY_NAMES[today.getDay()];
   const dateStr = `${today.getMonth() + 1}月${today.getDate()}日 星期${dayLabel}`;
 
-  const timed = (data?.tasks || []).filter(t => t.scheduled_start && t.status !== "completed");
-  const free = (data?.tasks || []).filter(t => !t.scheduled_start && t.status !== "completed");
-  const completed = (data?.tasks || []).filter(t => t.status === "completed");
-  const [showCompleted, setShowCompleted] = useState(false);
+  const timed = (data?.tasks || []).filter((t) => t.scheduled_start && t.status !== "completed");
+  const free = (data?.tasks || []).filter((t) => !t.scheduled_start && t.status !== "completed");
+  const completed = (data?.tasks || []).filter((t) => t.status === "completed");
 
-  const shareDialog = shareSnapshot && <TaskShareDialog snapshot={shareSnapshot} nameLabel="标题显示我的姓名" onClose={() => setShareSnapshot(null)} />;
-  if (loading) return <><div style={{ textAlign: "center", paddingTop: "40vh", color: "#73706b" }}>加载中…</div>{shareDialog}</>;
-  if (error) return <><div style={{ textAlign: "center", paddingTop: "40vh" }}><p style={{ color: "#c97070", marginBottom: "1rem" }}>{error}</p><button onClick={load} style={{ color: "#3d9e6b", fontSize: "1rem" }}>重试</button></div>{shareDialog}</>;
+  const taskShareDialog = shareSnapshot && <TaskShareDialog snapshot={shareSnapshot} nameLabel="标题显示我的姓名" onClose={() => setShareSnapshot(null)} />;
+
+  if (loading)
+    return (
+      <><div style={{ textAlign: "center", paddingTop: "40vh", color: "var(--muted)" }}>加载中…</div>{taskShareDialog}</>
+    );
+  if (error)
+    return (
+      <><div style={{ textAlign: "center", paddingTop: "40vh" }}>
+        <p style={{ color: "var(--danger)", marginBottom: "1rem" }}>{error}</p>
+        <button onClick={load} style={{ color: "var(--accent)", fontSize: "1rem", fontWeight: 600 }}>
+          重试
+        </button>
+      </div>{taskShareDialog}</>
+    );
+
+  const earnedStarsToday = completed.reduce((sum, t) => sum + (t.stars_awarded ?? t.reward_stars ?? 0), 0);
 
   return (
-    <>
     <div>
-      <div style={{ marginBottom: "1.4rem" }}><h1 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>你好，{child?.name ?? "小朋友"}</h1><p style={{ color: "#73706b", marginTop: "0.3rem", fontSize: "0.95rem" }}>{dateStr}</p></div>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
-        <button type="button" onClick={openShare} disabled={savingTask || !isValidTaskDate(data?.date) || !Array.isArray(data?.tasks)}
-          style={{ padding: "0.5rem 0.9rem", borderRadius: "12px", color: "#367e5b", background: "#edf3e9", fontSize: "0.85rem", fontWeight: 600, opacity: savingTask ? 0.45 : 1 }}>
-          分享图片
-        </button>
-      </div>
-      <div style={{ display: "flex", gap: "0.8rem", marginBottom: "1.4rem" }}>
-        <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#c4912a" }}>⭐ {formatStars(data?.rewards?.stars_total ?? 0)}</p><p style={{ fontSize: "0.75rem", color: "#73706b" }}>星星</p></div>
-        <div style={{ flex: 1, background: "#fff", borderRadius: "18px", padding: "1rem", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}><p style={{ fontSize: "1.8rem", fontWeight: 700, color: "#3d9e6b" }}>🔥 {data?.rewards?.current_streak_days ?? 0}</p><p style={{ fontSize: "0.8rem", color: "#73706b" }}>连续天数</p></div>
+      {/* 顶部标题区 (Apple iOS Large Title) */}
+      <div style={{ marginBottom: "16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <h1 className="ios-large-title">
+              你好，{child?.name ?? "小朋友"}
+            </h1>
+            <p className="ios-page-subtitle">
+              {dateStr}
+            </p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {data?.rewards?.is_on_vacation && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "4px 12px",
+                  borderRadius: "999px",
+                  background: "var(--star-bg)",
+                  color: "var(--star)",
+                  border: "1px solid var(--star-border)",
+                  fontWeight: 650,
+                  fontSize: "0.8rem",
+                }}
+              >
+                🌴 休假中
+              </span>
+            )}
+            <button type="button" onClick={openTaskShare} disabled={savingTask || !isValidTaskDate(data?.date)} className="ios-sheet-nav-action-btn">分享图片</button>
+            <button
+              type="button"
+              disabled={savingTask}
+              className="ios-share-trigger-btn"
+              onClick={() => setShowShareModal(true)}
+              title="分享今日自律成就卡"
+              aria-label="分享今日自律成就卡"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                color: "var(--accent)",
+                cursor: "pointer",
+                boxShadow: "var(--shadow-sm)",
+                transition: "opacity 0.15s ease",
+              }}
+            >
+              <ShareIcon size={18} color="var(--accent)" />
+            </button>
+            <button
+              type="button"
+              className="ios-theme-trigger-btn"
+              onClick={cycleTheme}
+              title={`外观：${themePreference === "auto" ? "跟随系统 (" + (effectiveTheme === "dark" ? "深色" : "浅色") + ")" : themePreference === "dark" ? "深色模式" : "浅色模式"}，轻点切换`}
+              aria-label="切换明暗主题"
+            >
+              {effectiveTheme === "dark" ? <SunIcon size={18} color="var(--star)" /> : <MoonIcon size={18} color="var(--accent)" />}
+            </button>
+          </div>
+        </div>
       </div>
 
-      {data?.tasks?.length === 0 && <p style={{ textAlign: "center", color: "#73706b", marginTop: "2rem" }}>今天没有任务</p>}
+      {/* 今日进度概览卡片 (Apple Fitness / Activity Ring 风格) */}
+      <div
+        style={{
+          backgroundColor: "var(--card)",
+          border: "1px solid var(--border)",
+          borderRadius: "16px",
+          padding: "18px 20px",
+          marginBottom: "20px",
+          boxShadow: "var(--shadow-sm)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div>
+          <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.015em" }}>
+            今日已完成 {completed.length} / {(data?.tasks || []).length} 项
+          </div>
+          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "10px", flexWrap: "wrap" }}>
+            <span className="stat-chip">⭐ {formatStars(data?.rewards?.stars_total ?? 0)} 星</span>
+            <span className="stat-chip flame">🔥 {data?.rewards?.current_streak_days ?? 0} 天连胜</span>
+            {data?.rewards?.streak_freeze_count > 0 && (
+              <span className="stat-chip protect">❄️ {data?.rewards?.streak_freeze_count} 卡</span>
+            )}
+          </div>
+        </div>
 
-      {timed.length > 0 && (
-        <div style={{ marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.8rem", color: "#73706b", marginBottom: "0.4rem" }}>已安排时间</p>
-          {timed.map(task => <TaskCard key={task.id} task={task} child={child} completingId={completingId} schedulingId={schedulingId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} editingId={editingId} editForm={editForm} setEditForm={setEditForm} onComplete={handleComplete} onSchedule={startSchedule} onSaveSchedule={handleSchedule} onCancelSchedule={() => setSchedulingId(null)} onEdit={startEdit} onSaveEdit={handleSaveEdit} onCancelEdit={() => setEditingId(null)} onDelete={handleDelete} scheduleLabel={scheduleLabel} />)}
+        {/* Apple Fitness Activity Ring */}
+        <div style={{ position: "relative", width: "72px", height: "72px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="72" height="72" viewBox="0 0 72 72" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
+            <circle
+              cx="36"
+              cy="36"
+              r="29"
+              fill="none"
+              stroke="#E5E5EA"
+              strokeWidth="5"
+            />
+            <circle
+              cx="36"
+              cy="36"
+              r="29"
+              fill="none"
+              stroke="#34C759"
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 29}
+              strokeDashoffset={2 * Math.PI * 29 * (1 - Math.min(100, Math.max(0, (data?.tasks?.length ? Math.round((completed.length / data.tasks.length) * 100) : 0))) / 100)}
+              style={{
+                transition: "stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+                filter: completed.length > 0 ? "drop-shadow(0 0 4px rgba(52, 199, 89, 0.3))" : "none",
+              }}
+            />
+          </svg>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+            <span style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text)", lineHeight: "1.1", letterSpacing: "-0.03em" }}>
+              {data?.tasks?.length ? Math.round((completed.length / data.tasks.length) * 100) : 0}%
+            </span>
+            <span style={{ fontSize: "0.62rem", color: "var(--muted)", fontWeight: 500, lineHeight: "1", marginTop: "2px" }}>
+              达成
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {data?.tasks?.length === 0 && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "40px 16px",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
+            borderRadius: "14px",
+            boxShadow: "var(--shadow-sm)",
+            color: "var(--muted)",
+          }}
+        >
+          <p style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text)", marginBottom: "4px" }}>
+            今天的所有任务都整理好啦
+          </p>
+          <p style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
+            享受充实的一天，尽情去探索与玩耍吧！
+          </p>
         </div>
       )}
 
-      {free.length > 0 && (
-        <div style={{ marginBottom: "1rem" }}>
-          <p style={{ fontSize: "0.8rem", color: "#73706b", marginBottom: "0.4rem" }}>自由安排</p>
-      {free.map(task => <TaskCard key={task.id} task={task} child={child} completingId={completingId} schedulingId={schedulingId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} editingId={editingId} editForm={editForm} setEditForm={setEditForm} onComplete={handleComplete} onSchedule={startSchedule} onSaveSchedule={handleSchedule} onCancelSchedule={() => setSchedulingId(null)} onEdit={startEdit} onSaveEdit={handleSaveEdit} onCancelEdit={() => setEditingId(null)} onDelete={handleDelete} scheduleLabel={scheduleLabel} />)}
+      {/* 待完成任务 (Apple Reminders Inset Grouped Table) */}
+      {[...timed, ...free].length > 0 && (
+        <div style={{ marginBottom: "20px" }}>
+          <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text)", marginBottom: "8px", paddingLeft: "4px" }}>
+            今日任务 ({[...timed, ...free].length})
           </div>
-        )}
-
-        {completed.length > 0 && (
-          <div style={{ borderTop: "1px solid #e8e4df", paddingTop: "0.5rem", marginBottom: "1rem" }}>
-            <button onClick={() => setShowCompleted(c => !c)} style={{ width: "100%", textAlign: "left", padding: "0.3rem 0", background: "none", border: "none", cursor: "pointer", fontSize: "0.85rem", color: "#73706b" }}>
-              {showCompleted ? "▼" : "▶"} 已完成 {completed.length} 项
-            </button>
-            {showCompleted && <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}>{completed.map(task => <div key={task.id} style={{ flex: "1 1 280px", minWidth: 0 }}><TaskCard key={task.id} task={task} child={child} completingId={completingId} schedulingId={schedulingId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} editingId={editingId} editForm={editForm} setEditForm={setEditForm} onComplete={handleComplete} onSchedule={startSchedule} onSaveSchedule={handleSchedule} onCancelSchedule={() => setSchedulingId(null)} onEdit={startEdit} onSaveEdit={handleSaveEdit} onCancelEdit={() => setEditingId(null)} onDelete={handleDelete} scheduleLabel={scheduleLabel} /></div>)}</div>}
+          <div className="ios-grouped-card">
+            {[...timed, ...free].map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                child={child}
+                completing={completingIds.has(task.id)}
+                poppingId={poppingId}
+                schedulingId={schedulingId}
+                scheduleForm={scheduleForm}
+                setScheduleForm={setScheduleForm}
+                editingId={editingId}
+                editForm={editForm}
+                setEditForm={setEditForm}
+                onComplete={handleComplete}
+                onStartFocus={(t) => setFocusingTask(t)}
+                onSchedule={startSchedule}
+                onSaveSchedule={handleSchedule}
+                onCancelSchedule={() => setSchedulingId(null)}
+                onEdit={startEdit}
+                onSaveEdit={handleSaveEdit}
+                onCancelEdit={() => setEditingId(null)}
+                onDelete={handleDelete}
+                scheduleLabel={scheduleLabel}
+              />
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
+      {/* 已完成任务 */}
+      {completed.length > 0 && (
+        <div style={{ marginBottom: "20px" }}>
+          <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--muted)", marginBottom: "8px", paddingLeft: "4px" }}>
+            已完成 ({completed.length})
+          </div>
+          <div className="ios-grouped-card">
+            {completed.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                child={child}
+                completing={completingIds.has(task.id)}
+                poppingId={poppingId}
+                schedulingId={schedulingId}
+                scheduleForm={scheduleForm}
+                setScheduleForm={setScheduleForm}
+                editingId={editingId}
+                editForm={editForm}
+                setEditForm={setEditForm}
+                onComplete={handleComplete}
+                onStartFocus={(t) => setFocusingTask(t)}
+                onSchedule={startSchedule}
+                onSaveSchedule={handleSchedule}
+                onCancelSchedule={() => setSchedulingId(null)}
+                onEdit={startEdit}
+                onSaveEdit={handleSaveEdit}
+                onCancelEdit={() => setEditingId(null)}
+                onDelete={handleDelete}
+                scheduleLabel={scheduleLabel}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 新建任务入口 (统一 iOS Sheet 底部滑出模式) */}
       <div style={{ marginTop: "1rem" }}>
-        {!showAdd ? <button onClick={() => setShowAdd(true)} style={{ width: "100%", padding: "0.6rem", fontSize: "0.95rem", color: "#3d9e6b", border: "1px dashed #3d9e6b", borderRadius: "14px", background: "transparent" }}>+ 添加任务</button> : (
-          <div style={{ background: "#fff", borderRadius: "16px", padding: "1rem", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-            <input placeholder="任务名 *" value={newForm.title} onChange={e => setNewForm({ ...newForm, title: e.target.value })} style={st.fi} autoFocus />
-            <div style={{ display: "flex", gap: "0.5rem" }}><input type="number" placeholder="分钟 *" value={newForm.minutes} onChange={e => setNewForm({ ...newForm, minutes: e.target.value })} style={{ ...st.fi, flex: 1 }} /><RewardSelect value={newForm.stars} onChange={value => setNewForm({ ...newForm, stars: value })} /></div>
-            <div style={{ display: "flex", gap: "0.5rem" }}><input type="time" value={newForm.start} onChange={e => setNewForm({ ...newForm, start: e.target.value })} style={{ ...st.fi, flex: 1 }} /><input type="time" value={newForm.end} onChange={e => setNewForm({ ...newForm, end: e.target.value })} style={{ ...st.fi, flex: 1 }} /></div>
-            <div style={{ display: "flex", gap: "0.5rem" }}><button onClick={handleCreateTask} style={st.fsb}>添加</button><button onClick={() => setShowAdd(false)} style={st.fcb}>取消</button></div>
+        <button
+          onClick={() => setShowAdd(true)}
+          style={{
+            width: "100%",
+            padding: "12px",
+            fontSize: "0.95rem",
+            fontWeight: 600,
+            color: "var(--accent)",
+            borderRadius: "14px",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
+            boxShadow: "var(--shadow-sm)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+          }}
+        >
+          <span>+ 添加日常任务</span>
+        </button>
+
+        {showAdd && (
+          <div
+            className="ios-sheet-overlay"
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.4)",
+              backdropFilter: "saturate(180%) blur(16px)",
+              WebkitBackdropFilter: "saturate(180%) blur(16px)",
+              zIndex: 1000,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "flex-end",
+            }}
+            onClick={() => setShowAdd(false)}
+          >
+            <div
+              style={{
+                width: "100%",
+                maxWidth: "540px",
+                backgroundColor: "#F2F2F7",
+                borderRadius: "16px 16px 0 0",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                boxShadow: "0 -4px 24px rgba(0, 0, 0, 0.15)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="drawer-handle-bar" />
+              <div className="ios-sheet-header">
+                <button
+                  type="button"
+                  className="ios-sheet-nav-btn"
+                  onClick={() => setShowAdd(false)}
+                >
+                  取消
+                </button>
+                <span className="ios-sheet-header-title">添加任务</span>
+                <button
+                  type="button"
+                  className="ios-sheet-nav-action-btn"
+                  onClick={handleCreateTask}
+                  disabled={!newForm.title.trim()}
+                >
+                  添加
+                </button>
+              </div>
+
+              {/* iOS Inset Grouped Table Views */}
+              <div className="ios-sheet-body">
+                {/* Group 1: 任务核心信息 */}
+                <div className="ios-grouped-card" style={{ marginBottom: "18px" }}>
+                  {/* Row 1: 标题 (Borderless direct input) */}
+                  <div style={{ padding: "12px 16px" }}>
+                    <input
+                      placeholder="任务名称，如：练琴、口算一页..."
+                      value={newForm.title}
+                      onChange={(e) => setNewForm({ ...newForm, title: e.target.value })}
+                      style={{
+                        width: "100%",
+                        border: "none",
+                        outline: "none",
+                        background: "transparent",
+                        fontSize: "1.02rem",
+                        color: "var(--text)",
+                        fontFamily: "inherit",
+                      }}
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="ios-separator" />
+
+                  {/* Row 2: 预计时长 (iOS Stepper) */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                      预计时长
+                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <button
+                        type="button"
+                        onClick={() => setNewForm((f) => ({ ...f, minutes: Math.max(5, (parseInt(f.minutes) || 20) - 5) }))}
+                        className="ios-stepper-btn"
+                        aria-label="减少 5 分钟"
+                      >
+                        −
+                      </button>
+                      <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)", minWidth: "48px", textAlign: "center" }}>
+                        {newForm.minutes || 20} 分钟
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setNewForm((f) => ({ ...f, minutes: Math.min(180, (parseInt(f.minutes) || 20) + 5) }))}
+                        className="ios-stepper-btn"
+                        aria-label="增加 5 分钟"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="ios-separator" />
+
+                  {/* Row 3: 奖励星星 (iOS Segmented Control) */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                      奖励星星
+                    </span>
+                    <div className="ios-segmented-control">
+                      {[1, 2, 3, 5].map((starVal) => {
+                        const active = (newForm.stars ?? 1) === starVal;
+                        return (
+                          <button
+                            key={starVal}
+                            type="button"
+                            onClick={() => setNewForm((f) => ({ ...f, stars: starVal }))}
+                            className={`ios-segmented-item ${active ? "active" : ""}`}
+                          >
+                            ⭐ {starVal}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Group 2: 时间规划 (可选) */}
+                <div className="ios-group-label">时间安排 (可选)</div>
+                <div className="ios-grouped-card" style={{ marginBottom: "20px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                      开始时间
+                    </span>
+                    <input
+                      type="time"
+                      value={newForm.start || ""}
+                      onChange={(e) => setNewForm({ ...newForm, start: e.target.value })}
+                      className="ios-time-input"
+                    />
+                  </div>
+
+                  <div className="ios-separator" />
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
+                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
+                      结束时间
+                    </span>
+                    <input
+                      type="time"
+                      value={newForm.end || ""}
+                      onChange={(e) => setNewForm({ ...newForm, end: e.target.value })}
+                      className="ios-time-input"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {justCompleted && <div style={{ position: "fixed", bottom: "30px", left: "50%", transform: "translateX(-50%)", background: "#3d9e6b", color: "#fff", padding: "0.8rem 1.5rem", borderRadius: "20px", fontSize: "1rem", fontWeight: 600, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>✅ {justCompleted.title} 完成！+{justCompleted.stars}⭐</div>}
+      {/* 完成/提交吐司提示 */}
+      {justCompleted && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "30px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: justCompleted.isSubmitted ? "var(--star)" : "var(--accent)",
+            color: "#FFFFFF",
+            padding: "0.8rem 1.6rem",
+            borderRadius: "var(--radius-pill)",
+            fontSize: "1rem",
+            fontWeight: 650,
+            boxShadow: "0 6px 20px rgba(0, 0, 0, 0.15)",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            zIndex: 1200,
+          }}
+        >
+          {justCompleted.isSubmitted
+            ? `⏳ ${justCompleted.title} 已提交，等待家长点赞！`
+            : `🌱 ${justCompleted.title} 完成！+${justCompleted.stars}⭐`}
+        </div>
+      )}
+
+      {/* 沉浸式专注番茄钟模态框 */}
+      {focusingTask && (
+        <FocusTimer
+          task={focusingTask}
+          onClose={() => setFocusingTask(null)}
+          onComplete={(t) => {
+            handleComplete(t);
+            setFocusingTask(null);
+          }}
+        />
+      )}
+
+      {taskShareDialog}
+      {/* 自律成长成就卡分享抽屉 (iOS Sheet) */}
+      <SharePosterModal
+        open={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        childName={child?.name || "小朋友"}
+        dateStr={dateStr}
+        completionRate={data?.tasks?.length ? Math.round((completed.length / data.tasks.length) * 100) : 0}
+        completedCount={completed.length}
+        totalCount={(data?.tasks || []).length}
+        streakDays={data?.rewards?.current_streak_days ?? 0}
+        stars={data?.rewards?.stars_total ?? 0}
+        starsToday={earnedStarsToday}
+        tasks={data?.tasks || []}
+      />
     </div>
-    {shareDialog}
-    </>
   );
 }
 
-function TaskCard({ task, child, completingId, schedulingId, scheduleForm, setScheduleForm, editingId, editForm, setEditForm, onComplete, onSchedule, onSaveSchedule, onCancelSchedule, onEdit, onSaveEdit, onCancelEdit, onDelete, scheduleLabel }) {
-  const isScheduled = task.scheduled_start;
+/**
+ * 任务卡片组件 (TaskCard)
+ * 重构升级：
+ * 1. 增加 72x72px 超大彩色复选圆钮（Min Target >= 64px 符合儿童人体工学），支持弹性动画与 1s 防抖
+ * 2. 针对时长型任务（expected_minutes > 0）提供 ⏱️ 开启专注 入口，无缝唤起 FocusTimer
+ */
+function TaskCard({
+  task,
+  child,
+  completing,
+  completingId,
+  poppingId,
+  schedulingId,
+  scheduleForm,
+  setScheduleForm,
+  editingId,
+  editForm,
+  setEditForm,
+  onComplete,
+  onStartFocus,
+  onSchedule,
+  onSaveSchedule,
+  onCancelSchedule,
+  onEdit,
+  onSaveEdit,
+  onCancelEdit,
+  onDelete,
+  scheduleLabel,
+}) {
+  const isScheduled = !!task.scheduled_start;
   const isChildTask = task.created_by === "child";
   const isUnapproved = isChildTask && !task.approved;
-  const src = task.schedule_by === "child" ? `${child.name}安排` : task.schedule_by === "parent" ? "" : "";
+  const isCompleted = task.status === "completed";
+  const isSubmitted = task.status === "submitted";
+  const isCompleting = completing !== undefined ? completing : completingId === task.id;
+  const isPopping = poppingId === task.id;
+  const src = task.schedule_by === "child" ? `${child?.name || "孩子"}安排` : "";
 
   return (
-    <div key={task.id} style={{ ...st.tc, opacity: task.status === "completed" ? 0.6 : 1 }}>
+    <div className="reminders-task-row" style={{ opacity: isCompleted ? 0.6 : 1 }}>
       {editingId === task.id ? (
-        <div>
-          <input placeholder="任务名 *" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} style={st.fi} autoFocus />
-          <div style={{ display: "flex", gap: "0.5rem" }}><input type="number" placeholder="分钟 *" value={editForm.minutes} onChange={e => setEditForm({ ...editForm, minutes: e.target.value })} style={{ ...st.fi, flex: 1 }} /><RewardSelect value={editForm.stars} onChange={value => setEditForm({ ...editForm, stars: value })} /></div>
-          <div style={{ display: "flex", gap: "0.5rem" }}><input type="time" value={editForm.start} onChange={e => setEditForm({ ...editForm, start: e.target.value })} style={{ ...st.fi, flex: 1 }} /><input type="time" value={editForm.end} onChange={e => setEditForm({ ...editForm, end: e.target.value })} style={{ ...st.fi, flex: 1 }} /></div>
-          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.3rem" }}><button onClick={() => onSaveEdit(task.id)} style={st.fsb}>保存</button><button onClick={onCancelEdit} style={st.fcb}>取消</button></div>
+        <div style={{ width: "100%" }}>
+          <input
+            placeholder="任务名 *"
+            value={editForm.title}
+            onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+            className="form-input-journal"
+            style={{ marginBottom: "8px" }}
+            autoFocus
+          />
+          <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+            <input
+              type="number"
+              placeholder="分钟 *"
+              value={editForm.minutes}
+              onChange={(e) => setEditForm({ ...editForm, minutes: e.target.value })}
+              className="form-input-journal"
+              style={{ flex: 1, marginBottom: 0 }}
+            />
+            <RewardSelect
+              value={editForm.stars}
+              onChange={(value) => setEditForm({ ...editForm, stars: value })}
+            />
+          </div>
+          <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
+            <input
+              type="time"
+              value={editForm.start}
+              onChange={(e) => setEditForm({ ...editForm, start: e.target.value })}
+              className="ios-time-input"
+              style={{ flex: 1, marginBottom: 0 }}
+            />
+            <span style={{ color: "var(--muted)", fontSize: "0.85rem" }}>至</span>
+            <input
+              type="time"
+              value={editForm.end}
+              onChange={(e) => setEditForm({ ...editForm, end: e.target.value })}
+              className="ios-time-input"
+              style={{ flex: 1, marginBottom: 0 }}
+            />
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={() => onSaveEdit(task.id)} style={st.fsb}>
+              保存
+            </button>
+            <button onClick={onCancelEdit} style={st.fcb}>
+              取消
+            </button>
+          </div>
         </div>
       ) : schedulingId === task.id ? (
-        <div>
-          <div style={{ display: "flex", gap: "0.5rem" }}><input type="time" value={scheduleForm.start} onChange={e => setScheduleForm({ ...scheduleForm, start: e.target.value })} style={{ ...st.fi, flex: 1 }} /><input type="time" value={scheduleForm.end} onChange={e => setScheduleForm({ ...scheduleForm, end: e.target.value })} style={{ ...st.fi, flex: 1 }} /></div>
-          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.3rem" }}><button onClick={() => onSaveSchedule(task.id)} style={st.fsb}>保存</button><button onClick={onCancelSchedule} style={st.fcb}>取消</button></div>
+        <div style={{ width: "100%" }}>
+          <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
+            <input
+              type="time"
+              value={scheduleForm.start}
+              onChange={(e) => setScheduleForm({ ...scheduleForm, start: e.target.value })}
+              className="ios-time-input"
+              style={{ flex: 1, marginBottom: 0 }}
+            />
+            <span style={{ color: "var(--muted)", fontSize: "0.85rem" }}>至</span>
+            <input
+              type="time"
+              value={scheduleForm.end}
+              onChange={(e) => setScheduleForm({ ...scheduleForm, end: e.target.value })}
+              className="ios-time-input"
+              style={{ flex: 1, marginBottom: 0 }}
+            />
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={() => onSaveSchedule(task.id)} style={st.fsb}>
+              保存
+            </button>
+            <button onClick={onCancelSchedule} style={st.fcb}>
+              取消
+            </button>
+          </div>
         </div>
       ) : (
-        <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: "1.1rem", fontWeight: 600, color: task.status === "completed" ? "#73706b" : "#2d2b28", textDecoration: task.status === "completed" ? "line-through" : "none" }}>
-              {isUnapproved && <span style={{ fontSize: "0.65rem", color: "#c97070", marginRight: "0.2rem" }}>待确认</span>}
-              {task.title}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "12px" }}>
+          {/* 左侧：任务详情区域 (从左到右阅读顺畅) */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+              <p
+                style={{
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  color: isCompleted ? "var(--muted)" : "var(--text)",
+                  textDecoration: isCompleted ? "line-through" : "none",
+                  wordBreak: "break-word",
+                  letterSpacing: "-0.015em",
+                }}
+              >
+                {task.title}
+              </p>
+              {isSubmitted && (
+                <span
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: "999px",
+                    backgroundColor: "var(--star-bg)",
+                    border: "1px solid var(--star-border)",
+                    color: "var(--star)",
+                    fontSize: "0.72rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  等待家长点赞
+                </span>
+              )}
+              {task.require_approval && !isSubmitted && !isCompleted && (
+                <span
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: "999px",
+                    background: "rgba(118, 118, 128, 0.12)",
+                    color: "var(--text)",
+                    fontSize: "0.72rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  需家长确认
+                </span>
+              )}
+            </div>
+
+            <p style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: "4px" }}>
+              {task.expected_minutes ? `${task.expected_minutes} 分钟 · ` : ""}⭐+{task.reward_stars}
+              {isScheduled ? ` · ${task.scheduled_start}${task.scheduled_end ? `-${task.scheduled_end}` : ""}` : " · 自由安排"}
             </p>
-            <p style={{ fontSize: "0.8rem", color: "#73706b", marginTop: "0.15rem" }}>
-              {task.expected_minutes ? `${task.expected_minutes}分钟 · ` : ""}⭐{task.reward_stars}
-              {isScheduled ? ` · ${scheduleLabel(task)}${src ? ` (${src})` : ""}` : " · 自由安排"}
-            </p>
+
+            {/* 操作入口行 (开启专注、修改、安排时间) */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: "6px",
+                marginTop: "6px",
+              }}
+            >
+              {/* 时长型任务 (expected_minutes > 0) 提供 ⏱️ 开启专注 入口 */}
+              {task.expected_minutes > 0 && !isCompleted && !isSubmitted && (
+                <button
+                  type="button"
+                  onClick={() => onStartFocus(task)}
+                  className="task-focus-btn"
+                  aria-label={`开启 ${task.title} 专注计时`}
+                  style={{ minHeight: "30px", padding: "4px 10px", fontSize: "0.78rem" }}
+                >
+                  ⏱️ 专注 ({task.expected_minutes}m)
+                </button>
+              )}
+
+              {isUnapproved && (
+                <button onClick={() => onEdit(task)} style={st.pillBtn}>
+                  修改
+                </button>
+              )}
+              {isUnapproved && (
+                <button
+                  onClick={() => onDelete(task.id)}
+                  style={{ ...st.pillBtn, background: "var(--danger-bg)", color: "var(--danger)" }}
+                >
+                  删除
+                </button>
+              )}
+              {!isUnapproved && !isScheduled && task.created_by === "parent" && !isCompleted && !isSubmitted && (
+                <button onClick={() => onSchedule(task)} style={st.pillBtn}>
+                  安排时间
+                </button>
+              )}
+            </div>
           </div>
-          {isScheduled && task.status !== "completed" && (
-            <span style={{ padding: "0.35rem 0.8rem", borderRadius: "999px", background: "#d4e8da", color: "#3d9e6b", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" }}>{task.scheduled_start}</span>
-          )}
-          {task.status === "completed" ? (
-            <span style={{ padding: "0.35rem 0.8rem", borderRadius: "999px", background: "#def0e3", color: "#4b9c64", fontSize: "0.85rem", fontWeight: 600 }}>已完成</span>
-          ) : (
-            <>
-              {isUnapproved && <button onClick={() => onEdit(task)} style={{ padding: "0.35rem 0.6rem", borderRadius: "999px", background: "#e3f0e8", color: "#3d9e6b", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap", border: "none", cursor: "pointer" }}>修改</button>}
-              {isUnapproved && <button onClick={() => onDelete(task.id)} style={{ padding: "0.35rem 0.6rem", borderRadius: "999px", background: "#fef0f0", color: "#c97070", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap", border: "none", cursor: "pointer" }}>删除</button>}
-              {!isUnapproved && !isScheduled && task.created_by === "parent" && (
-                <button onClick={() => onSchedule(task)} style={{ padding: "0.35rem 0.6rem", borderRadius: "999px", background: "#e3f0e8", color: "#3d9e6b", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap", border: "none", cursor: "pointer" }}>安排时间</button>
-              )}
-              {!isUnapproved && (
-                <button onClick={() => onComplete(task)} disabled={completingId === task.id} style={{ padding: "0.45rem 1rem", borderRadius: "999px", background: completingId === task.id ? "#8cb99a" : "#3d9e6b", color: "#fff", fontSize: "0.9rem", fontWeight: 600, whiteSpace: "nowrap", border: "none", cursor: "pointer" }}>{completingId === task.id ? "…" : "完成"}</button>
-              )}
-            </>
-          )}
+
+          {/* 右侧：iOS Trailing Accessory 主打卡完成按钮 (大拇指右手热区) */}
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {isSubmitted ? (
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  background: "var(--star-bg)",
+                  border: "1.5px solid var(--star-border)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                title="等待家长点赞发星"
+              >
+                <span style={{ fontSize: "1.1rem", lineHeight: 1 }}>⏳</span>
+              </div>
+            ) : !isUnapproved ? (
+              <button
+                type="button"
+                onClick={(e) => onComplete(task, e)}
+                disabled={isCompleted || isCompleting}
+                className={`task-check-btn ${isCompleted ? "completed" : ""} ${isPopping ? "spring-pop" : ""}`}
+                aria-label={isCompleted ? "任务已完成" : `标记完成: ${task.title}`}
+                title={isCompleted ? "已完成" : "轻点打卡完成"}
+                style={{
+                  width: 36,
+                  height: 36,
+                  minWidth: 36,
+                  minHeight: 36,
+                  borderRadius: "50%",
+                  border: isCompleted ? "none" : "2px solid var(--border)",
+                  backgroundColor: isCompleted ? "var(--cell-perfect)" : "var(--card)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: isCompleted ? "default" : "pointer",
+                  boxShadow: isCompleted ? "0 2px 6px rgba(52, 199, 89, 0.35)" : "none",
+                  padding: 0,
+                }}
+              >
+                {isCompleted ? (
+                  <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "#FFFFFF", lineHeight: 1 }}>
+                    ✓
+                  </span>
+                ) : isCompleting ? (
+                  <span style={{ fontSize: "1rem", fontWeight: 700, color: "var(--accent)" }}>…</span>
+                ) : (
+                  <span
+                    style={{
+                      fontSize: "1.1rem",
+                      fontWeight: 700,
+                      color: "transparent",
+                      lineHeight: 1,
+                    }}
+                  >
+                    ✓
+                  </span>
+                )}
+              </button>
+            ) : (
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  border: "1px solid var(--danger-border)",
+                  background: "var(--danger-bg)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span style={{ fontSize: "0.68rem", color: "var(--danger)", fontWeight: 700 }}>待确认</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -222,15 +1072,77 @@ function TaskCard({ task, child, completingId, schedulingId, scheduleForm, setSc
 
 function RewardSelect({ value, onChange }) {
   return (
-    <select value={value} onChange={e => onChange(parseInt(e.target.value))} style={{ ...st.fi, flex: 1 }}>
-      {[0, 1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n === 0 ? "0⭐" : "⭐".repeat(n)}</option>)}
-    </select>
+    <div className="ios-segmented-control" style={{ flex: 1, display: "flex", alignItems: "center" }}>
+      {[0, 1, 2, 3, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          className={`ios-segmented-item ${value === n ? "active" : ""}`}
+          style={{ padding: "4px 6px", fontSize: "0.78rem" }}
+        >
+          {n === 0 ? "0星" : `⭐${n}`}
+        </button>
+      ))}
+    </div>
   );
 }
 
 const st = {
-  tc: { background: "#fff", borderRadius: "18px", padding: "1rem 1.1rem", marginBottom: "0.8rem", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" },
-  fi: { padding: "0.5rem 0.6rem", fontSize: "0.9rem", border: "1px solid #d6d2cc", borderRadius: "12px", outline: "none", background: "#fff", display: "block", marginBottom: "0.5rem", width: "100%" },
-  fsb: { flex: 1, padding: "0.5rem", fontSize: "0.9rem", fontWeight: 600, color: "#fff", background: "#3d9e6b", borderRadius: "12px", border: "none", cursor: "pointer" },
-  fcb: { flex: 1, padding: "0.5rem", fontSize: "0.9rem", fontWeight: 600, color: "#73706b", background: "#efece8", borderRadius: "12px", border: "none", cursor: "pointer" },
+  tc: {
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    borderRadius: "14px",
+    padding: "14px 16px",
+    marginBottom: "10px",
+    boxShadow: "var(--shadow-sm)",
+    transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+  },
+  fi: {
+    padding: "0.55rem 0.7rem",
+    fontSize: "0.9rem",
+    border: "1px solid var(--border)",
+    borderRadius: "12px",
+    outline: "none",
+    background: "var(--card)",
+    color: "var(--text)",
+    display: "block",
+    marginBottom: "0.5rem",
+    width: "100%",
+    fontVariantNumeric: "tabular-nums",
+  },
+  fsb: {
+    flex: 1,
+    padding: "8px",
+    fontSize: "0.9rem",
+    fontWeight: 650,
+    color: "#FFFFFF",
+    background: "var(--accent)",
+    borderRadius: "10px",
+    border: "none",
+    cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(0, 113, 227, 0.25)",
+  },
+  fcb: {
+    flex: 1,
+    padding: "8px",
+    fontSize: "0.9rem",
+    fontWeight: 600,
+    color: "var(--muted)",
+    background: "rgba(118, 118, 128, 0.12)",
+    border: "none",
+    borderRadius: "10px",
+    cursor: "pointer",
+  },
+  pillBtn: {
+    padding: "4px 10px",
+    borderRadius: "var(--radius-pill)",
+    background: "rgba(118, 118, 128, 0.12)",
+    color: "var(--text)",
+    border: "none",
+    fontSize: "0.78rem",
+    fontWeight: 600,
+    whiteSpace: "nowrap",
+    cursor: "pointer",
+  },
 };

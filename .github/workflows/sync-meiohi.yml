@@ -1,0 +1,40 @@
+name: Sync meiohi development
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-meiohi-development
+  cancel-in-progress: false
+
+jobs:
+  prepare-sync-branch:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prepare incremental synchronization branch
+        id: sync
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh auth setup-git
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          bash scripts/sync-meiohi.sh --branch
+      - name: Link to review
+        env:
+          COMPARE_URL: ${{ steps.sync.outputs.compare_url }}
+        run: |
+          if [ -n "$COMPARE_URL" ]; then
+            printf '## 同步分支已就绪\n\n[审查差异并创建 PR](%s)\n\n请运行 CI，通过后选择 Create a merge commit。生产未更新。\n' "$COMPARE_URL" >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '## 已是最新\n\n主仓已包含当前 meiohi/master。\n' >> "$GITHUB_STEP_SUMMARY"
+          fi

@@ -12,6 +12,33 @@ env:
   CI_IMAGE: family-plan-ci:${{ github.sha }}
 
 jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            src/parent-web/package-lock.json
+            src/child-pwa/package-lock.json
+      - name: Parent tests and build
+        working-directory: src/parent-web
+        run: npm ci && npm test && npm run build
+      - name: Child tests and build
+        working-directory: src/child-pwa
+        run: npm ci && npm test && npm run build
+      - name: Shared date, refresh and sharing regressions
+        run: |
+          node scripts/test-date-input.mjs
+          node scripts/test-refresh-queue.mjs
+          node scripts/test-task-share-model.mjs
+          node scripts/test-child-share-model.mjs
+          bash scripts/test-sync-meiohi.sh
+
   docker:
     runs-on: ubuntu-latest
     permissions:

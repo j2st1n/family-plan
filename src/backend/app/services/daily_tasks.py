@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import CursorResult, Date, cast, func, select, update
+from sqlalchemy import CursorResult, Date, cast, delete, func, select, update
 from sqlalchemy.orm import Session
 
 from app.core.errors import api_error
@@ -15,6 +15,8 @@ from app.models.streak import Streak
 from app.models.task_template import TaskTemplate
 from app.schemas.daily_task import ChildScheduleRequest, ChildTaskCreate, ManualTaskItem
 from app.services.reward_settings import get_or_create_reward_settings
+from app.services.streak_freeze import consume_freeze_for_date, get_or_create_streak_freeze, is_date_frozen
+from app.services.vacations import is_child_on_vacation
 
 
 def _get_or_create_streak(db: Session, child_id: UUID) -> Streak:
@@ -50,9 +52,6 @@ def _has_missed_task_day(
             DailyTask.task_date < before_date,
             DailyTask.approved.is_(True),
             DailyTask.status != "deleted",
-            # Legacy history views could create tasks after their assigned day.
-            # Such rows must not retroactively turn a rest day into a missed day.
-            # Production uses UTC calendar dates; do not use the DB session zone.
             cast(func.timezone("UTC", DailyTask.created_at), Date) <= DailyTask.task_date,
         )
     ).all()
@@ -61,15 +60,35 @@ def _has_missed_task_day(
     for task_date, status in tasks:
         tasks_by_date.setdefault(task_date, []).append(status)
 
-    for statuses in tasks_by_date.values():
+    for task_date in sorted(tasks_by_date.keys()):
+        statuses = tasks_by_date[task_date]
         completed = sum(1 for status in statuses if status == "completed")
+        is_missed = False
         if threshold <= 0:
             if completed == 0:
-                return True
+                is_missed = True
         elif int((completed / len(statuses)) * 100) < threshold:
-            return True
-    return False
+            is_missed = True
 
+        if not is_missed:
+            continue
+
+        # 1. Vacation exemption: dates within any vacation interval are automatically exempt
+        if is_child_on_vacation(db, child_id, task_date):
+            continue
+
+        # 2. Already protected by freeze card
+        if is_date_frozen(db, child_id, task_date):
+            continue
+
+        # 3. Try to consume 1 available freeze card
+        if consume_freeze_for_date(db, child_id, task_date):
+            continue
+
+        # Cannot be exempted or protected -> missed day breaks streak
+        return True
+
+    return False
 
 def _has_new_historical_deletion(db: Session, streak: Streak) -> bool:
     return db.scalar(select(DailyTask.id).where(
@@ -90,6 +109,66 @@ def get_todays_tasks(db: Session, child_id: UUID) -> list[DailyTask]:
     return generate_todays_tasks(db, child_id)
 
 
+def _award_task_and_update_streak(db: Session, task: DailyTask) -> None:
+    stars = task.reward_stars
+    if stars > 0:
+        db.add(
+            RewardLedger(
+                child_id=task.child_id,
+                source_type="daily_task",
+                source_id=task.id,
+                stars_delta=Decimal(str(stars)),
+                reason=task.title,
+            )
+        )
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise api_error("conflict", "Task already completed", 409)
+
+    streak = _get_or_create_streak(db, task.child_id)
+    if _has_new_historical_deletion(db, streak):
+        streak = _recalculate_streak_from_tasks(db, task.child_id)
+    today = date.today()
+
+    # Always track that a task was completed today (for get_reward_summary)
+    previous_date = streak.streak_updated_date or streak.last_completed_date
+    streak.last_completed_date = today
+
+    threshold = get_or_create_reward_settings(db, task.child_id).streak_threshold
+
+    # Only parent-approved tasks count toward the daily completion rate.
+    if streak.streak_updated_date != today:
+        tasks = list(
+            db.scalars(
+                select(DailyTask).where(
+                    DailyTask.child_id == task.child_id,
+                    DailyTask.task_date == today,
+                    DailyTask.approved.is_(True),
+                    DailyTask.status != "deleted",
+                )
+            )
+        )
+        if tasks:
+            completed = sum(1 for t in tasks if t.status == "completed")
+            rate = int((completed / len(tasks)) * 100)
+            qualifies = completed > 0 if threshold <= 0 else rate >= threshold
+            if qualifies:
+                if previous_date and not _has_missed_task_day(
+                    db, task.child_id, previous_date, today, threshold
+                ):
+                    streak.current_days += 1
+                else:
+                    streak.current_days = 1
+                streak.streak_updated_date = today
+
+    if streak.current_days > streak.longest_days:
+        streak.longest_days = streak.current_days
+
+    db.commit()
+
+
 def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | None) -> DailyTask:
     task = db.scalar(
         select(DailyTask).where(
@@ -99,9 +178,23 @@ def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | No
     if task is None:
         raise api_error("not_found", "Task not found", 404)
     if task.status != "pending":
-        raise api_error("conflict", "Task already completed", 409)
+        raise api_error("conflict", f"Task already {task.status}", 409)
     if task.created_by == "child" and not task.approved:
         raise api_error("conflict", "Task not yet approved by parent", 409)
+
+    if task.require_approval:
+        result = db.execute(
+            update(DailyTask)
+            .where(DailyTask.id == task_id, DailyTask.status == "pending")
+            .values(status="submitted", submitted_at=datetime.now(UTC), child_feedback=feedback)
+        )
+        cursor_result: CursorResult = result  # type: ignore[assignment]
+        if cursor_result.rowcount != 1:
+            db.rollback()
+            raise api_error("conflict", "Task already completed", 409)
+        db.commit()
+        db.refresh(task)
+        return task
 
     result = db.execute(
         update(DailyTask)
@@ -114,59 +207,141 @@ def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | No
         raise api_error("conflict", "Task already completed", 409)
     db.refresh(task)
 
-    stars = task.reward_stars
-    if stars > 0:
-        db.add(
-            RewardLedger(
-                child_id=child_id,
-                source_type="daily_task",
-                source_id=task.id,
-                stars_delta=stars,
-                reason=task.title,
+    _award_task_and_update_streak(db, task)
+    db.refresh(task)
+    return task
+
+
+def approve_daily_task(db: Session, task_id: UUID, parent_id: UUID) -> DailyTask:
+    task = db.scalar(
+        select(DailyTask)
+        .join(Child, DailyTask.child_id == Child.id)
+        .where(
+            DailyTask.id == task_id,
+            Child.parent_id == parent_id,
+            DailyTask.status != "deleted",
+        )
+        .with_for_update()
+    )
+    if task is None:
+        raise api_error("not_found", "Task not found", 404)
+    if task.status != "submitted":
+        raise api_error("conflict", f"Task is not submitted for approval (current status: {task.status})", 409)
+
+    task.status = "completed"
+    task.completed_at = datetime.now(UTC)
+
+    _award_task_and_update_streak(db, task)
+    db.refresh(task)
+    return task
+
+
+def parent_check_daily_task(db: Session, task_id: UUID, parent_id: UUID) -> DailyTask:
+    """家长直接代打卡（标记任务完成并给星发奖、更新连胜）"""
+    task = db.scalar(
+        select(DailyTask)
+        .join(Child, DailyTask.child_id == Child.id)
+        .where(
+            DailyTask.id == task_id,
+            Child.parent_id == parent_id,
+            DailyTask.status != "deleted",
+        )
+        .with_for_update()
+    )
+    if task is None:
+        raise api_error("not_found", "Task not found", 404)
+    if task.status == "completed":
+        return task
+
+    task.status = "completed"
+    task.completed_at = datetime.now(UTC)
+    task.approved = True
+
+    _award_task_and_update_streak(db, task)
+    db.refresh(task)
+    return task
+
+
+def reject_daily_task(db: Session, task_id: UUID, parent_id: UUID) -> DailyTask:
+    task = db.scalar(
+        select(DailyTask)
+        .join(Child, DailyTask.child_id == Child.id)
+        .where(
+            DailyTask.id == task_id,
+            Child.parent_id == parent_id,
+            DailyTask.status != "deleted",
+        )
+        .with_for_update()
+    )
+    if task is None:
+        raise api_error("not_found", "Task not found", 404)
+    if task.status != "submitted":
+        raise api_error("conflict", f"Task is not submitted for approval (current status: {task.status})", 409)
+
+    task.status = "pending"
+    task.submitted_at = None
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+def revoke_daily_task(db: Session, task_id: UUID, parent_id: UUID) -> DailyTask:
+    task = db.scalar(
+        select(DailyTask)
+        .join(Child, DailyTask.child_id == Child.id)
+        .where(
+            DailyTask.id == task_id,
+            Child.parent_id == parent_id,
+            DailyTask.status != "deleted",
+        )
+        .with_for_update()
+    )
+    if task is None:
+        raise api_error("not_found", "Task not found", 404)
+    if task.status != "completed":
+        raise api_error("conflict", f"Only completed tasks can be revoked (current status: {task.status})", 409)
+
+    task.status = "pending"
+    task.completed_at = None
+    task.submitted_at = None
+
+    db.execute(
+        delete(RewardLedger).where(
+            RewardLedger.source_type == "daily_task",
+            RewardLedger.source_id == task.id,
+        )
+    )
+
+    streak = db.scalar(select(Streak).where(Streak.child_id == task.child_id))
+    if streak:
+        if streak.streak_updated_date == task.task_date:
+            threshold = get_or_create_reward_settings(db, task.child_id).streak_threshold
+            tasks = list(
+                db.scalars(
+                    select(DailyTask).where(
+                        DailyTask.child_id == task.child_id,
+                        DailyTask.task_date == task.task_date,
+                        DailyTask.approved.is_(True),
+                        DailyTask.status != "deleted",
+                    )
+                )
+            )
+            completed = sum(1 for t in tasks if t.status == "completed" and t.id != task.id)
+            rate = int((completed / len(tasks)) * 100) if tasks else 0
+            qualifies = completed > 0 if threshold <= 0 else rate >= threshold
+            if not qualifies:
+                if streak.current_days > 0:
+                    streak.current_days -= 1
+                streak.streak_updated_date = None
+
+        latest_completed_date = db.scalar(
+            select(func.max(DailyTask.task_date)).where(
+                DailyTask.child_id == task.child_id,
+                DailyTask.status == "completed",
+                DailyTask.id != task.id,
             )
         )
-    try:
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise api_error("conflict", "Task already completed", 409)
-
-    streak = _get_or_create_streak(db, child_id)
-    if _has_new_historical_deletion(db, streak):
-        streak = _recalculate_streak_from_tasks(db, child_id)
-    today = date.today()
-
-    # Always track that a task was completed today (for get_reward_summary)
-    previous_date = streak.streak_updated_date or streak.last_completed_date
-    streak.last_completed_date = today
-
-    threshold = get_or_create_reward_settings(db, child_id).streak_threshold
-
-    # Only parent-approved tasks count toward the daily completion rate.
-    if streak.streak_updated_date != today:
-        tasks = list(db.scalars(
-            select(DailyTask).where(
-                DailyTask.child_id == child_id,
-                DailyTask.task_date == today,
-                DailyTask.approved.is_(True),
-                DailyTask.status != "deleted",
-            )
-        ))
-        if tasks:
-            completed = sum(1 for t in tasks if t.status == "completed")
-            rate = int((completed / len(tasks)) * 100)
-            qualifies = completed > 0 if threshold <= 0 else rate >= threshold
-            if qualifies:
-                if previous_date and not _has_missed_task_day(
-                    db, child_id, previous_date, today, threshold
-                ):
-                    streak.current_days += 1
-                else:
-                    streak.current_days = 1
-                streak.streak_updated_date = today
-
-    if streak.current_days > streak.longest_days:
-        streak.longest_days = streak.current_days
+        streak.last_completed_date = latest_completed_date
 
     db.commit()
     db.refresh(task)
@@ -189,7 +364,16 @@ def get_reward_summary(db: Session, child_id: UUID) -> dict:
     elif effective_date and _has_missed_task_day(db, child_id, effective_date, today, threshold):
         streak.current_days = 0
         db.commit()
-    return {"stars_total": stars_total, "current_streak_days": streak.current_days}
+
+    freeze = get_or_create_streak_freeze(db, child_id)
+    on_vacation = is_child_on_vacation(db, child_id, today)
+
+    return {
+        "stars_total": stars_total,
+        "current_streak_days": streak.current_days,
+        "streak_freeze_count": freeze.available_count,
+        "is_on_vacation": on_vacation,
+    }
 
 
 def _recalculate_streak_from_tasks(db: Session, child_id: UUID) -> Streak:
@@ -225,7 +409,7 @@ def _recalculate_streak_from_tasks(db: Session, child_id: UUID) -> Streak:
             current += 1
             longest = max(longest, current)
             last_qualified = task_date
-        elif task_date < today:
+        elif task_date < today and not is_child_on_vacation(db, child_id, task_date) and not is_date_frozen(db, child_id, task_date):
             current = 0
     streak.current_days = current
     streak.longest_days = max(streak.longest_days, longest)
@@ -233,7 +417,6 @@ def _recalculate_streak_from_tasks(db: Session, child_id: UUID) -> Streak:
     # Acknowledge corrections even when their resulting count is unchanged.
     streak.updated_at = datetime.now(UTC)
     return streak
-
 
 def create_manual_daily_tasks(
     db: Session, plan: Plan, task_date: date, task_payloads: list[ManualTaskItem]
@@ -249,6 +432,7 @@ def create_manual_daily_tasks(
             expected_minutes=item.expected_minutes,
             reward_stars=item.reward_stars,
             sort_order=i,
+            require_approval=item.require_approval,
             scheduled_start=_parse_time(item.scheduled_start),
             scheduled_end=_parse_time(item.scheduled_end),
         )
@@ -270,8 +454,8 @@ def update_daily_task(db: Session, task_id: UUID, plan: Plan, data: ManualTaskIt
     )
     if task is None:
         raise api_error("not_found", "Task not found", 404)
-    if task.status == "completed":
-        raise api_error("conflict", "Cannot edit completed task", 409)
+    if task.status in ("completed", "submitted"):
+        raise api_error("conflict", f"Cannot edit {task.status} task", 409)
     was_approved = task.approved
     if data.approved is not None:
         task.approved = data.approved
@@ -284,6 +468,8 @@ def update_daily_task(db: Session, task_id: UUID, plan: Plan, data: ManualTaskIt
         task.expected_minutes = data.expected_minutes
     if "reward_stars" in data.model_fields_set:
         task.reward_stars = data.reward_stars
+    if "require_approval" in data.model_fields_set:
+        task.require_approval = data.require_approval
     if "scheduled_start" in data.model_fields_set:
         task.scheduled_start = _parse_time(data.scheduled_start)
     if "scheduled_end" in data.model_fields_set:
@@ -304,8 +490,8 @@ def delete_daily_task(db: Session, task_id: UUID, plan: Plan) -> None:
     )
     if task is None:
         raise api_error("not_found", "Task not found", 404)
-    if task.status == "completed":
-        raise api_error("conflict", "Cannot delete completed task", 409)
+    if task.status in ("completed", "submitted"):
+        raise api_error("conflict", f"Cannot delete {task.status} task", 409)
     task.status = "deleted"
     if task.approved and task.task_date <= date.today() and task.created_at.astimezone(UTC).date() <= task.task_date:
         db.flush()
@@ -355,6 +541,7 @@ def _generate_tasks_for_date(db: Session, child_id: UUID, task_date: date) -> li
             expected_minutes=tpl.expected_minutes,
             reward_stars=tpl.reward_stars,
             sort_order=tpl.sort_order,
+            require_approval=tpl.require_approval,
         )
         db.add(daily)
         new_dailies.append(daily)
@@ -363,7 +550,6 @@ def _generate_tasks_for_date(db: Session, child_id: UUID, task_date: date) -> li
         db.commit()
 
     return _list_existing_tasks_for_date(db, child_id, task_date)
-
 
 def _list_existing_tasks_for_date(db: Session, child_id: UUID, task_date: date) -> list[DailyTask]:
     return list(

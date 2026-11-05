@@ -20,3 +20,4 @@ class Parent(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     children = relationship("Child", back_populates="parent")
+    ai_settings = relationship("ParentAISettings", back_populates="parent", uselist=False, cascade="all, delete-orphan")

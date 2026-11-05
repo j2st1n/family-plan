@@ -7,8 +7,12 @@ from app.core.deps import get_current_parent
 from app.db.session import get_db
 from app.models.parent import Parent
 from app.schemas.plan import PlanCreate, PlanResponse, TaskTemplateCreate, TaskTemplateResponse
+from app.schemas.vacation import VacationCreate, VacationResponse
+from app.schemas.analytics import AnalyticsResponse
 from app.services.event_hub import event_hub
 from app.services.plans import add_task_template, create_plan, delete_task_template, get_plan_for_parent, list_plans_for_parent, update_task_template
+from app.services.vacations import create_vacation, delete_vacation, list_vacations, verify_child_ownership
+from app.services.analytics import get_child_analytics
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
@@ -82,3 +86,51 @@ def remove_task_template(
     plan = get_plan_for_parent(db, plan_id, parent.id)
     delete_task_template(db, plan, template_id)
     event_hub.publish(parent.id, "tasks", "routine_deleted", plan.child_id)
+
+
+@router.get("/children/{child_id}/vacations", response_model=list[VacationResponse])
+def get_child_vacations(
+    child_id: UUID,
+    parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+) -> list[VacationResponse]:
+    verify_child_ownership(db, child_id, parent.id)
+    vacations = list_vacations(db, child_id)
+    return [VacationResponse.model_validate(v, from_attributes=True) for v in vacations]
+
+
+@router.post("/children/{child_id}/vacations", response_model=VacationResponse, status_code=201)
+def add_child_vacation(
+    child_id: UUID,
+    payload: VacationCreate,
+    parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+) -> VacationResponse:
+    verify_child_ownership(db, child_id, parent.id)
+    vacation = create_vacation(db, child_id, payload)
+    event_hub.publish(parent.id, "tasks", "vacation_created", child_id)
+    return VacationResponse.model_validate(vacation, from_attributes=True)
+
+
+@router.delete("/children/{child_id}/vacations/{vacation_id}", status_code=204)
+def remove_child_vacation(
+    child_id: UUID,
+    vacation_id: UUID,
+    parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+):
+    verify_child_ownership(db, child_id, parent.id)
+    delete_vacation(db, child_id, vacation_id)
+    event_hub.publish(parent.id, "tasks", "vacation_deleted", child_id)
+
+
+@router.get("/children/{child_id}/analytics", response_model=AnalyticsResponse)
+def get_analytics(
+    child_id: UUID,
+    days: int = Query(default=30, ge=1, le=365),
+    parent: Parent = Depends(get_current_parent),
+    db: Session = Depends(get_db),
+) -> AnalyticsResponse:
+    verify_child_ownership(db, child_id, parent.id)
+    data = get_child_analytics(db, child_id, days=days)
+    return AnalyticsResponse.model_validate(data)

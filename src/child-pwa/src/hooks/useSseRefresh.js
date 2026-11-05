@@ -27,7 +27,7 @@ export default function useSseRefresh({ enabled = true, topics = [], onRefresh, 
       }
     }
 
-    readSseStream("/api/v1/child/events", token, controller.signal, handlePayload, scheduleRefresh, onExpired);
+    readSseStream("/api/v1/child/events", token, controller.signal, handlePayload, onExpired);
 
     return () => {
       controller.abort();
@@ -36,7 +36,7 @@ export default function useSseRefresh({ enabled = true, topics = [], onRefresh, 
   }, [enabled, topics.join("|"), onExpired]);
 }
 
-async function readSseStream(url, token, signal, onPayload, onOpen, onExpired) {
+async function readSseStream(url, token, signal, onPayload, onExpired) {
   let delay = 1000;
   while (!signal.aborted) {
     try {
@@ -47,7 +47,6 @@ async function readSseStream(url, token, signal, onPayload, onOpen, onExpired) {
         return;
       }
       if (!response.ok || !response.body) throw new Error(`SSE request failed: ${response.status}`);
-      onOpen();
       delay = 1000;
       const reader = response.body.getReader();
       const decoder = new TextDecoder();

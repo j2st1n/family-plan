@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Bind from "./pages/Bind.jsx";
 import Today from "./pages/Today.jsx";
 import Shop from "./pages/Shop.jsx";
+import { TodayIcon, ShopIcon } from "./components/Icons.jsx";
 
 export default function App() {
   const [deviceToken, setDeviceToken] = useState(() => localStorage.getItem("device_token"));
@@ -13,6 +14,28 @@ export default function App() {
     }
   });
   const [tab, setTab] = useState("today");
+
+  // VisualViewport keyboard dynamic adaptation for iOS Safari
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+
+    const handleViewportChange = () => {
+      const vv = window.visualViewport;
+      if (!vv) return;
+      const keyboardHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty("--keyboard-height", `${keyboardHeight}px`);
+      document.documentElement.style.setProperty("--visual-viewport-height", `${vv.height}px`);
+    };
+
+    window.visualViewport.addEventListener("resize", handleViewportChange);
+    window.visualViewport.addEventListener("scroll", handleViewportChange);
+    handleViewportChange();
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handleViewportChange);
+      window.visualViewport?.removeEventListener("scroll", handleViewportChange);
+    };
+  }, []);
 
   function handleBound(token, profile) {
     localStorage.setItem("device_token", token);
@@ -41,8 +64,14 @@ export default function App() {
   <Shop onExpired={handleExpired} active={tab === "shop"} />
 </div>
       <nav className="nav-tabs" role="navigation">
-        <button className={`nav-tab${tab === "today" ? " on" : ""}`} onClick={() => setTab("today")}>今日任务</button>
-        <button className={`nav-tab${tab === "shop" ? " on" : ""}`} onClick={() => setTab("shop")}>星星商城</button>
+        <button className={`nav-tab${tab === "today" ? " on" : ""}`} onClick={() => setTab("today")}>
+          <TodayIcon size={22} filled={tab === "today"} />
+          <span>今天</span>
+        </button>
+        <button className={`nav-tab${tab === "shop" ? " on" : ""}`} onClick={() => setTab("shop")}>
+          <ShopIcon size={22} filled={tab === "shop"} />
+          <span>商城</span>
+        </button>
       </nav>
     </>
   );

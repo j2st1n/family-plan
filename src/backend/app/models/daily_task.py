@@ -22,6 +22,8 @@ class DailyTask(Base):
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    require_approval: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     child_feedback: Mapped[str | None] = mapped_column(String(20))
     created_by: Mapped[str] = mapped_column(String(20), nullable=False, default="parent")
     approved: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
