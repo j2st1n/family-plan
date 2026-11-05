@@ -34,10 +34,10 @@ test "$(git rev-parse origin/master)" != "$(git rev-parse HEAD)"
 test "$(git --git-dir="$fixture/main.git" rev-parse master)" = "$(git rev-parse origin/master)"
 git push -q origin HEAD:master
 bash "$script" --prepare > "$fixture/noop.log" 2>&1
-rg -q 'Already synchronized' "$fixture/noop.log"
+grep -q 'Already synchronized' "$fixture/noop.log"
 printf 'dirty\n' >> source.txt
 if bash "$script" --prepare > "$fixture/dirty.log" 2>&1; then echo 'Dirty tree was accepted' >&2; exit 1; fi
-rg -q 'not clean' "$fixture/dirty.log"
+grep -q 'not clean' "$fixture/dirty.log"
 git restore source.txt
 # Divergent edits must stop locally and never push an unresolved merge.
 printf 'main edit\n' > base.txt
@@ -64,8 +64,8 @@ git commit -qm resolved
 git push -q source master
 cd "$fixture/work"
 GITHUB_OUTPUT="$fixture/outputs" bash "$script" --branch > "$fixture/branch.log" 2>&1
-rg -q '^branch=sync/meiohi-' "$fixture/outputs"
-rg -q '^compare_url=https://github.com/j2st1n/family-plan/compare/master' "$fixture/outputs"
+grep -q '^branch=sync/meiohi-' "$fixture/outputs"
+grep -q '^compare_url=https://github.com/j2st1n/family-plan/compare/master' "$fixture/outputs"
 test "$(git --git-dir="$fixture/main.git" rev-parse master)" = "$(git rev-parse origin/master)"
 test "$(git --git-dir="$fixture/main.git" rev-parse "$(git branch --show-current)")" = "$(git rev-parse HEAD)"
 echo 'Sync tests passed: history, no-op, dirty tree, conflict isolation, review branch.'

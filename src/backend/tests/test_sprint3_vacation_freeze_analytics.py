@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -129,6 +129,7 @@ class TestVacationMode:
                 child_id=UUID(cid),
                 plan_id=UUID(plan_id),
                 task_date=missed_day,
+                created_at=datetime.combine(missed_day, time.min, tzinfo=UTC),
                 title="Math Homework",
                 reward_stars=1,
                 approved=True,
@@ -172,7 +173,7 @@ class TestStreakFreeze:
         assert freeze.last_granted_month == current_month
 
         # Simulate previous month
-        freeze.last_granted_month = "2026-10"
+        freeze.last_granted_month = (date.today().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
         db_session.commit()
 
         # When checked in current month (2026-11), it should grant 1 card automatically
@@ -242,6 +243,7 @@ class TestStreakFreeze:
                 child_id=UUID(cid),
                 plan_id=UUID(plan_id),
                 task_date=yesterday,
+                created_at=datetime.combine(yesterday, time.min, tzinfo=UTC),
                 title="Morning Reading",
                 reward_stars=1,
                 approved=True,
@@ -272,6 +274,7 @@ class TestStreakFreeze:
                 child_id=UUID(cid),
                 plan_id=UUID(plan_id),
                 task_date=date.today() - timedelta(days=3),
+                created_at=datetime.combine(date.today() - timedelta(days=3), time.min, tzinfo=UTC),
                 title="Science Project",
                 reward_stars=1,
                 approved=True,
@@ -499,7 +502,7 @@ class TestEdgeCasesAndConcurrencyHardening:
         assert saved.available_count == 0
 
         # Simulate rollover to new month
-        saved.last_granted_month = "2026-10"
+        saved.last_granted_month = (date.today().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
         db2.commit()
         db2.close()
 
