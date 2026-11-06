@@ -10,7 +10,6 @@ import { useFeedback } from "../components/FeedbackContext.jsx";
 import { CheckCircleIcon, SparklesIcon, PlusIcon, ShareIcon } from "../components/Icons.jsx";
 import { createRefreshQueue } from "../utils/refreshQueue.js";
 import { isValidTaskDate } from "../utils/date.js";
-import TaskShareDialog from "../components/TaskShareDialog.jsx";
 
 function parseLocal(s) {
   if (!isValidTaskDate(s)) return new Date();
@@ -38,15 +37,15 @@ function addDays(s, n) {
 }
 
 const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-function formatDateDisplay(dateStr) {
+function formatDateHint(dateStr) {
   if (!dateStr) return "";
   const todayStr = fmtDate(new Date());
   const d = parseLocal(dateStr);
   const weekDay = WEEKDAYS[d.getDay()] || "";
   if (dateStr === todayStr) {
-    return `${dateStr} ${weekDay} (今天)`;
+    return `${weekDay} (今天)`;
   }
-  return `${dateStr} ${weekDay}`;
+  return weekDay;
 }
 
 function pad(n) {
@@ -94,7 +93,6 @@ export default function TodayDashboard({
   const [showCopilot, setShowCopilot] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [taskShareSnapshot, setTaskShareSnapshot] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
 
   // Regular task form state
@@ -122,11 +120,6 @@ export default function TodayDashboard({
 
   function selectDate(value) {
     if (isValidTaskDate(value)) setDate(value);
-  }
-
-  function openTaskShare() {
-    if (loading || error || actionInProgress || loadedKey.current !== dataKey) return;
-    setTaskShareSnapshot({ date, childName: activeChild?.name || "", tasks: tasks.map(t => ({ ...t })) });
   }
 
   // Load pending counts for child capsules
@@ -502,7 +495,7 @@ export default function TodayDashboard({
       )}
 
       {/* 日期选择与导航条 (iOS 极简胶囊切换) */}
-      <div
+      <div role="group" aria-label="日期与分享"
         style={{
           display: "flex",
           alignItems: "center",
@@ -529,15 +522,16 @@ export default function TodayDashboard({
             alignItems: "center",
             justifyContent: "center",
           }}
+          aria-label="前一天"
           title="前一天"
         >
           ‹
         </button>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--text)", letterSpacing: "-0.01em" }}>
-            {formatDateDisplay(date)}
+          <input aria-label="任务日期" type="date" min="0001-01-01" max="9999-12-31" value={date} onChange={e => selectDate(e.target.value)} className="ios-time-input" style={{ maxWidth: "140px", minWidth: 0 }} />
+          <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--text)", letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>
+            {formatDateHint(date)}
           </span>
-          <input aria-label="任务日期" type="date" min="0001-01-01" max="9999-12-31" value={date} onChange={e => selectDate(e.target.value)} className="ios-time-input" style={{ maxWidth: "140px" }} />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <button
@@ -553,11 +547,11 @@ export default function TodayDashboard({
               alignItems: "center",
               justifyContent: "center",
             }}
+            aria-label="后一天"
             title="后一天"
           >
             ›
           </button>
-          <button type="button" onClick={openTaskShare} disabled={loading || !!error || actionInProgress || loadedKey.current !== dataKey} className="ios-sheet-nav-action-btn">分享图片</button>
           <button
             type="button"
             className="ios-share-trigger-btn"
@@ -1216,7 +1210,6 @@ export default function TodayDashboard({
         </div>
       )}
 
-      {taskShareSnapshot && <TaskShareDialog snapshot={taskShareSnapshot} onClose={() => setTaskShareSnapshot(null)} />}
       {/* 自律成长成就卡分享抽屉 (iOS Sheet) */}
       <SharePosterModal
         open={showShareModal}
