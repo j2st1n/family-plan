@@ -1,17 +1,27 @@
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
+import { mkdir, readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createServer } from '../src/parent-web/node_modules/vite/dist/node/index.js';
 import { chromium } from '../src/child-pwa/node_modules/playwright/index.mjs';
 const root = fileURLToPath(new URL('../src/parent-web/', import.meta.url));
 const server = await createServer({ root, server: { host: '127.0.0.1', port: 19139, strictPort: true } });
+const childRoot = fileURLToPath(new URL('../src/child-pwa/', import.meta.url));
+const childServer = await createServer({root:childRoot,server:{host:'127.0.0.1',port:19140,strictPort:true}});
+const output=process.env.BROWSER_ARTIFACT_DIR || join(tmpdir(),'family-plan-share-date-regression');
 let browser;
 try {
+  await mkdir(output,{recursive:true});
   await server.listen();
-  browser = await chromium.launch({channel:'chrome',headless:true});
+  await childServer.listen();
+  browser = await chromium.launch({...(process.env.PLAYWRIGHT_BROWSER==='chromium'?{}:{channel:'chrome'}),headless:true});
   const page = await browser.newPage({viewport:{width:1100,height:900}});
+  page.setDefaultTimeout(15000);
   const errors = [];
   page.on('pageerror', err => errors.push(err.message));
   await page.addInitScript(() => {
+    localStorage.setItem('family_plan_theme','dark');
     localStorage.setItem('parent_token','synthetic-integration-token');
     localStorage.setItem('parent_active_tab','today');
     const fetchOriginal = window.fetch;
@@ -42,7 +52,7 @@ try {
   });
   await page.goto('http://127.0.0.1:19139');
   const date=page.getByLabel('任务日期');
-  const share=page.getByRole('button',{name:'分享图片',exact:true});
+  const share=page.getByRole('button',{name:'分享自律成长成就海报',exact:true});
   await share.waitFor();
   await date.fill('2026-10-19');
   await page.waitForRequest(r=>r.url().includes('task_date=2026-10-19'));
@@ -50,10 +60,36 @@ try {
   await page.getByText('任务 2026-10-20',{exact:true}).waitFor();
   await page.waitForTimeout(650);
   assert.equal(await page.getByText('任务 2026-10-19',{exact:true}).count(),0,'stale date response must not replace selected day');
+  const dateBar=page.getByRole('group',{name:'日期与分享'});
+  assert.equal(await dateBar.locator('input[type=date]').count(),1);
+  assert.ok(!/\d{4}[-/]\d{2}[-/]\d{2}/.test(await dateBar.innerText()),'date exists only in the native date control, not repeated as text');
+  assert.equal(await page.getByRole('button',{name:'分享图片',exact:true}).count(),0);
+  assert.equal(await dateBar.getByRole('button',{name:/分享/}).count(),1,'one share entry');
+  for(const width of [390,768,1440]) {
+    await page.setViewportSize({width,height:900});
+    const bounds=await dateBar.boundingBox();
+    assert.ok(bounds.x>=0 && bounds.x+bounds.width<=width);
+    const inputBounds=await date.boundingBox(), shareBounds=await share.boundingBox();
+    assert.ok(inputBounds.x+inputBounds.width<=shareBounds.x,'date input must not collide with share icon');
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),'no horizontal overflow');
+    await page.screenshot({animations:'disabled',path:join(output,`parent-dark-${width}.png`)});
+  }
   await share.click();
-  const shareDialog=page.getByRole('dialog',{name:'分享任务图片'});
-  await shareDialog.getByRole('img').evaluate(img=>img.decode());
-  await shareDialog.getByRole('button',{name:'关闭分享预览'}).click();
+  const shareDialog=page.getByRole('dialog',{name:'分享自律成长成就卡'});
+  await shareDialog.getByRole('img',{name:'自律成长成就卡预览'}).waitFor();
+  await shareDialog.getByRole('img',{name:'自律成长成就卡预览'}).evaluate(img=>img.decode());
+  const download=page.waitForEvent('download');
+  await shareDialog.getByRole('button',{name:'保存',exact:true}).click();
+  const file=await download;
+  assert.ok(file.suggestedFilename().includes('2026-10-20'));
+  const pngPath=join(output,'parent-growth-poster.png');await file.saveAs(pngPath);
+  assert.deepEqual([...(await readFile(pngPath)).subarray(0,8)],[137,80,78,71,13,10,26,10]);
+  await shareDialog.getByRole('button',{name:'完成',exact:true}).click();
+  await page.getByRole('button',{name:'前一天',exact:true}).click();
+  assert.equal(await date.inputValue(),'2026-10-19');
+  await page.getByText('任务 2026-10-19',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'后一天',exact:true}).click();
+  await page.getByText('任务 2026-10-20',{exact:true}).waitFor();
   await page.getByRole('button',{name:'设置',exact:true}).click();
   await page.getByText('家庭与孩子档案',{exact:true}).click();
   await page.getByRole('button',{name:'连胜规则',exact:true}).click();
@@ -69,5 +105,60 @@ try {
   await dialog.getByText('奖励设置已保存',{exact:true}).waitFor();
   assert.deepEqual(saved,{streak_threshold:85,streak_discount_enabled:false,streak_discount_tiers:[7,14,21,28,35].map((days,i)=>({days,discount_percent:i===4?70:95-i*5}))});
   assert.deepEqual(errors,[]);
-  console.log('Merged UI regression passed: stale dates, real PNG share, reachable complete streak settings, exact API roundtrip.');
-} finally { await browser?.close(); await server.close(); }
+  // Repeat the visible control checks in light mode after a real theme UI action.
+  await dialog.getByRole('button',{name:'关闭',exact:true}).click();
+  await page.getByRole('button',{name:'关闭',exact:true}).click();
+  await page.getByRole('button',{name:'今天',exact:true}).click();
+  await page.getByRole('button',{name:'切换明暗主题',exact:true}).click();
+  assert.equal(await page.locator('html').getAttribute('data-theme'),'light');
+  await page.setViewportSize({width:390,height:900});
+  await page.screenshot({animations:'disabled',path:join(output,'parent-light-390.png')});
+
+  const child=await browser.newPage({viewport:{width:768,height:900}});
+  child.setDefaultTimeout(15000);
+  child.on('pageerror',err=>errors.push(err.message));
+  await child.addInitScript(()=>{
+    localStorage.setItem('family_plan_theme','dark');
+    localStorage.setItem('device_token','synthetic-device-token');
+    localStorage.setItem('child_profile',JSON.stringify({id:'kid',name:'合并测试'}));
+    const original=window.fetch;
+    window.fetch=(input,options)=>String(input).includes('/events')?Promise.resolve(new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode(': connected\n\n'));}}),{headers:{'Content-Type':'text/event-stream'}})):original(input,options);
+  });
+  await child.route('https://**/*',r=>r.abort());
+  let complete=false,writes=0;
+  await child.route('**/api/v1/**',async r=>{
+    const path=new URL(r.request().url()).pathname;
+    if(path.endsWith('/complete')){writes++;await new Promise(resolve=>setTimeout(resolve,400));complete=true;return r.fulfill({json:{status:'completed',stars_awarded:2}});}
+    if(path.endsWith('/today'))return r.fulfill({json:{date:'2026-10-20',tasks:[{id:'task',title:'测试阅读',status:complete?'completed':'pending',approved:true,reward_stars:2,expected_minutes:10}],rewards:{stars_total:complete?22:20,current_streak_days:12}}});
+    if(path.includes('/shop/'))return r.fulfill({json:path.endsWith('/freeze')?{available_count:0,star_cost:5,max_limit:2}:[]});
+    throw new Error(`Unexpected mocked child API ${path}`);
+  });
+  await child.goto('http://127.0.0.1:19140');
+  const childShare=child.getByRole('button',{name:'分享今日自律成就卡',exact:true});
+  await childShare.waitFor();
+  assert.equal(await child.getByRole('button',{name:'分享图片',exact:true}).count(),0);
+  assert.equal(await child.getByRole('button',{name:/^分享/}).count(),1);
+  assert.equal(await child.getByRole('heading',{name:'你好，合并测试',exact:true}).count(),1);
+  for(const width of [390,768]){
+    await child.setViewportSize({width,height:900});
+    assert.ok(await child.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
+    await child.screenshot({animations:'disabled',path:join(output,`child-dark-${width}.png`)});
+  }
+  await childShare.click();
+  const childDialog=child.getByRole('dialog',{name:'分享自律成长成就卡'});
+  await childDialog.getByRole('img',{name:'自律成长成就卡预览'}).waitFor();
+  await childDialog.getByRole('img',{name:'自律成长成就卡预览'}).evaluate(img=>img.decode());
+  const childDownload=child.waitForEvent('download');await childDialog.getByRole('button',{name:'保存',exact:true}).click();
+  const childFile=await childDownload;const childPng=join(output,'child-growth-poster.png');await childFile.saveAs(childPng);
+  assert.deepEqual([...(await readFile(childPng)).subarray(0,8)],[137,80,78,71,13,10,26,10]);
+  await childDialog.getByRole('button',{name:'完成',exact:true}).click();
+  const mutation=child.waitForRequest(r=>r.url().endsWith('/complete'));
+  await child.getByLabel('标记完成: 测试阅读').click();await mutation;
+  assert.equal(await childShare.isDisabled(),true);
+  await child.getByLabel('任务已完成').waitFor();
+  await childShare.waitFor({state:'visible'});
+  await child.waitForFunction(()=>document.querySelector('[aria-label="分享今日自律成就卡"]')?.disabled===false);
+  assert.equal(writes,1);
+  assert.deepEqual(errors,[]);
+  console.log('UI regression passed: one date, one growth-poster entry per app, responsive layouts, real PNG downloads, date race/navigation, child mutation guard, complete streak settings.');
+} finally { await browser?.close(); await server.close(); await childServer.close(); }

@@ -18,9 +18,7 @@ import { ShareIcon, SunIcon, MoonIcon } from "../components/Icons.jsx";
 import { childFeedback } from "../components/ChildFeedback.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 
-import TaskShareDialog from "../../../shared-web/TaskShareDialog.jsx";
 import { isValidTaskDate } from "../../../shared-web/date.js";
-import { createChildTaskShareSnapshot } from "../utils/taskShareSnapshot.js";
 
 const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -92,7 +90,6 @@ export default function Today({ child, onExpired, active }) {
   const loadSequence = useRef(0);
   const pendingMutations = useRef(0);
   const [savingTask, setSavingTask] = useState(false);
-  const [shareSnapshot, setShareSnapshot] = useState(null);
 
   const load = useCallback(async (forceLoading = false) => {
     const sequence = ++loadSequence.current;
@@ -130,12 +127,6 @@ export default function Today({ child, onExpired, active }) {
     setSavingTask(true);
     try { const result = await operation(); await load(); return result; }
     finally { pendingMutations.current -= 1; setSavingTask(pendingMutations.current > 0); }
-  }
-
-  function openTaskShare() {
-    if (loading || error || pendingMutations.current) return;
-    const snapshot = createChildTaskShareSnapshot(data, child?.name);
-    if (snapshot) setShareSnapshot(snapshot);
   }
 
   async function handleComplete(task, event) {
@@ -283,20 +274,18 @@ export default function Today({ child, onExpired, active }) {
   const free = (data?.tasks || []).filter((t) => !t.scheduled_start && t.status !== "completed");
   const completed = (data?.tasks || []).filter((t) => t.status === "completed");
 
-  const taskShareDialog = shareSnapshot && <TaskShareDialog snapshot={shareSnapshot} nameLabel="标题显示我的姓名" onClose={() => setShareSnapshot(null)} />;
-
   if (loading)
     return (
-      <><div style={{ textAlign: "center", paddingTop: "40vh", color: "var(--muted)" }}>加载中…</div>{taskShareDialog}</>
+      <div style={{ textAlign: "center", paddingTop: "40vh", color: "var(--muted)" }}>加载中…</div>
     );
   if (error)
     return (
-      <><div style={{ textAlign: "center", paddingTop: "40vh" }}>
+      <div style={{ textAlign: "center", paddingTop: "40vh" }}>
         <p style={{ color: "var(--danger)", marginBottom: "1rem" }}>{error}</p>
         <button onClick={load} style={{ color: "var(--accent)", fontSize: "1rem", fontWeight: 600 }}>
           重试
         </button>
-      </div>{taskShareDialog}</>
+      </div>
     );
 
   const earnedStarsToday = completed.reduce((sum, t) => sum + (t.stars_awarded ?? t.reward_stars ?? 0), 0);
@@ -333,7 +322,6 @@ export default function Today({ child, onExpired, active }) {
                 🌴 休假中
               </span>
             )}
-            <button type="button" onClick={openTaskShare} disabled={savingTask || !isValidTaskDate(data?.date)} className="ios-sheet-nav-action-btn">分享图片</button>
             <button
               type="button"
               disabled={savingTask}
@@ -752,7 +740,6 @@ export default function Today({ child, onExpired, active }) {
         />
       )}
 
-      {taskShareDialog}
       {/* 自律成长成就卡分享抽屉 (iOS Sheet) */}
       <SharePosterModal
         open={showShareModal}
