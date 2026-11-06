@@ -1,3 +1,4 @@
+import FieldLabel from "../../../shared-web/FieldLabel.jsx";
 import RewardStars, {validReward} from "../../../shared-web/RewardStars.jsx";
 import TaskTimingFields from "../../../shared-web/TaskTimingFields.jsx";
 import {plannedEnd, formatActualSeconds} from "../../../shared-web/taskTiming.js";
@@ -1042,8 +1043,10 @@ export default function TodayDashboard({
               <div className="ios-grouped-card" style={{ marginBottom: "18px" }}>
                 {/* 任务名称 */}
                 <div style={{ padding: "12px 16px" }}>
+                  <label htmlFor="parent-task-title" style={{display:"block",marginBottom:8}}><FieldLabel required>任务名称</FieldLabel></label>
                   <input
                     type="text"
+                    id="parent-task-title" required
                     placeholder="任务名称，如：练琴20分钟、口算一页..."
                     value={taskForm.title}
                     onChange={(e) => handleTitleChange(e.target.value)}
@@ -1069,7 +1072,7 @@ export default function TodayDashboard({
                 <div style={{ padding: "10px 16px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                     <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                      习惯分类
+                      <FieldLabel>习惯分类</FieldLabel>
                     </span>
                     <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
                       {taskForm.category}
@@ -1097,7 +1100,7 @@ export default function TodayDashboard({
 
                 <TaskTimingFields minutes={taskForm.minutes} start={taskForm.start} onChange={patch=>setTaskForm(f=>({...f,...patch}))}/>
                 <div style={{padding:"10px 16px",display:"flex",gap:8,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}}>
-                  <span>奖励星星</span><RewardStars value={taskForm.stars} onChange={stars=>setTaskForm(f=>({...f,stars}))}/>
+                  <FieldLabel required>奖励星星</FieldLabel><RewardStars value={taskForm.stars} onChange={stars=>setTaskForm(f=>({...f,stars}))}/>
                 </div>
               </div>
 
@@ -1114,7 +1117,7 @@ export default function TodayDashboard({
                 >
                   <div>
                     <span style={{ fontSize: "0.95rem", fontWeight: 500, color: "var(--text)" }}>
-                      需家长点赞确认发星
+                      <FieldLabel>需家长点赞确认发星</FieldLabel>
                     </span>
                     <p style={{ fontSize: "0.74rem", color: "var(--muted)", marginTop: "2px" }}>
                       孩子打卡后不立即加星，需家长审核后发放

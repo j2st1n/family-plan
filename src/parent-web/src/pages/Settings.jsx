@@ -1,3 +1,4 @@
+import FieldLabel from "../../../shared-web/FieldLabel.jsx";
 import RewardStars, {validReward} from "../../../shared-web/RewardStars.jsx";
 import { useState, useEffect, useCallback } from "react";
 import api from "../api.js";
@@ -1927,8 +1928,10 @@ export default function Settings({
               {/* Group 1: 核心信息 Inset Grouped */}
               <div className="ios-grouped-card" style={{ marginBottom: "18px" }}>
                 <div style={{ padding: "12px 16px" }}>
+                  <label htmlFor="routine-task-title" style={{display:"block",marginBottom:8}}><FieldLabel required>任务名称</FieldLabel></label>
                   <input
                     type="text"
+                    id="routine-task-title" required
                     placeholder="任务名称，如：练琴20分钟、晨读15分钟..."
                     value={routineForm.title}
                     onChange={(e) => setRoutineForm({ ...routineForm, title: e.target.value })}
@@ -1949,7 +1952,7 @@ export default function Settings({
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
                   <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                    预计时长
+                    <FieldLabel required>预计时长</FieldLabel>
                   </span>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <button
@@ -1976,14 +1979,14 @@ export default function Settings({
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
                   <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                    奖励星星
+                    <FieldLabel required>奖励星星</FieldLabel>
                   </span>
                   <RewardStars value={routineForm.stars} onChange={stars=>setRoutineForm(f=>({...f,stars}))}/>
                 </div>
               </div>
 
               {/* Group 2: 每周循环设置 */}
-              <div className="ios-group-label" style={{ margin: "0 0 6px 16px" }}>每周重复日</div>
+              <div className="ios-group-label" style={{ margin: "0 0 6px 16px" }}><FieldLabel required>每周重复日</FieldLabel></div>
               <div className="ios-grouped-card" style={{ padding: "10px 14px", marginBottom: "18px" }}>
                 <div style={{ display: "flex", gap: "6px" }}>
                   {WEEKDAYS.map((w) => {

@@ -1,3 +1,4 @@
+import FieldLabel from "../../../shared-web/FieldLabel.jsx";
 import RewardStars, {validReward} from "../../../shared-web/RewardStars.jsx";
 import TaskTimingFields from "../../../shared-web/TaskTimingFields.jsx";
 import {plannedEnd} from "../../../shared-web/taskTiming.js";
@@ -314,9 +315,11 @@ export default function TaskCopilotModal({
                     }}
                   >
                     {/* Title and remove button */}
+                    <label htmlFor={`draft-task-title-${idx}`} style={{display:"block",marginBottom:6}}><FieldLabel required>任务名称</FieldLabel></label>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
                       <input
                         type="text"
+                        id={`draft-task-title-${idx}`} required
                         value={task.title}
                         onChange={(e) => handleUpdateTask(idx, "title", e.target.value)}
                         style={{
@@ -384,7 +387,7 @@ export default function TaskCopilotModal({
                       }}
                     >
                       <div style={{width:"100%"}}><TaskTimingFields minutes={task.expected_minutes} start={task.start ?? task.scheduled_start ?? ""} onChange={patch=>handleTiming(idx,patch)}/></div>
-                      <RewardStars value={task.reward_stars} onChange={n=>handleUpdateTask(idx,"reward_stars",n)}/>
+                      <FieldLabel required>奖励星星</FieldLabel><RewardStars value={task.reward_stars} onChange={n=>handleUpdateTask(idx,"reward_stars",n)}/>
 
                       <label
                         style={{
