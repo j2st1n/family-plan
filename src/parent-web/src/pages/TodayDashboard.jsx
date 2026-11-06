@@ -376,7 +376,7 @@ export default function TodayDashboard({
 
   // Save regular task modal
   const handleSaveRegularTask = async () => {
-    if (!taskForm.title.trim() || !plan || !validReward(taskForm.stars)) return;
+    if (!taskForm.title.trim() || !plan || !validReward(taskForm.stars) || !CATEGORIES.includes(taskForm.category)) return;
     const dur = parseInt(taskForm.minutes) || 20;
     const filled = autoFillTime(dur, taskForm.start, taskForm.end);
 
@@ -1032,7 +1032,7 @@ export default function TodayDashboard({
                 type="button"
                 className="ios-sheet-nav-action-btn"
                 onClick={handleSaveRegularTask}
-                disabled={actionInProgress || !taskForm.title.trim() || !validReward(taskForm.stars)}
+                disabled={actionInProgress || !taskForm.title.trim() || !validReward(taskForm.stars) || !CATEGORIES.includes(taskForm.category)}
               >
                 {editingTask ? (tasks.find(t=>t.id===editingTask)?.approved===false ? "定星并确认" : "保存") : "添加"}
               </button>
@@ -1072,19 +1072,20 @@ export default function TodayDashboard({
                 <div style={{ padding: "10px 16px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                     <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                      <FieldLabel>习惯分类</FieldLabel>
+                      <FieldLabel required>习惯分类</FieldLabel>
                     </span>
                     <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
                       {taskForm.category}
                     </span>
                   </div>
-                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  <div role="group" aria-label="习惯分类（必填）" style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                     {CATEGORIES.map((cat) => {
                       const isSelected = taskForm.category === cat;
                       return (
                         <button
                           key={cat}
                           type="button"
+                          aria-pressed={isSelected}
                           onClick={() => handleCategorySelect(cat)}
                           className={`capsule-btn ${isSelected ? "capsule-accent" : "capsule-muted"}`}
                           style={{ padding: "4px 10px", fontSize: "0.76rem" }}

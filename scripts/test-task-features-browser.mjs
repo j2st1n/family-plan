@@ -18,7 +18,7 @@ try{
  });
  let tasks=[{id:'timed',title:'计时任务',status:'pending',approved:true,created_by:'parent',require_approval:false,reward_stars:2,expected_minutes:20,completion_version:0,plan_id:'plan'},
  {id:'plain',title:'普通任务',status:'pending',approved:true,created_by:'parent',require_approval:false,reward_stars:1,expected_minutes:10,completion_version:0,plan_id:'plan'}];
- let stars=6, created, childCreated, mutationBodies=[],failCompletion=false,redeemCount=0;
+ let stars=6, created, childCreated, mutationBodies=[],failCompletion=false,redeemCount=0,parentPosts=0;
  const today=()=>({date:'2026-11-06',tasks,rewards:{stars_total:stars,current_streak_days:12}});
  const goods=[{id:'item',title:'折扣礼物',status:'active',star_cost:10,discounted_star_cost:8,stock:2}];
  await context.route('https://**/*',r=>r.abort());
@@ -27,7 +27,8 @@ try{
   if(p==='/api/v1/children')return route.fulfill({json:[{id:'kid',name:'测试孩子',streak_threshold:80}]});
   if(p.endsWith('/dashboard'))return route.fulfill({json:{today:{submitted_tasks:0},rewards:today().rewards}});
   if(p==='/api/v1/plans')return route.fulfill({json:[{id:'plan',status:'active',tasks:[]}]});
-  if(p.endsWith('/daily-tasks')){if(req.method()==='POST'){created=req.postDataJSON();return route.fulfill({status:201,json:created.tasks});}return route.fulfill({json:today()});}
+  if(p.endsWith('/daily-tasks')){if(req.method()==='POST'){parentPosts++;created=req.postDataJSON();return route.fulfill({status:201,json:created.tasks});}return route.fulfill({json:today()});}
+  if(p==='/api/v1/ai/copilot/parse-tasks')return route.fulfill({json:{raw_summary:'分类校验草稿',resolved_date:'2026-11-06',tasks:[{title:'AI分类任务',expected_minutes:20,reward_stars:1,category:'未知分类'}]}});
   if(p==='/api/v1/child/today')return route.fulfill({json:today()});
   if(p==='/api/v1/child/tasks'&&req.method()==='POST'){childCreated=req.postDataJSON();return route.fulfill({status:201,json:{id:'proposal',...childCreated,approved:false,reward_stars:null}});}
   if(p.endsWith('/complete')){
@@ -67,9 +68,16 @@ try{
  await parent.getByLabel('开始小时',{exact:true}).selectOption('00');
  assert.equal(await parent.getByLabel('计划结束').innerText(),'00:25');
  await parent.getByLabel('开始小时',{exact:true}).selectOption('23');await parent.getByLabel('开始分钟',{exact:true}).selectOption('50');
+ await parent.getByRole('group',{name:'习惯分类（必填）',exact:true}).getByRole('button',{name:'🏃 体育运动',exact:true}).click();
+ assert.equal(await parent.getByRole('button',{name:'🏃 体育运动',exact:true}).getAttribute('aria-pressed'),'true');
  await parent.getByRole('button',{name:'添加',exact:true}).click();
  await parent.getByText('自定义奖励',{exact:true}).waitFor({state:'detached'}).catch(()=>{});
- assert.equal(created.tasks[0].reward_stars,8);assert.equal(created.tasks[0].scheduled_end,'00:15');
+ assert.equal(created.tasks[0].reward_stars,8);assert.equal(created.tasks[0].scheduled_end,'00:15');assert.equal(created.tasks[0].description,'[体育运动]');
+ await parent.getByRole('button',{name:'AI 建议建任务',exact:true}).click();
+ await parent.getByPlaceholder(/^如：每天晚上7点/).fill('新增一个分类任务');await parent.getByRole('button',{name:'开始智能解析',exact:true}).click();
+ await parent.getByRole('button',{name:'发布',exact:true}).click();await parent.getByText('请为每个任务选择习惯分类',{exact:true}).waitFor();assert.equal(parentPosts,1);
+ await parent.getByRole('button',{name:'🧹 家务协助',exact:true}).click();await parent.getByRole('button',{name:'发布',exact:true}).click();
+ await parent.getByText('AI 智能建任务',{exact:true}).waitFor({state:'detached'});assert.equal(parentPosts,2);assert.equal(created.tasks[0].description,'[家务协助]');
  const kid=await context.newPage();kid.setDefaultTimeout(15000);kid.on('pageerror',e=>errors.push(e.message));
  await kid.clock.install({time:new Date('2026-11-06T12:00:00Z')});
  await kid.clock.pauseAt(new Date('2026-11-06T12:00:01Z'));

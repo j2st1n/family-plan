@@ -116,6 +116,7 @@ export default function TaskCopilotModal({
       return;
     }
 
+    if (result.tasks.some(t=>!CATEGORIES.includes(t.category))) {setError("请为每个任务选择习惯分类");return;}
     if (result.tasks.some(t=>!validReward(t.reward_stars))) {setError("每个任务奖励都需要是1–99星的整数");return;}
     if (result.tasks.some(t=>Number(t.expected_minutes)%5!==0)) {setError("请将预计用时调整为5分钟的整数倍");return;}
     setPublishing(true);
@@ -350,6 +351,7 @@ export default function TaskCopilotModal({
                     </div>
 
                     {/* Category 4-choice capsule */}
+                    <div style={{marginBottom:6}}><FieldLabel required>习惯分类</FieldLabel></div>
                     <div style={{ display: "flex", gap: "6px", marginBottom: "8px", overflowX: "auto" }}>
                       {CATEGORIES.map((cat) => {
                         const isSelected = task.category === cat;
@@ -357,6 +359,7 @@ export default function TaskCopilotModal({
                           <button
                             key={cat}
                             type="button"
+                            aria-pressed={isSelected}
                             onClick={() => handleSelectCategory(idx, cat)}
                             style={{
                               padding: "3px 8px",
