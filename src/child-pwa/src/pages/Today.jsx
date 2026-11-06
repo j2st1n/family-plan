@@ -1,3 +1,4 @@
+import FieldLabel from "../../../shared-web/FieldLabel.jsx";
 import {readTimer, readCompletions, startTimer, pauseTimer, saveTimer, timerMilliseconds, freezeCompletion, acknowledgeCompletion} from "../utils/taskTimer.js";
 import TaskTimingFields from "../../../shared-web/TaskTimingFields.jsx";
 import {plannedEnd, formatActualSeconds} from "../../../shared-web/taskTiming.js";
@@ -670,7 +671,9 @@ export default function Today({ child, onExpired, active }) {
                 <div className="ios-grouped-card" style={{ marginBottom: "18px" }}>
                   {/* Row 1: 标题 (Borderless direct input) */}
                   <div style={{ padding: "12px 16px" }}>
+                    <label htmlFor="child-task-title" style={{display:"block",marginBottom:8}}><FieldLabel required>任务名称</FieldLabel></label>
                     <input
+                      id="child-task-title" required
                       placeholder="任务名称，如：练琴、口算一页..."
                       value={newForm.title}
                       onChange={(e) => setNewForm({ ...newForm, title: e.target.value })}
@@ -796,8 +799,10 @@ function TaskCard({
     <div className="reminders-task-row" style={{ opacity: isCompleted ? 0.6 : 1 }}>
       {editingId === task.id ? (
         <div style={{ width: "100%" }}>
+          <label htmlFor={`child-edit-title-${task.id}`} style={{display:"block",marginBottom:8}}><FieldLabel required>任务名称</FieldLabel></label>
           <input
-            placeholder="任务名 *"
+            id={`child-edit-title-${task.id}`} required
+            placeholder="任务名"
             value={editForm.title}
             onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
             className="form-input-journal"
