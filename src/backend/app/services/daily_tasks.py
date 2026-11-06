@@ -169,24 +169,31 @@ def _award_task_and_update_streak(db: Session, task: DailyTask) -> None:
     db.commit()
 
 
-def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | None) -> DailyTask:
+def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | None, actual_seconds: int | None = None, operation_id: UUID | None = None, expected_version: int | None = None) -> DailyTask:
     task = db.scalar(
         select(DailyTask).where(
             DailyTask.id == task_id, DailyTask.child_id == child_id, DailyTask.status != "deleted"
-        )
+        ).with_for_update()
     )
     if task is None:
         raise api_error("not_found", "Task not found", 404)
+    if expected_version is not None and expected_version != task.completion_version:
+        raise api_error("conflict", "Task changed; refresh before completing", 409)
+    if operation_id is not None and task.completion_operation_id == operation_id and task.status in ("completed", "submitted"):
+        return task
     if task.status != "pending":
         raise api_error("conflict", f"Task already {task.status}", 409)
     if task.created_by == "child" and not task.approved:
         raise api_error("conflict", "Task not yet approved by parent", 409)
 
+    if task.reward_stars < 1:
+        raise api_error("validation_error", "Parent must assign positive reward stars first", 422)
+    completion_values = dict(actual_seconds=actual_seconds, completion_operation_id=operation_id)
     if task.require_approval:
         result = db.execute(
             update(DailyTask)
             .where(DailyTask.id == task_id, DailyTask.status == "pending")
-            .values(status="submitted", submitted_at=datetime.now(UTC), child_feedback=feedback)
+            .values(status="submitted", submitted_at=datetime.now(UTC), child_feedback=feedback, **completion_values)
         )
         cursor_result: CursorResult = result  # type: ignore[assignment]
         if cursor_result.rowcount != 1:
@@ -199,7 +206,7 @@ def complete_task(db: Session, task_id: UUID, child_id: UUID, feedback: str | No
     result = db.execute(
         update(DailyTask)
         .where(DailyTask.id == task_id, DailyTask.status == "pending")
-        .values(status="completed", completed_at=datetime.now(UTC), child_feedback=feedback)
+        .values(status="completed", completed_at=datetime.now(UTC), child_feedback=feedback, **completion_values)
     )
     cursor_result: CursorResult = result  # type: ignore[assignment]
     if cursor_result.rowcount != 1:
@@ -279,6 +286,9 @@ def reject_daily_task(db: Session, task_id: UUID, parent_id: UUID) -> DailyTask:
         raise api_error("conflict", f"Task is not submitted for approval (current status: {task.status})", 409)
 
     task.status = "pending"
+    task.actual_seconds = None
+    task.completion_operation_id = None
+    task.completion_version += 1
     task.submitted_at = None
     db.commit()
     db.refresh(task)
@@ -302,6 +312,9 @@ def revoke_daily_task(db: Session, task_id: UUID, parent_id: UUID) -> DailyTask:
         raise api_error("conflict", f"Only completed tasks can be revoked (current status: {task.status})", 409)
 
     task.status = "pending"
+    task.actual_seconds = None
+    task.completion_operation_id = None
+    task.completion_version += 1
     task.completed_at = None
     task.submitted_at = None
 
@@ -456,6 +469,8 @@ def update_daily_task(db: Session, task_id: UUID, plan: Plan, data: ManualTaskIt
         raise api_error("not_found", "Task not found", 404)
     if task.status in ("completed", "submitted"):
         raise api_error("conflict", f"Cannot edit {task.status} task", 409)
+    if ((task.created_by == "child" and not task.approved) or task.reward_stars < 1) and "reward_stars" not in data.model_fields_set:
+        raise api_error("validation_error", "Choose reward stars before approving this task", 422)
     was_approved = task.approved
     if data.approved is not None:
         task.approved = data.approved
@@ -572,7 +587,7 @@ def create_child_task(db: Session, child_id: UUID, plan_id: UUID, data) -> Daily
         task_date=date.today(),
         title=data.title,
         expected_minutes=data.expected_minutes,
-        reward_stars=data.reward_stars,
+        reward_stars=1,  # Internal placeholder; hidden until the parent explicitly assigns it.
         status="pending",
         created_by="child",
         approved=False,
@@ -618,7 +633,6 @@ def update_child_task(db: Session, task_id: UUID, child_id: UUID, data) -> Daily
         raise api_error("conflict", "Cannot edit this task", 409)
     task.title = data.title
     task.expected_minutes = data.expected_minutes
-    task.reward_stars = data.reward_stars
     task.scheduled_start = _parse_time(data.scheduled_start)
     task.scheduled_end = _parse_time(data.scheduled_end)
     task.schedule_by = "child" if data.scheduled_start else None

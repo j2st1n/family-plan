@@ -1,3 +1,6 @@
+import RewardStars, {validReward} from "../../../shared-web/RewardStars.jsx";
+import TaskTimingFields from "../../../shared-web/TaskTimingFields.jsx";
+import {plannedEnd, formatActualSeconds} from "../../../shared-web/taskTiming.js";
 import { useState, useEffect, useCallback, useRef } from "react";
 import api from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
@@ -62,13 +65,7 @@ function minutesToTime(m) {
   return `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`;
 }
 
-function autoFillTime(minutes, start, end) {
-  const dur = parseInt(minutes) || 0;
-  if (!dur) return { start, end };
-  if (start && !end) return { start, end: minutesToTime(timeToMinutes(start) + dur) };
-  if (end && !start) return { start: minutesToTime(timeToMinutes(end) - dur), end };
-  return { start, end };
-}
+function autoFillTime(minutes, start) {return {start, end:plannedEnd(start,minutes).time};}
 
 export default function TodayDashboard({
   token,
@@ -378,7 +375,7 @@ export default function TodayDashboard({
 
   // Save regular task modal
   const handleSaveRegularTask = async () => {
-    if (!taskForm.title.trim() || !plan) return;
+    if (!taskForm.title.trim() || !plan || !validReward(taskForm.stars)) return;
     const dur = parseInt(taskForm.minutes) || 20;
     const filled = autoFillTime(dur, taskForm.start, taskForm.end);
 
@@ -642,7 +639,7 @@ export default function TodayDashboard({
                     {t.title}
                   </p>
                   <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>
-                    用时 {t.expected_minutes || 20} 分钟 · ⭐+{t.reward_stars} · 孩子已打卡提交
+                    预计 {t.expected_minutes || 20} 分钟 · ⭐+{t.reward_stars} · 孩子已打卡提交{t.actual_seconds != null && ` · 用时 ${formatActualSeconds(t.actual_seconds)}`}
                   </p>
                 </div>
                 <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
@@ -812,8 +809,8 @@ export default function TodayDashboard({
                   <button
                     type="button"
                     className="reminders-checkbox-btn"
-                    onClick={() => handleParentCheckTask(t.id)}
-                    title="轻点打卡"
+                    onClick={() => t.reward_stars == null ? openEditTaskModal(t) : handleParentCheckTask(t.id)}
+                    title={t.reward_stars==null?"定星并确认":"轻点打卡"}
                   >
                     <CheckCircleIcon checked={false} />
                   </button>
@@ -840,7 +837,7 @@ export default function TodayDashboard({
                       )}
                     </div>
                     <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
-                      {t.expected_minutes || 20} 分钟 · +{t.reward_stars} 星
+                      {t.expected_minutes || 20} 分钟 · {t.reward_stars == null ? "待家长定星" : `+${t.reward_stars} 星`}
                       {t.scheduled_start && ` · ${t.scheduled_start}${t.scheduled_end ? `-${t.scheduled_end}` : ""}`}
                     </p>
                   </div>
@@ -913,7 +910,7 @@ export default function TodayDashboard({
                     </span>
                   </div>
                   <p style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
-                    {t.expected_minutes || 20} 分钟 · ⭐+{t.reward_stars} · 孩子已提交
+                    {t.expected_minutes || 20} 分钟 · ⭐+{t.reward_stars} · 孩子已提交{t.actual_seconds != null && ` · 用时 ${formatActualSeconds(t.actual_seconds)}`}
                   </p>
                 </div>
                 <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
@@ -979,6 +976,7 @@ export default function TodayDashboard({
                   </div>
                   <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "2px" }}>
                     已赚得 ⭐+{t.reward_stars}
+                    {t.actual_seconds != null && ` · 用时 ${formatActualSeconds(t.actual_seconds)}`}
                   </p>
                 </div>
                 <button
@@ -1033,9 +1031,9 @@ export default function TodayDashboard({
                 type="button"
                 className="ios-sheet-nav-action-btn"
                 onClick={handleSaveRegularTask}
-                disabled={actionInProgress || !taskForm.title.trim()}
+                disabled={actionInProgress || !taskForm.title.trim() || !validReward(taskForm.stars)}
               >
-                {editingTask ? "保存" : "添加"}
+                {editingTask ? (tasks.find(t=>t.id===editingTask)?.approved===false ? "定星并确认" : "保存") : "添加"}
               </button>
             </div>
 
@@ -1097,84 +1095,9 @@ export default function TodayDashboard({
 
                 <div className="ios-separator" />
 
-                {/* 预计时长 */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
-                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                    预计时长
-                  </span>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <button
-                      type="button"
-                      onClick={() => setTaskForm((f) => ({ ...f, minutes: Math.max(5, (parseInt(f.minutes) || 20) - 5) }))}
-                      className="ios-stepper-btn"
-                    >
-                      −
-                    </button>
-                    <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)", minWidth: "48px", textAlign: "center" }}>
-                      {taskForm.minutes || 20} 分钟
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setTaskForm((f) => ({ ...f, minutes: Math.min(240, (parseInt(f.minutes) || 20) + 5) }))}
-                      className="ios-stepper-btn"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                <div className="ios-separator" />
-
-                {/* 奖励星星 */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
-                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                    奖励星星
-                  </span>
-                  <div className="ios-segmented-control">
-                    {[0, 1, 2, 3, 5].map((starVal) => {
-                      const active = taskForm.stars === starVal;
-                      return (
-                        <button
-                          key={starVal}
-                          type="button"
-                          onClick={() => setTaskForm({ ...taskForm, stars: starVal })}
-                          className={`ios-segmented-item ${active ? "active" : ""}`}
-                        >
-                          {starVal === 0 ? "0星" : `⭐ ${starVal}`}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Group 2: 时间安排 (可选) */}
-              <div className="ios-group-label" style={{ margin: "0 0 6px 16px" }}>时间安排 (可选)</div>
-              <div className="ios-grouped-card" style={{ marginBottom: "18px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
-                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                    计划开始
-                  </span>
-                  <input
-                    type="time"
-                    value={taskForm.start || ""}
-                    onChange={(e) => setTaskForm({ ...taskForm, start: e.target.value })}
-                    className="ios-time-input"
-                  />
-                </div>
-
-                <div className="ios-separator" />
-
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
-                  <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                    计划结束
-                  </span>
-                  <input
-                    type="time"
-                    value={taskForm.end || ""}
-                    onChange={(e) => setTaskForm({ ...taskForm, end: e.target.value })}
-                    className="ios-time-input"
-                  />
+                <TaskTimingFields minutes={taskForm.minutes} start={taskForm.start} onChange={patch=>setTaskForm(f=>({...f,...patch}))}/>
+                <div style={{padding:"10px 16px",display:"flex",gap:8,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}}>
+                  <span>奖励星星</span><RewardStars value={taskForm.stars} onChange={stars=>setTaskForm(f=>({...f,stars}))}/>
                 </div>
               </div>
 

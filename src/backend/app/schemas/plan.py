@@ -10,7 +10,7 @@ class TaskTemplateCreate(BaseModel):
     expected_minutes: int | None = Field(default=None, ge=1)
     weekdays: list[int] = Field(default_factory=list)
     sort_order: int = Field(default=0)
-    reward_stars: int = Field(default=1, ge=0)
+    reward_stars: int = Field(default=1, ge=1, le=99)
     require_approval: bool = False
 
 

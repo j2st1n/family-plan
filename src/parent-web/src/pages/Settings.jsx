@@ -1,3 +1,4 @@
+import RewardStars, {validReward} from "../../../shared-web/RewardStars.jsx";
 import { useState, useEffect, useCallback } from "react";
 import api from "../api.js";
 import RewardSettings from "./RewardSettings.jsx";
@@ -437,7 +438,7 @@ export default function Settings({
 
   // Routine tasks actions
   const handleSaveRoutine = async () => {
-    if (!routinePlanId || !routineForm.title.trim()) return;
+    if (!routinePlanId || !routineForm.title.trim() || !validReward(routineForm.stars)) return;
     setSaving(true);
     try {
       await api.addRoutineTask(token, routinePlanId, {
@@ -1915,7 +1916,7 @@ export default function Settings({
               <button
                 type="button"
                 className="ios-sheet-nav-action-btn"
-                disabled={saving || !routineForm.title.trim() || routineForm.weekdays.length === 0}
+                disabled={saving || !routineForm.title.trim() || routineForm.weekdays.length === 0 || !validReward(routineForm.stars)}
                 onClick={handleSaveRoutine}
               >
                 添加
@@ -1977,21 +1978,7 @@ export default function Settings({
                   <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
                     奖励星星
                   </span>
-                  <div className="ios-segmented-control">
-                    {[1, 2, 3, 5].map((starVal) => {
-                      const active = routineForm.stars === starVal;
-                      return (
-                        <button
-                          key={starVal}
-                          type="button"
-                          onClick={() => setRoutineForm({ ...routineForm, stars: starVal })}
-                          className={`ios-segmented-item ${active ? "active" : ""}`}
-                        >
-                          ⭐ {starVal}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <RewardStars value={routineForm.stars} onChange={stars=>setRoutineForm(f=>({...f,stars}))}/>
                 </div>
               </div>
 

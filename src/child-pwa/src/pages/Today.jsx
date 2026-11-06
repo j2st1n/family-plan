@@ -1,3 +1,6 @@
+import {readTimer, readCompletions, startTimer, pauseTimer, saveTimer, timerMilliseconds, freezeCompletion, acknowledgeCompletion} from "../utils/taskTimer.js";
+import TaskTimingFields from "../../../shared-web/TaskTimingFields.jsx";
+import {plannedEnd, formatActualSeconds} from "../../../shared-web/taskTiming.js";
 import { useState, useEffect, useCallback, useRef } from "react";
 import confetti from "canvas-confetti";
 import {
@@ -73,14 +76,43 @@ export default function Today({ child, onExpired, active }) {
   const [poppingId, setPoppingId] = useState(null);
   const [justCompleted, setJustCompleted] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [newForm, setNewForm] = useState({ title: "", minutes: "", stars: 1, start: "", end: "" });
+  const [newForm, setNewForm] = useState({ title: "", minutes: "20", start: "", end: "" });
   const [schedulingId, setSchedulingId] = useState(null);
   const [scheduleForm, setScheduleForm] = useState({ start: "", end: "" });
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ title: "", minutes: "", stars: 1, start: "", end: "" });
+  const [editForm, setEditForm] = useState({ title: "", minutes: "20", start: "", end: "" });
   const [showCompleted, setShowCompleted] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [focusingTask, setFocusingTask] = useState(null);
+  const focusActive=useRef(false);
+  const closeFocus=()=>{focusActive.current=false;setFocusingTask(null);};
+  const owner=data?.child?.id || child?.id || "unbound";
+  const [localTimer,setLocalTimer]=useState(()=>readTimer(owner));
+  const [clock,setClock]=useState(Date.now());
+  const [queuedTasks,setQueuedTasks]=useState(()=>readCompletions(owner));
+  const completionRequests=useRef(new Set());
+  const syncLocal=()=>{setLocalTimer(readTimer(owner));setQueuedTasks(readCompletions(owner));setClock(Date.now());};
+  useEffect(()=>{
+    syncLocal();
+    const changed=e=>{if(e.key===`family_plan_timer_v1:${owner}` || e.key===`family_plan_completion_v1:${owner}`)syncLocal();};
+    window.addEventListener("storage",changed);return()=>window.removeEventListener("storage",changed);
+  },[owner]);
+  useEffect(()=>{
+    if(localTimer?.phase!=="running")return;
+    const id=setInterval(()=>setClock(Date.now()),500);
+    const visible=()=>setClock(Date.now());
+    document.addEventListener("visibilitychange",visible);
+    return()=>{clearInterval(id);document.removeEventListener("visibilitychange",visible);};
+  },[localTimer?.phase]);
+  const beginTimer=task=>{
+    if(focusActive.current){childFeedback.toast("请先结束专注");return;}
+    try{startTimer(owner,task);syncLocal();}catch(e){childFeedback.toast(e.message);}
+  };
+  const toggleTimer=task=>{try{if(localTimer?.phase==="running")pauseTimer(owner);else startTimer(owner,task);syncLocal();}catch(e){childFeedback.toast(e.message);}};
+  const cancelTimer=async()=>{
+    if(await childFeedback.confirm({title:"取消计时",message:"清除本机计时？任务仍可正常完成。",confirmText:"取消计时",cancelText:"保留"})){saveTimer(owner,null);syncLocal();}
+  };
+  const beginFocus=task=>{if(readTimer(owner)){childFeedback.toast("请先完成或取消当前计时");return;}focusActive.current=true;setFocusingTask(task);};
 
   // 1s 防抖记录：记录每个任务上一次点击完成的时间戳
   const lastCompleteTimeRef = useRef(new Map());
@@ -129,6 +161,31 @@ export default function Today({ child, onExpired, active }) {
     finally { pendingMutations.current -= 1; setSavingTask(pendingMutations.current > 0); }
   }
 
+  async function submitCompletion(packet) {
+    if(completionRequests.current.has(packet.operation_id))return null;
+    completionRequests.current.add(packet.operation_id);
+    try {
+      const result=await completeTask(packet.taskId,"easy",packet);
+      acknowledgeCompletion(owner,packet.taskId);syncLocal();return result;
+    } catch(err) {
+      if([409,422].includes(err.status)){acknowledgeCompletion(owner,packet.taskId);syncLocal();}
+      if(err.status===401)onExpired();
+      throw err;
+    } finally {completionRequests.current.delete(packet.operation_id);}
+  }
+  useEffect(()=>{
+    const retry=async()=>{
+      if(!navigator.onLine)return;
+      for(const packet of Object.values(readCompletions(owner))){
+        if(completionRequests.current.has(packet.operation_id))continue;
+        try{await submitCompletion(packet);await load();}catch(err){if([409,422].includes(err.status))await load();}
+      }
+    };
+    retry();const id=setInterval(retry,15000);
+    window.addEventListener("online",retry);
+    return()=>{clearInterval(id);window.removeEventListener("online",retry);};
+  },[owner]);
+
   async function handleComplete(task, event) {
     if (!task || task.status === "completed" || task.status === "submitted") return;
 
@@ -168,15 +225,18 @@ export default function Today({ child, onExpired, active }) {
     fireCelebration(originX, originY);
 
     try {
-      const result = await runTaskAction(() => completeTask(task.id, "easy"));
+      const packet=freezeCompletion(owner,task);syncLocal();
+      const result = await runTaskAction(() => submitCompletion(packet));
+      if(!result)return;
       if (result.status === "submitted") {
         setJustCompleted({ id: task.id, title: task.title, stars: 0, isSubmitted: true });
       } else {
         setJustCompleted({ id: task.id, title: task.title, stars: result.stars_awarded, isSubmitted: false });
       }
       setTimeout(() => setJustCompleted(null), 2500);
-    } catch {
-      setError("操作失败");
+    } catch (err) {
+      syncLocal();childFeedback.toast(readCompletions(owner)[task.id]?"完成结果待同步，联网后会自动重试":err.message || "操作失败");
+      if([409,422].includes(err.status))load();
     } finally {
       inFlightIdsRef.current.delete(task.id);
       setCompletingIds((prev) => {
@@ -193,11 +253,10 @@ export default function Today({ child, onExpired, active }) {
     await createChildTask({
       title: newForm.title.trim(),
       expected_minutes: parseInt(newForm.minutes),
-      reward_stars: newForm.stars,
       scheduled_start: newForm.start || null,
-      scheduled_end: newForm.end || null,
+      scheduled_end: plannedEnd(newForm.start,newForm.minutes).time || null,
     });
-    setNewForm({ title: "", minutes: "", stars: 1, start: "", end: "" });
+    setNewForm({ title: "", minutes: "20", start: "", end: "" });
     setShowAdd(false);
 
     }); } catch { setError("操作失败，请重试"); }
@@ -205,7 +264,6 @@ export default function Today({ child, onExpired, active }) {
 
   async function handleSchedule(taskId) {
     try { await runTaskAction(async () => {
-    if (!scheduleForm.start || !scheduleForm.end) return;
     await scheduleChildTask(taskId, scheduleForm.start, scheduleForm.end);
     setSchedulingId(null);
     setScheduleForm({ start: "", end: "" });
@@ -223,7 +281,6 @@ export default function Today({ child, onExpired, active }) {
     setEditForm({
       title: task.title,
       minutes: task.expected_minutes?.toString() || "",
-      stars: task.reward_stars,
       start: task.scheduled_start || "",
       end: task.scheduled_end || "",
     });
@@ -236,9 +293,8 @@ export default function Today({ child, onExpired, active }) {
     await updateChildTask(editingId, {
       title: editForm.title.trim(),
       expected_minutes: parseInt(editForm.minutes),
-      reward_stars: editForm.stars,
       scheduled_start: editForm.start || null,
-      scheduled_end: editForm.end || null,
+      scheduled_end: plannedEnd(editForm.start,editForm.minutes).time || null,
     });
     setEditingId(null);
 
@@ -270,6 +326,11 @@ export default function Today({ child, onExpired, active }) {
   const dayLabel = DAY_NAMES[today.getDay()];
   const dateStr = `${today.getMonth() + 1}月${today.getDate()}日 星期${dayLabel}`;
 
+  useEffect(()=>{
+    const timer=readTimer(owner);const task=data?.tasks?.find(t=>t.id===timer?.taskId);
+    if(task && ["completed","submitted","deleted"].includes(task.status) && !readCompletions(owner)[task.id]){saveTimer(owner,null);syncLocal();}
+  },[data,owner]);
+
   const timed = (data?.tasks || []).filter((t) => t.scheduled_start && t.status !== "completed");
   const free = (data?.tasks || []).filter((t) => !t.scheduled_start && t.status !== "completed");
   const completed = (data?.tasks || []).filter((t) => t.status === "completed");
@@ -292,6 +353,7 @@ export default function Today({ child, onExpired, active }) {
 
   return (
     <div>
+      {localTimer && !(data?.tasks||[]).some(t=>t.id===localTimer.taskId) && <div role="status" style={{padding:12,background:"var(--card)",borderRadius:12}}>计时：{localTimer.title} {formatActualSeconds(Math.floor(timerMilliseconds(localTimer,clock)/1000))}<button onClick={cancelTimer} style={{marginLeft:8}}>取消计时</button></div>}
       {/* 顶部标题区 (Apple iOS Large Title) */}
       <div style={{ marginBottom: "16px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -466,7 +528,13 @@ export default function Today({ child, onExpired, active }) {
                 editForm={editForm}
                 setEditForm={setEditForm}
                 onComplete={handleComplete}
-                onStartFocus={(t) => setFocusingTask(t)}
+                onStartFocus={beginFocus}
+                onStartTimer={beginTimer}
+                onToggleTimer={toggleTimer}
+                onCancelTimer={cancelTimer}
+                timer={localTimer?.taskId===task.id?localTimer:null}
+                elapsedSeconds={localTimer?.taskId===task.id?Math.floor(timerMilliseconds(localTimer,clock)/1000):null}
+                completionQueued={!!queuedTasks[task.id]}
                 onSchedule={startSchedule}
                 onSaveSchedule={handleSchedule}
                 onCancelSchedule={() => setSchedulingId(null)}
@@ -502,7 +570,13 @@ export default function Today({ child, onExpired, active }) {
                 editForm={editForm}
                 setEditForm={setEditForm}
                 onComplete={handleComplete}
-                onStartFocus={(t) => setFocusingTask(t)}
+                onStartFocus={beginFocus}
+                onStartTimer={beginTimer}
+                onToggleTimer={toggleTimer}
+                onCancelTimer={cancelTimer}
+                timer={localTimer?.taskId===task.id?localTimer:null}
+                elapsedSeconds={localTimer?.taskId===task.id?Math.floor(timerMilliseconds(localTimer,clock)/1000):null}
+                completionQueued={!!queuedTasks[task.id]}
                 onSchedule={startSchedule}
                 onSaveSchedule={handleSchedule}
                 onCancelSchedule={() => setSchedulingId(null)}
@@ -615,87 +689,8 @@ export default function Today({ child, onExpired, active }) {
 
                   <div className="ios-separator" />
 
-                  {/* Row 2: 预计时长 (iOS Stepper) */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
-                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                      预计时长
-                    </span>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <button
-                        type="button"
-                        onClick={() => setNewForm((f) => ({ ...f, minutes: Math.max(5, (parseInt(f.minutes) || 20) - 5) }))}
-                        className="ios-stepper-btn"
-                        aria-label="减少 5 分钟"
-                      >
-                        −
-                      </button>
-                      <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)", minWidth: "48px", textAlign: "center" }}>
-                        {newForm.minutes || 20} 分钟
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setNewForm((f) => ({ ...f, minutes: Math.min(180, (parseInt(f.minutes) || 20) + 5) }))}
-                        className="ios-stepper-btn"
-                        aria-label="增加 5 分钟"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="ios-separator" />
-
-                  {/* Row 3: 奖励星星 (iOS Segmented Control) */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
-                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                      奖励星星
-                    </span>
-                    <div className="ios-segmented-control">
-                      {[1, 2, 3, 5].map((starVal) => {
-                        const active = (newForm.stars ?? 1) === starVal;
-                        return (
-                          <button
-                            key={starVal}
-                            type="button"
-                            onClick={() => setNewForm((f) => ({ ...f, stars: starVal }))}
-                            className={`ios-segmented-item ${active ? "active" : ""}`}
-                          >
-                            ⭐ {starVal}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Group 2: 时间规划 (可选) */}
-                <div className="ios-group-label">时间安排 (可选)</div>
-                <div className="ios-grouped-card" style={{ marginBottom: "20px" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
-                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                      开始时间
-                    </span>
-                    <input
-                      type="time"
-                      value={newForm.start || ""}
-                      onChange={(e) => setNewForm({ ...newForm, start: e.target.value })}
-                      className="ios-time-input"
-                    />
-                  </div>
-
-                  <div className="ios-separator" />
-
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", minHeight: "48px" }}>
-                    <span style={{ fontSize: "0.95rem", color: "var(--text)", fontWeight: 500 }}>
-                      结束时间
-                    </span>
-                    <input
-                      type="time"
-                      value={newForm.end || ""}
-                      onChange={(e) => setNewForm({ ...newForm, end: e.target.value })}
-                      className="ios-time-input"
-                    />
-                  </div>
+                  <TaskTimingFields minutes={newForm.minutes} start={newForm.start} onChange={patch=>setNewForm(f=>({...f,...patch}))}/>
+                  <p style={{padding:"8px 16px",color:"var(--muted)"}}>奖励由家长确认后设置</p>
                 </div>
               </div>
             </div>
@@ -732,10 +727,10 @@ export default function Today({ child, onExpired, active }) {
       {focusingTask && (
         <FocusTimer
           task={focusingTask}
-          onClose={() => setFocusingTask(null)}
+          onClose={closeFocus}
           onComplete={(t) => {
             handleComplete(t);
-            setFocusingTask(null);
+            closeFocus();
           }}
         />
       )}
@@ -777,6 +772,7 @@ function TaskCard({
   editForm,
   setEditForm,
   onComplete,
+  onStartTimer, onToggleTimer, onCancelTimer, timer, elapsedSeconds, completionQueued,
   onStartFocus,
   onSchedule,
   onSaveSchedule,
@@ -789,7 +785,7 @@ function TaskCard({
 }) {
   const isScheduled = !!task.scheduled_start;
   const isChildTask = task.created_by === "child";
-  const isUnapproved = isChildTask && !task.approved;
+  const isUnapproved = (isChildTask && !task.approved) || (task.status === "pending" && (task.reward_stars == null || task.reward_stars < 1));
   const isCompleted = task.status === "completed";
   const isSubmitted = task.status === "submitted";
   const isCompleting = completing !== undefined ? completing : completingId === task.id;
@@ -808,37 +804,7 @@ function TaskCard({
             style={{ marginBottom: "8px" }}
             autoFocus
           />
-          <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
-            <input
-              type="number"
-              placeholder="分钟 *"
-              value={editForm.minutes}
-              onChange={(e) => setEditForm({ ...editForm, minutes: e.target.value })}
-              className="form-input-journal"
-              style={{ flex: 1, marginBottom: 0 }}
-            />
-            <RewardSelect
-              value={editForm.stars}
-              onChange={(value) => setEditForm({ ...editForm, stars: value })}
-            />
-          </div>
-          <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
-            <input
-              type="time"
-              value={editForm.start}
-              onChange={(e) => setEditForm({ ...editForm, start: e.target.value })}
-              className="ios-time-input"
-              style={{ flex: 1, marginBottom: 0 }}
-            />
-            <span style={{ color: "var(--muted)", fontSize: "0.85rem" }}>至</span>
-            <input
-              type="time"
-              value={editForm.end}
-              onChange={(e) => setEditForm({ ...editForm, end: e.target.value })}
-              className="ios-time-input"
-              style={{ flex: 1, marginBottom: 0 }}
-            />
-          </div>
+          <TaskTimingFields minutes={editForm.minutes} start={editForm.start} onChange={patch=>setEditForm(f=>({...f,...patch}))}/>
           <div style={{ display: "flex", gap: "8px" }}>
             <button onClick={() => onSaveEdit(task.id)} style={st.fsb}>
               保存
@@ -850,23 +816,7 @@ function TaskCard({
         </div>
       ) : schedulingId === task.id ? (
         <div style={{ width: "100%" }}>
-          <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
-            <input
-              type="time"
-              value={scheduleForm.start}
-              onChange={(e) => setScheduleForm({ ...scheduleForm, start: e.target.value })}
-              className="ios-time-input"
-              style={{ flex: 1, marginBottom: 0 }}
-            />
-            <span style={{ color: "var(--muted)", fontSize: "0.85rem" }}>至</span>
-            <input
-              type="time"
-              value={scheduleForm.end}
-              onChange={(e) => setScheduleForm({ ...scheduleForm, end: e.target.value })}
-              className="ios-time-input"
-              style={{ flex: 1, marginBottom: 0 }}
-            />
-          </div>
+          <TaskTimingFields showDuration={false} minutes={task.expected_minutes || 20} start={scheduleForm.start} onChange={patch=>setScheduleForm(f=>({...f,...patch}))}/>
           <div style={{ display: "flex", gap: "8px" }}>
             <button onClick={() => onSaveSchedule(task.id)} style={st.fsb}>
               保存
@@ -925,7 +875,8 @@ function TaskCard({
             </div>
 
             <p style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: "4px" }}>
-              {task.expected_minutes ? `${task.expected_minutes} 分钟 · ` : ""}⭐+{task.reward_stars}
+              {task.expected_minutes ? `${task.expected_minutes} 分钟 · ` : ""}{isUnapproved ? "待家长定星" : `⭐+${task.reward_stars}`}
+              {task.actual_seconds != null && (isCompleted || isSubmitted) && ` · 用时 ${formatActualSeconds(task.actual_seconds)}`}
               {isScheduled ? ` · ${task.scheduled_start}${task.scheduled_end ? `-${task.scheduled_end}` : ""}` : " · 自由安排"}
             </p>
 
@@ -939,8 +890,14 @@ function TaskCard({
                 marginTop: "6px",
               }}
             >
+              {!isCompleted && !isSubmitted && !isUnapproved && !completionQueued && !timer && <button type="button" onClick={()=>onStartTimer(task)} style={st.pillBtn}>计时</button>}
+              {timer && <span role="status" aria-label="本机计时" style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>计时 {formatActualSeconds(elapsedSeconds)}
+                {timer.phase!=="stopped" && <button type="button" onClick={()=>onToggleTimer(task)} style={st.pillBtn}>{timer.phase==="running"?"暂停":"继续"}</button>}
+                {!completionQueued&&<button type="button" onClick={onCancelTimer} style={st.pillBtn}>取消计时</button>}
+              </span>}
+              {completionQueued&&<span role="status">完成结果待同步</span>}
               {/* 时长型任务 (expected_minutes > 0) 提供 ⏱️ 开启专注 入口 */}
-              {task.expected_minutes > 0 && !isCompleted && !isSubmitted && (
+              {task.expected_minutes > 0 && !isCompleted && !isSubmitted && !isUnapproved && !completionQueued && (
                 <button
                   type="button"
                   onClick={() => onStartFocus(task)}
@@ -965,7 +922,7 @@ function TaskCard({
                   删除
                 </button>
               )}
-              {!isUnapproved && !isScheduled && task.created_by === "parent" && !isCompleted && !isSubmitted && (
+              {!isUnapproved && !isScheduled && task.created_by === "parent" && !isCompleted && !isSubmitted && !isUnapproved && !completionQueued && (
                 <button onClick={() => onSchedule(task)} style={st.pillBtn}>
                   安排时间
                 </button>
@@ -995,7 +952,7 @@ function TaskCard({
               <button
                 type="button"
                 onClick={(e) => onComplete(task, e)}
-                disabled={isCompleted || isCompleting}
+                disabled={isCompleted || isCompleting || completionQueued}
                 className={`task-check-btn ${isCompleted ? "completed" : ""} ${isPopping ? "spring-pop" : ""}`}
                 aria-label={isCompleted ? "任务已完成" : `标记完成: ${task.title}`}
                 title={isCompleted ? "已完成" : "轻点打卡完成"}
@@ -1053,24 +1010,6 @@ function TaskCard({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function RewardSelect({ value, onChange }) {
-  return (
-    <div className="ios-segmented-control" style={{ flex: 1, display: "flex", alignItems: "center" }}>
-      {[0, 1, 2, 3, 5].map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onChange(n)}
-          className={`ios-segmented-item ${value === n ? "active" : ""}`}
-          style={{ padding: "4px 6px", fontSize: "0.78rem" }}
-        >
-          {n === 0 ? "0星" : `⭐${n}`}
-        </button>
-      ))}
     </div>
   );
 }
