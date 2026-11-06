@@ -175,7 +175,7 @@ def _parse_single_task_segment(raw_segment: str) -> Optional[ParsedTaskItem]:
             val_str = star_match2.group(1)
             # 如果匹配位置紧跟着点/时，则跳过
             reward_stars = int(val_str)
-    reward_stars = max(0, min(5, reward_stars))
+    reward_stars = max(0, reward_stars)
 
     # 3. 时间与用时解析
     start_time, end_time, expected_minutes = _parse_time_from_text(segment)

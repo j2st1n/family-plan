@@ -35,13 +35,15 @@ export async function fetchToday(onExpired) {
   return res.json();
 }
 
-export async function completeTask(taskId, feedback) {
+export async function completeTask(taskId, feedback, completion = {}) {
   const res = await fetch(`${API}/child/tasks/${taskId}/complete`, {
     method: "PATCH",
     headers: headers(),
-    body: JSON.stringify({ feedback }),
+    body: JSON.stringify({ feedback, ...completion, taskId: undefined }),
   });
-  if (!res.ok) throw new Error("完成任务失败");
+  if (!res.ok) {
+    const error=new Error(await extractError(res,"完成任务失败"));error.status=res.status;throw error;
+  }
   return res.json();
 }
 

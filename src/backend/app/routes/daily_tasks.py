@@ -49,7 +49,10 @@ parent_router = APIRouter(prefix="/plans", tags=["parent daily tasks"])
 
 
 def _daily_to_item(task: DailyTask) -> DailyTaskItem:
-    return DailyTaskItem.model_validate(task, from_attributes=True)
+    item = DailyTaskItem.model_validate(task, from_attributes=True)
+    if (task.created_by == "child" and not task.approved) or (task.status == "pending" and task.reward_stars < 1):
+        item.reward_stars = None
+    return item
 
 
 @router.get("/today", response_model=ChildTodayResponse)
@@ -79,7 +82,7 @@ def complete_child_task(
     db: Session = Depends(get_db),
 ) -> TaskCompleteResponse:
     child, _ = child_device
-    task = complete_task(db, task_id, child.id, payload.feedback)
+    task = complete_task(db, task_id, child.id, payload.feedback, payload.actual_seconds, payload.operation_id, payload.expected_version)
     summary = get_reward_summary(db, child.id)
     if task.status == "submitted":
         event_hub.publish(child.parent_id, "tasks", "task_submitted", child.id)

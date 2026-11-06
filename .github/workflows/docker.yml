@@ -37,12 +37,14 @@ jobs:
           node scripts/test-refresh-queue.mjs
           node scripts/test-task-share-model.mjs
           node scripts/test-child-share-model.mjs
+          node scripts/test-task-features.mjs
           bash scripts/test-sync-meiohi.sh
 
       - name: Browser date and growth-poster regressions
         run: |
           src/child-pwa/node_modules/.bin/playwright install --with-deps chromium
           PLAYWRIGHT_BROWSER=chromium node scripts/test-integration-browser.mjs
+          PLAYWRIGHT_BROWSER=chromium node scripts/test-task-features-browser.mjs
 
   docker:
     runs-on: ubuntu-latest

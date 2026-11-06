@@ -1,3 +1,4 @@
+import {affordability} from "../../../shared-web/affordability.js";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchShop, fetchToday, fetchChildFreeze, purchaseChildFreeze, redeemItem, makeWish, editWish } from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
@@ -18,7 +19,9 @@ export default function Shop({ onExpired, active }) {
   const [redeemed, setRedeemed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [stars, setStars] = useState(0);
+  const [stars, setStars] = useState(null);
+  const [redeemingId,setRedeemingId]=useState(null);
+  const redeemingRef=useRef(false);
   const [showWish, setShowWish] = useState(false);
   const [showFulfilledRedemptions, setShowFulfilledRedemptions] = useState(false);
   const [wishForm, setWishForm] = useState({ title: "", desc: "" });
@@ -71,26 +74,20 @@ export default function Shop({ onExpired, active }) {
   useVisibilityRefresh({ enabled: active, onRefresh: load });
 
   async function handleRedeem(item) {
-    const cost = item.discounted_star_cost ?? item.star_cost;
-    const ok = await childFeedback.confirm({
-      title: "兑换商品",
-      message: `用 ${formatStars(cost)}⭐ 兑换「${item.title}」？`,
-      confirmText: "立即兑换",
-      cancelText: "再想想",
-      icon: "🎁",
-    });
-    if (!ok) return;
+    const cost=item.discounted_star_cost ?? item.star_cost;
+    if(redeemingRef.current || !affordability(stars,cost).canAfford || item.stock===0)return;
+    redeemingRef.current=true;setRedeemingId(item.id);
     try {
-      await redeemItem(item.id, onExpired);
-      load();
-    } catch (err) {
-      if (err.message === "token_expired") {
-        setError("登录已过期，请重新绑定");
-        if (onExpired) onExpired();
-      } else {
-        setError(err.message);
-      }
-    }
+      const ok=await childFeedback.confirm({title:"兑换商品",message:`用 ${formatStars(cost)}⭐ 兑换「${item.title}」？`,confirmText:"立即兑换",cancelText:"再想想",icon:"🎁"});
+      if(!ok)return;
+      const [today,goods]=await Promise.all([fetchToday(onExpired),fetchShop(onExpired)]);
+      const current=goods.find(g=>g.id===item.id);
+      const currentCost=current?.discounted_star_cost ?? current?.star_cost;
+      if(!current || current.stock===0 || !affordability(today.rewards.stars_total,currentCost).canAfford){childFeedback.toast("余额或库存已变化，请重新选择");await load();return;}
+      if(Number(currentCost)!==Number(cost)){childFeedback.toast("兑换价格已变化，请重新确认");await load();return;}
+      await redeemItem(item.id,onExpired);await load();
+    } catch(err){if(err.message==="token_expired")onExpired?.();else setError(err.message);}
+    finally{redeemingRef.current=false;setRedeemingId(null);}
   }
 
   async function handleWish() {
@@ -274,6 +271,8 @@ export default function Shop({ onExpired, active }) {
             {items.map((item) => {
               const discounted = item.discounted_star_cost != null && Number(item.discounted_star_cost) < Number(item.star_cost);
               const cost = item.discounted_star_cost ?? item.star_cost;
+              const funds=affordability(stars,cost);
+              const unavailable=!funds.canAfford || item.stock===0 || !!redeemingId;
               return (
                 <div key={item.id} className="reminders-task-row">
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -292,10 +291,12 @@ export default function Shop({ onExpired, active }) {
                   <button
                     type="button"
                     onClick={() => handleRedeem(item)}
+                    disabled={unavailable}
+                    aria-label={item.stock===0?"已兑完":!funds.known?"余额加载中":!funds.canAfford?`还差${formatStars(funds.shortfall)}星`:`兑换${item.title}`}
                     className="btn-primary"
-                    style={{ borderRadius: "999px", padding: "6px 14px", fontSize: "0.82rem", flexShrink: 0 }}
+                    style={{ borderRadius: "999px", padding: "6px 14px", fontSize: "0.82rem", flexShrink: 0, ...(unavailable?{background:"var(--card-subtle)",color:"var(--muted)",boxShadow:"none",cursor:"not-allowed"}:{}) }}
                   >
-                    ⭐ {formatStars(cost)} 兑换
+                    {item.stock===0?"已兑完":!funds.known?"余额加载中":!funds.canAfford?`还差${formatStars(funds.shortfall)}星`:redeemingId===item.id?"兑换中…":`⭐ ${formatStars(cost)} 兑换`}
                   </button>
                 </div>
               );

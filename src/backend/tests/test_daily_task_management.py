@@ -148,7 +148,7 @@ def test_invalid_time_is_validation_error_without_changing_task(client, family):
     assert list_tasks(client, headers, plans[0])[0]['title'] == 'test-task'
 
 
-@pytest.mark.parametrize('stars', [0, 2, 5])
+@pytest.mark.parametrize('stars', [1, 2, 8, 99])
 def test_only_changing_stars_persists_in_response_database_and_both_lists(client, family, db_session, stars):
     headers, child_headers, _, plans = family
     task = create_task(client, headers, plans[1], expected_minutes=22)

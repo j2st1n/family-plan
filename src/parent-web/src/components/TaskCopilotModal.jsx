@@ -1,3 +1,6 @@
+import RewardStars, {validReward} from "../../../shared-web/RewardStars.jsx";
+import TaskTimingFields from "../../../shared-web/TaskTimingFields.jsx";
+import {plannedEnd} from "../../../shared-web/taskTiming.js";
 import { useState, useEffect } from "react";
 import api from "../api.js";
 import { CATEGORIES, CATEGORY_ICONS, inferCategory } from "../utils/category.js";
@@ -66,6 +69,11 @@ export default function TaskCopilotModal({
     setResult({ ...result, tasks: updated });
   }
 
+  function handleTiming(index, patch) {
+    const tasks=result.tasks.map((t,i)=>i===index?{...t,expected_minutes:Number(patch.minutes),start:patch.start,end:patch.end,scheduled_start:patch.start,scheduled_end:patch.end}:t);
+    setResult({...result,tasks});
+  }
+
   function handleSelectCategory(index, cat) {
     if (!result?.tasks) return;
     const updated = [...result.tasks];
@@ -107,6 +115,8 @@ export default function TaskCopilotModal({
       return;
     }
 
+    if (result.tasks.some(t=>!validReward(t.reward_stars))) {setError("每个任务奖励都需要是1–99星的整数");return;}
+    if (result.tasks.some(t=>Number(t.expected_minutes)%5!==0)) {setError("请将预计用时调整为5分钟的整数倍");return;}
     setPublishing(true);
     setError("");
     try {
@@ -115,8 +125,8 @@ export default function TaskCopilotModal({
         expected_minutes: parseInt(t.expected_minutes) || 20,
         reward_stars: parseInt(t.reward_stars) || 1,
         require_approval: !!t.require_approval,
-        scheduled_start: t.start || t.scheduled_start || null,
-        scheduled_end: t.end || t.scheduled_end || null,
+        scheduled_start: (t.start ?? t.scheduled_start) || null,
+        scheduled_end: plannedEnd(t.start ?? t.scheduled_start, t.expected_minutes).time || null,
         description: t.description || (t.category ? `[${t.category}]` : null),
       }));
 
@@ -373,59 +383,8 @@ export default function TaskCopilotModal({
                         fontSize: "0.8rem",
                       }}
                     >
-                      <label style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                        <span style={{ color: "var(--muted)" }}>⏱️</span>
-                        <input
-                          type="number"
-                          min={1}
-                          max={240}
-                          value={task.expected_minutes}
-                          onChange={(e) => handleUpdateTask(idx, "expected_minutes", parseInt(e.target.value) || 1)}
-                          style={{
-                            width: "50px",
-                            padding: "3px 4px",
-                            border: "1px solid var(--border)",
-                            borderRadius: "4px",
-                            textAlign: "center",
-                            backgroundColor: "var(--card)",
-                          }}
-                        />
-                        <span style={{ color: "var(--muted)" }}>分</span>
-                      </label>
-
-                      <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                        <div className="ios-segmented-control" style={{ display: "inline-flex" }}>
-                          {[0, 1, 2, 3, 5].map((n) => (
-                            <button
-                              key={n}
-                              type="button"
-                              onClick={() => handleUpdateTask(idx, "reward_stars", n)}
-                              className={`ios-segmented-item ${task.reward_stars === n ? "active" : ""}`}
-                              style={{ padding: "2px 6px", fontSize: "0.74rem" }}
-                            >
-                              {n === 0 ? "0星" : `⭐${n}`}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                        <input
-                          type="time"
-                          value={task.start || ""}
-                          onChange={(e) => handleUpdateTask(idx, "start", e.target.value)}
-                          className="ios-time-input"
-                          style={{ padding: "2px 6px", fontSize: "0.8rem" }}
-                        />
-                        <span style={{ color: "var(--muted)" }}>-</span>
-                        <input
-                          type="time"
-                          value={task.end || ""}
-                          onChange={(e) => handleUpdateTask(idx, "end", e.target.value)}
-                          className="ios-time-input"
-                          style={{ padding: "2px 6px", fontSize: "0.8rem" }}
-                        />
-                      </div>
+                      <div style={{width:"100%"}}><TaskTimingFields minutes={task.expected_minutes} start={task.start ?? task.scheduled_start ?? ""} onChange={patch=>handleTiming(idx,patch)}/></div>
+                      <RewardStars value={task.reward_stars} onChange={n=>handleUpdateTask(idx,"reward_stars",n)}/>
 
                       <label
                         style={{
