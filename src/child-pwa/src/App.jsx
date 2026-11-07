@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import Bind from "./pages/Bind.jsx";
 import Today from "./pages/Today.jsx";
 import Shop from "./pages/Shop.jsx";
+import Growth from "./pages/Growth.jsx";
+import { GrowthIcon } from "../../shared-web/GrowthBoard.jsx";
 import { TodayIcon, ShopIcon } from "./components/Icons.jsx";
 
 export default function App() {
@@ -60,13 +62,19 @@ export default function App() {
       <div style={{ display: tab === "today" ? undefined : "none" }}>
         <Today child={child} onExpired={handleExpired} active={tab === "today"} />
       </div>
-<div style={{ display: tab === "shop" ? undefined : "none" }}>
-  <Shop onExpired={handleExpired} active={tab === "shop"} />
-</div>
+      <div style={{ display: tab === "growth" ? undefined : "none" }}>
+        <Growth onExpired={handleExpired} active={tab === "growth"} />
+      </div>
+      <div style={{ display: tab === "shop" ? undefined : "none" }}>
+        <Shop onExpired={handleExpired} active={tab === "shop"} />
+      </div>
       <nav className="nav-tabs" role="navigation">
         <button className={`nav-tab${tab === "today" ? " on" : ""}`} onClick={() => setTab("today")}>
           <TodayIcon size={22} filled={tab === "today"} />
           <span>今天</span>
+        </button>
+        <button className={`nav-tab${tab === "growth" ? " on" : ""}`} onClick={() => setTab("growth")}>
+          <GrowthIcon size={22} /><span>成长</span>
         </button>
         <button className={`nav-tab${tab === "shop" ? " on" : ""}`} onClick={() => setTab("shop")}>
           <ShopIcon size={22} filled={tab === "shop"} />

@@ -1,5 +1,6 @@
 from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
+import re
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -40,6 +41,10 @@ CATEGORY_KEYWORDS = {
 
 
 def classify_task_category(title: str, description: str | None = None) -> str:
+    # An explicitly selected category takes precedence over title inference.
+    explicit = re.search(r"\[(学习思考|体育运动|生活自理|家务协助)\]", description or "")
+    if explicit:
+        return explicit.group(1)
     text = f"{title} {description or ''}"
     best_cat = "学习思考"
     best_score = 0
@@ -205,6 +210,7 @@ def get_child_analytics(db: Session, child_id: UUID, days: int = 30) -> dict:
     longest_streak = streak.longest_days if streak else 0
 
     range_start_dt = datetime.combine(start_date, time.min, tzinfo=UTC)
+    range_end_dt = datetime.combine(today + timedelta(days=1), time.min, tzinfo=UTC)
 
     earned = db.scalar(
         select(func.coalesce(func.sum(RewardLedger.stars_delta), Decimal("0.00")))
@@ -212,6 +218,7 @@ def get_child_analytics(db: Session, child_id: UUID, days: int = 30) -> dict:
             RewardLedger.child_id == child_id,
             RewardLedger.stars_delta > 0,
             RewardLedger.created_at >= range_start_dt,
+            RewardLedger.created_at < range_end_dt,
         )
     ) or Decimal("0.00")
 
@@ -221,6 +228,7 @@ def get_child_analytics(db: Session, child_id: UUID, days: int = 30) -> dict:
             RewardLedger.child_id == child_id,
             RewardLedger.stars_delta < 0,
             RewardLedger.created_at >= range_start_dt,
+            RewardLedger.created_at < range_end_dt,
         )
     ) or Decimal("0.00")
 
@@ -236,6 +244,14 @@ def get_child_analytics(db: Session, child_id: UUID, days: int = 30) -> dict:
         "end_date": today.isoformat(),
         "heatmap": heatmap,
         "categories": categories,
+        "summary": {
+            "total_tasks": len(tasks),
+            "completed_tasks": sum(t.status == "completed" for t in tasks),
+            "qualified_days": sum(h["status"] in ("perfect", "qualified") for h in heatmap),
+            "task_days": sum(h["total_tasks"] > 0 and h["status"] not in ("vacation", "frozen") for h in heatmap),
+            "recorded_tasks": sum(t.status == "completed" and t.actual_seconds is not None for t in tasks),
+            "actual_seconds": sum(t.actual_seconds for t in tasks if t.status == "completed" and t.actual_seconds is not None),
+        },
         "insights": {
             "best_habit": best_habit,
             "attention_needed": attention_needed,

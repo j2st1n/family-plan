@@ -1,7 +1,7 @@
 from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,8 @@ from app.models.child_device import ChildDevice
 from app.models.daily_task import DailyTask
 from app.models.parent import Parent
 from app.schemas.child import ChildBrief
+from app.schemas.analytics import ChildAnalyticsResponse
+from app.services.analytics import get_child_analytics
 from app.schemas.daily_task import (
     ChildScheduleRequest,
     ChildTaskCreate,
@@ -46,6 +48,22 @@ from app.services.plans import get_plan_for_parent
 
 router = APIRouter(prefix="/child", tags=["child tasks"])
 parent_router = APIRouter(prefix="/plans", tags=["parent daily tasks"])
+
+
+@router.get("/analytics", response_model=ChildAnalyticsResponse)
+def child_analytics(
+    days: int = Query(default=30, ge=1, le=365),
+    child_device: tuple[Child, ChildDevice] = Depends(get_current_child),
+    db: Session = Depends(get_db),
+) -> ChildAnalyticsResponse:
+    child, _device = child_device
+    data = get_child_analytics(db, child.id, days=days)
+    return ChildAnalyticsResponse(
+        child_name=child.name,
+        days=data["days"], start_date=data["start_date"], end_date=data["end_date"],
+        heatmap=data["heatmap"], categories=data["categories"], summary=data["summary"],
+        streak=data["insights"]["streak"], stars_earned=data["insights"]["stars"]["stars_earned"],
+    )
 
 
 def _daily_to_item(task: DailyTask) -> DailyTaskItem:

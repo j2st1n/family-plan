@@ -204,7 +204,7 @@ h1, h2, h3, h4, .display-text {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 32px;
+  gap: clamp(8px, 4vw, 32px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: rgba(249, 249, 249, 0.88);
   backdrop-filter: blur(20px) saturate(180%);
