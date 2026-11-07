@@ -1,7 +1,7 @@
 import FieldLabel from "../../../shared-web/FieldLabel.jsx";
 import {readTimer, readCompletions, startTimer, pauseTimer, saveTimer, timerMilliseconds, freezeCompletion, acknowledgeCompletion} from "../utils/taskTimer.js";
 import TaskTimingFields from "../../../shared-web/TaskTimingFields.jsx";
-import {plannedEnd, formatActualSeconds} from "../../../shared-web/taskTiming.js";
+import {plannedEnd, formatActualSeconds, formatElapsedSeconds} from "../../../shared-web/taskTiming.js";
 import { useState, useEffect, useCallback, useRef } from "react";
 import confetti from "canvas-confetti";
 import {
@@ -16,9 +16,11 @@ import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
 import { playTaskComplete, playTaskSubmitted, initAudioUnlock } from "../utils/soundFx.js";
+import TaskStopwatch from "../components/TaskStopwatch.jsx";
+import TaskOptionsMenu from "../components/TaskOptionsMenu.jsx";
 import FocusTimer from "../components/FocusTimer.jsx";
 import SharePosterModal from "../components/SharePosterModal.jsx";
-import { ShareIcon, SunIcon, MoonIcon } from "../components/Icons.jsx";
+import { ShareIcon, SunIcon, MoonIcon, TimerIcon } from "../components/Icons.jsx";
 import { childFeedback } from "../components/ChildFeedback.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 
@@ -111,7 +113,7 @@ export default function Today({ child, onExpired, active }) {
   };
   const toggleTimer=task=>{try{if(localTimer?.phase==="running")pauseTimer(owner);else startTimer(owner,task);syncLocal();}catch(e){childFeedback.toast(e.message);}};
   const cancelTimer=async()=>{
-    if(await childFeedback.confirm({title:"取消计时",message:"清除本机计时？任务仍可正常完成。",confirmText:"取消计时",cancelText:"保留"})){saveTimer(owner,null);syncLocal();}
+    if(await childFeedback.confirm({title:"取消计时",message:"清除本机计时？任务仍可正常完成。",confirmText:"取消计时",cancelText:"保留",icon:null})){saveTimer(owner,null);syncLocal();}
   };
   const beginFocus=task=>{if(readTimer(owner)){childFeedback.toast("请先完成或取消当前计时");return;}focusActive.current=true;setFocusingTask(task);};
 
@@ -354,9 +356,13 @@ export default function Today({ child, onExpired, active }) {
 
   return (
     <div>
-      {localTimer && !(data?.tasks||[]).some(t=>t.id===localTimer.taskId) && <div role="status" style={{padding:12,background:"var(--card)",borderRadius:12}}>计时：{localTimer.title} {formatActualSeconds(Math.floor(timerMilliseconds(localTimer,clock)/1000))}<button onClick={cancelTimer} style={{marginLeft:8}}>取消计时</button></div>}
+      {localTimer && !(data?.tasks||[]).some(t=>t.id===localTimer.taskId) && <div className="task-stopwatch-orphan">
+        <p className="task-stopwatch-orphan-title">{localTimer.title}</p>
+        <p className="task-stopwatch-orphan-note">该任务不在今日列表中</p>
+        <TaskStopwatch timer={localTimer} elapsedSeconds={Math.floor(timerMilliseconds(localTimer,clock)/1000)} onToggle={()=>toggleTimer({id:localTimer.taskId,title:localTimer.title})} onCancel={cancelTimer}/>
+      </div>}
       {/* 顶部标题区 (Apple iOS Large Title) */}
-      <div style={{ marginBottom: "16px" }}>
+      <div style={{ marginBottom: "8px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <h1 className="ios-large-title">
@@ -422,14 +428,14 @@ export default function Today({ child, onExpired, active }) {
         </div>
       </div>
 
-      {/* 今日进度概览卡片 (Apple Fitness / Activity Ring 风格) */}
+      {/* 今日进度概览 */}
       <div
         style={{
           backgroundColor: "var(--card)",
           border: "1px solid var(--border)",
           borderRadius: "16px",
-          padding: "18px 20px",
-          marginBottom: "20px",
+          padding: "16px 20px",
+          marginBottom: "16px",
           boxShadow: "var(--shadow-sm)",
           display: "flex",
           alignItems: "center",
@@ -446,43 +452,6 @@ export default function Today({ child, onExpired, active }) {
             {data?.rewards?.streak_freeze_count > 0 && (
               <span className="stat-chip protect">❄️ {data?.rewards?.streak_freeze_count} 卡</span>
             )}
-          </div>
-        </div>
-
-        {/* Apple Fitness Activity Ring */}
-        <div style={{ position: "relative", width: "72px", height: "72px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width="72" height="72" viewBox="0 0 72 72" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
-            <circle
-              cx="36"
-              cy="36"
-              r="29"
-              fill="none"
-              stroke="#E5E5EA"
-              strokeWidth="5"
-            />
-            <circle
-              cx="36"
-              cy="36"
-              r="29"
-              fill="none"
-              stroke="#34C759"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 29}
-              strokeDashoffset={2 * Math.PI * 29 * (1 - Math.min(100, Math.max(0, (data?.tasks?.length ? Math.round((completed.length / data.tasks.length) * 100) : 0))) / 100)}
-              style={{
-                transition: "stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
-                filter: completed.length > 0 ? "drop-shadow(0 0 4px rgba(52, 199, 89, 0.3))" : "none",
-              }}
-            />
-          </svg>
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-            <span style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text)", lineHeight: "1.1", letterSpacing: "-0.03em" }}>
-              {data?.tasks?.length ? Math.round((completed.length / data.tasks.length) * 100) : 0}%
-            </span>
-            <span style={{ fontSize: "0.62rem", color: "var(--muted)", fontWeight: 500, lineHeight: "1", marginTop: "2px" }}>
-              达成
-            </span>
           </div>
         </div>
       </div>
@@ -514,7 +483,7 @@ export default function Today({ child, onExpired, active }) {
           <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text)", marginBottom: "8px", paddingLeft: "4px" }}>
             今日任务 ({[...timed, ...free].length})
           </div>
-          <div className="ios-grouped-card">
+          <div className="ios-grouped-card task-list-card">
             {[...timed, ...free].map((task) => (
               <TaskCard
                 key={task.id}
@@ -556,7 +525,7 @@ export default function Today({ child, onExpired, active }) {
           <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--muted)", marginBottom: "8px", paddingLeft: "4px" }}>
             已完成 ({completed.length})
           </div>
-          <div className="ios-grouped-card">
+          <div className="ios-grouped-card task-list-card">
             {completed.map((task) => (
               <TaskCard
                 key={task.id}
@@ -793,10 +762,11 @@ function TaskCard({
   const isSubmitted = task.status === "submitted";
   const isCompleting = completing !== undefined ? completing : completingId === task.id;
   const isPopping = poppingId === task.id;
+  const isTiming = !!timer && !isCompleted && !isSubmitted && !completionQueued;
   const src = task.schedule_by === "child" ? `${child?.name || "孩子"}安排` : "";
 
   return (
-    <div className="reminders-task-row" style={{ opacity: isCompleted ? 0.6 : 1 }}>
+    <div className={`reminders-task-row${isTiming ? " task-row--timing" : ""}`}>
       {editingId === task.id ? (
         <div style={{ width: "100%" }}>
           <label htmlFor={`child-edit-title-${task.id}`} style={{display:"block",marginBottom:8}}><FieldLabel required>任务名称</FieldLabel></label>
@@ -835,10 +805,11 @@ function TaskCard({
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "12px" }}>
           {/* 左侧：任务详情区域 (从左到右阅读顺畅) */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", paddingRight: isTiming ? 40 : 0 }}>
               <p
                 style={{
                   fontSize: "1rem",
+                  lineHeight: "1.25",
                   fontWeight: 600,
                   color: isCompleted ? "var(--muted)" : "var(--text)",
                   textDecoration: isCompleted ? "line-through" : "none",
@@ -881,38 +852,26 @@ function TaskCard({
 
             <p style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: "4px" }}>
               {task.expected_minutes ? `${task.expected_minutes} 分钟 · ` : ""}{isUnapproved ? "待家长定星" : `⭐+${task.reward_stars}`}
-              {task.actual_seconds != null && (isCompleted || isSubmitted) && ` · 用时 ${formatActualSeconds(task.actual_seconds)}`}
               {isScheduled ? ` · ${task.scheduled_start}${task.scheduled_end ? `-${task.scheduled_end}` : ""}` : " · 自由安排"}
             </p>
 
+            {task.actual_seconds != null && (isCompleted || isSubmitted) && <p className="task-actual-duration">
+              <span aria-hidden="true"><TimerIcon size={14}/></span><span>用时</span>
+              <time dateTime={`PT${task.actual_seconds}S`} aria-label={formatActualSeconds(task.actual_seconds)}>{formatElapsedSeconds(task.actual_seconds)}</time>
+            </p>}
+            {isTiming && <TaskStopwatch timer={timer} elapsedSeconds={elapsedSeconds} onToggle={()=>onToggleTimer(task)}
+              onCancel={onCancelTimer} onComplete={event=>onComplete(task,event)} busy={isCompleting}/>}
+
             {/* 操作入口行 (开启专注、修改、安排时间) */}
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                gap: "6px",
-                marginTop: "6px",
-              }}
+            {!isCompleted && !isSubmitted && !isTiming && <div
+              className="task-card-actions"
             >
-              {!isCompleted && !isSubmitted && !isUnapproved && !completionQueued && !timer && <button type="button" onClick={()=>onStartTimer(task)} style={st.pillBtn}>计时</button>}
-              {timer && <span role="status" aria-label="本机计时" style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>计时 {formatActualSeconds(elapsedSeconds)}
-                {timer.phase!=="stopped" && <button type="button" onClick={()=>onToggleTimer(task)} style={st.pillBtn}>{timer.phase==="running"?"暂停":"继续"}</button>}
-                {!completionQueued&&<button type="button" onClick={onCancelTimer} style={st.pillBtn}>取消计时</button>}
-              </span>}
-              {completionQueued&&<span role="status">完成结果待同步</span>}
-              {/* 时长型任务 (expected_minutes > 0) 提供 ⏱️ 开启专注 入口 */}
-              {task.expected_minutes > 0 && !isCompleted && !isSubmitted && !isUnapproved && !completionQueued && (
-                <button
-                  type="button"
-                  onClick={() => onStartFocus(task)}
-                  className="task-focus-btn"
-                  aria-label={`开启 ${task.title} 专注计时`}
-                  style={{ minHeight: "30px", padding: "4px 10px", fontSize: "0.78rem" }}
-                >
-                  ⏱️ 专注 ({task.expected_minutes}m)
-                </button>
-              )}
+              {!isCompleted && !isSubmitted && !isUnapproved && !completionQueued && !timer && <button type="button" onClick={()=>onStartTimer(task)} className="task-text-action"><span aria-hidden="true"><TimerIcon size={18}/></span>计时</button>}
+              {completionQueued&&<p className="task-completion-queued" role="status">完成结果待同步</p>}
+              {!isUnapproved && !completionQueued && <TaskOptionsMenu label={`任务选项：${task.title}`} items={[
+                ...(task.expected_minutes>0 ? [{label:`专注 ${task.expected_minutes}分钟`,action:()=>onStartFocus(task),restoreFocus:false}] : []),
+                ...(!isScheduled && task.created_by==="parent" ? [{label:"安排时间",action:()=>onSchedule(task),restoreFocus:false}] : []),
+              ]}/>}
 
               {isUnapproved && (
                 <button onClick={() => onEdit(task)} style={st.pillBtn}>
@@ -927,16 +886,12 @@ function TaskCard({
                   删除
                 </button>
               )}
-              {!isUnapproved && !isScheduled && task.created_by === "parent" && !isCompleted && !isSubmitted && !isUnapproved && !completionQueued && (
-                <button onClick={() => onSchedule(task)} style={st.pillBtn}>
-                  安排时间
-                </button>
-              )}
-            </div>
+
+            </div>}
           </div>
 
-          {/* 右侧：iOS Trailing Accessory 主打卡完成按钮 (大拇指右手热区) */}
-          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {/* 计时中使用面板内唯一的完成按钮 */}
+          {!isTiming && <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {isSubmitted ? (
               <div
                 style={{
@@ -962,13 +917,13 @@ function TaskCard({
                 aria-label={isCompleted ? "任务已完成" : `标记完成: ${task.title}`}
                 title={isCompleted ? "已完成" : "轻点打卡完成"}
                 style={{
-                  width: 36,
-                  height: 36,
-                  minWidth: 36,
-                  minHeight: 36,
+                  width: 44,
+                  height: 44,
+                  minWidth: 44,
+                  minHeight: 44,
                   borderRadius: "50%",
                   border: isCompleted ? "none" : "2px solid var(--border)",
-                  backgroundColor: isCompleted ? "var(--cell-perfect)" : "var(--card)",
+                  backgroundColor: isCompleted ? "var(--cell-perfect, #34C759)" : "var(--card)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -1012,7 +967,7 @@ function TaskCard({
                 <span style={{ fontSize: "0.68rem", color: "var(--danger)", fontWeight: 700 }}>待确认</span>
               </div>
             )}
-          </div>
+          </div>}
         </div>
       )}
     </div>

@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
-import {plannedEnd,formatActualSeconds} from '../src/shared-web/taskTiming.js';
+import {plannedEnd,formatActualSeconds,formatElapsedSeconds} from '../src/shared-web/taskTiming.js';
 import {affordability} from '../src/shared-web/affordability.js';
 import {startTimer,pauseTimer,readTimer,timerMilliseconds,freezeCompletion,readCompletions,acknowledgeCompletion} from '../src/child-pwa/src/utils/taskTimer.js';
 const store=new Map();globalThis.localStorage={getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)};
 assert.deepEqual(plannedEnd('23:50',20),{time:'00:10',label:'次日 00:10'});
 assert.equal(plannedEnd('19:20',25).time,'19:45');
 assert.equal(formatActualSeconds(null),'');assert.equal(formatActualSeconds(125),'2分5秒');
+for(const [input,expected] of [[0,'00:00'],[65,'01:05'],[3599,'59:59'],[3600,'01:00:00'],[86400,'24:00:00'],[-2,'00:00'],[NaN,'00:00']]) assert.equal(formatElapsedSeconds(input),expected);
 assert.equal(affordability('8.00','8').canAfford,true);
 assert.equal(affordability('0.25','0.50').shortfall,.25);
 assert.equal(affordability(null,'8').known,false);

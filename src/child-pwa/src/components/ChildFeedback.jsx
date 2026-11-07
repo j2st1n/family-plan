@@ -22,6 +22,28 @@ export function ChildFeedbackProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const [confirmDialog, setConfirmDialog] = useState(null);
   const counter = useRef(0);
+  const dialog = useRef(null);
+
+  useEffect(() => {
+    if (!confirmDialog) return;
+    const previousFocus = document.activeElement;
+    const buttons = () => [...(dialog.current?.querySelectorAll("button") || [])];
+    buttons()[0]?.focus();
+    const keyboard = event => {
+      if (event.key === "Escape") {event.preventDefault(); confirmDialog.resolve(false);}
+      if (event.key === "Tab") {
+        const targets = buttons();
+        const next = event.shiftKey ? targets.at(-1) : targets[0];
+        const boundary = event.shiftKey ? targets[0] : targets.at(-1);
+        if (document.activeElement === boundary) {event.preventDefault(); next?.focus();}
+      }
+    };
+    document.addEventListener("keydown", keyboard);
+    return () => {
+      document.removeEventListener("keydown", keyboard);
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [confirmDialog]);
 
   const showToast = useCallback((message, type = "info", duration = 2400) => {
     if (!message) return;
@@ -40,7 +62,7 @@ export function ChildFeedbackProvider({ children }) {
         message: opts.message || "",
         confirmText: opts.confirmText || "确定",
         cancelText: opts.cancelText || "取消",
-        icon: opts.icon || "⭐",
+        icon: opts.icon === undefined ? "⭐" : opts.icon,
         resolve: (val) => {
           setConfirmDialog(null);
           resolve(val);
@@ -117,9 +139,9 @@ export function ChildFeedbackProvider({ children }) {
           }}
           onClick={() => confirmDialog.resolve(false)}
         >
-          <div
+          <div ref={dialog} role="alertdialog" aria-modal="true" aria-label={confirmDialog.title}
             style={{
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              backgroundColor: "var(--card)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
               borderRadius: "16px",
