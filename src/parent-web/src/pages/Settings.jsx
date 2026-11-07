@@ -1,3 +1,4 @@
+import { BRAND_SLOGAN } from "../../../shared-web/brand.js";
 import FieldLabel from "../../../shared-web/FieldLabel.jsx";
 import RewardStars, {validReward} from "../../../shared-web/RewardStars.jsx";
 import { useState, useEffect, useCallback } from "react";
@@ -717,7 +718,7 @@ export default function Settings({
           padding: "14px 0 20px 0",
         }}
       >
-        Family Plan 亲子自律计划 · v1.2.0
+        {BRAND_SLOGAN} · v1.2.0
       </div>
 
       {/* =========================================================================

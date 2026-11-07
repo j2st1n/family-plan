@@ -30,7 +30,7 @@ export default function TaskShareDialog({ snapshot, onClose, nameLabel = "标题
       if (cancelled) return;
       setImages(result.map((image, index) => {
         const url = URL.createObjectURL(image.blob); urls.push(url);
-        const name = `family-plan-${snapshot.date}${result.length > 1 ? `-${index + 1}` : ""}.png`;
+        const name = `family-habit-planner-${snapshot.date}${result.length > 1 ? `-${index + 1}` : ""}.png`;
         return { ...image, url, name, file: new File([image.blob], name, { type: "image/png" }) };
       }));
     }).catch(() => { if (!cancelled) setError("图片生成失败，请重试"); })

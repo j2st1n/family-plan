@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 export default defineConfig({
   plugins: [react()],
+  publicDir: fileURLToPath(new URL("../shared-web/public/", import.meta.url)),
   resolve: { dedupe: ["react", "react-dom"] },
   server: {
     fs: { allow: [fileURLToPath(new URL("../", import.meta.url))] },
