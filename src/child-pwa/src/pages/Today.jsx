@@ -17,7 +17,7 @@ import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
 import { playTaskComplete, playTaskSubmitted, initAudioUnlock } from "../utils/soundFx.js";
 import TaskStopwatch from "../components/TaskStopwatch.jsx";
-import TaskOptionsMenu from "../components/TaskOptionsMenu.jsx";
+import { ClockIcon, CalendarDaysIcon, CheckIcon } from "@heroicons/react/24/outline";
 import FocusTimer from "../components/FocusTimer.jsx";
 import SharePosterModal from "../components/SharePosterModal.jsx";
 import { ShareIcon, SunIcon, MoonIcon, TimerIcon } from "../components/Icons.jsx";
@@ -728,7 +728,7 @@ export default function Today({ child, onExpired, active }) {
 /**
  * 任务卡片组件 (TaskCard)
  * 重构升级：
- * 1. 增加 72x72px 超大彩色复选圆钮（Min Target >= 64px 符合儿童人体工学），支持弹性动画与 1s 防抖
+ * 1. 带文字的完成按钮，44px最小触控高度，保留弹性动画与1s防抖
  * 2. 针对时长型任务（expected_minutes > 0）提供 ⏱️ 开启专注 入口，无缝唤起 FocusTimer
  */
 function TaskCard({
@@ -862,16 +862,14 @@ function TaskCard({
             {isTiming && <TaskStopwatch timer={timer} elapsedSeconds={elapsedSeconds} onToggle={()=>onToggleTimer(task)}
               onCancel={onCancelTimer} onComplete={event=>onComplete(task,event)} busy={isCompleting}/>}
 
-            {/* 操作入口行 (开启专注、修改、安排时间) */}
+            {/* 常用操作直接展示，使用相同的图标与文字样式。 */}
             {!isCompleted && !isSubmitted && !isTiming && <div
-              className="task-card-actions"
+              className="task-card-actions" role="group" aria-label={`任务操作：${task.title}`}
             >
               {!isCompleted && !isSubmitted && !isUnapproved && !completionQueued && !timer && <button type="button" onClick={()=>onStartTimer(task)} className="task-text-action"><span aria-hidden="true"><TimerIcon size={18}/></span>计时</button>}
               {completionQueued&&<p className="task-completion-queued" role="status">完成结果待同步</p>}
-              {!isUnapproved && !completionQueued && <TaskOptionsMenu label={`任务选项：${task.title}`} items={[
-                ...(task.expected_minutes>0 ? [{label:`专注 ${task.expected_minutes}分钟`,action:()=>onStartFocus(task),restoreFocus:false}] : []),
-                ...(!isScheduled && task.created_by==="parent" ? [{label:"安排时间",action:()=>onSchedule(task),restoreFocus:false}] : []),
-              ]}/>}
+              {!isUnapproved && !completionQueued && task.expected_minutes > 0 && <button type="button" onClick={() => onStartFocus(task)} className="task-text-action" title={`专注 ${task.expected_minutes} 分钟`}><span aria-hidden="true"><ClockIcon strokeWidth={1.8}/></span>专注</button>}
+              {!isUnapproved && !completionQueued && !isScheduled && task.created_by === "parent" && <button type="button" onClick={() => onSchedule(task)} className="task-text-action"><span aria-hidden="true"><CalendarDaysIcon strokeWidth={1.8}/></span>安排时间</button>}
 
               {isUnapproved && (
                 <button onClick={() => onEdit(task)} style={st.pillBtn}>
@@ -913,43 +911,13 @@ function TaskCard({
                 type="button"
                 onClick={(e) => onComplete(task, e)}
                 disabled={isCompleted || isCompleting || completionQueued}
-                className={`task-check-btn ${isCompleted ? "completed" : ""} ${isPopping ? "spring-pop" : ""}`}
+                className={`task-check-btn task-complete-action ${isCompleted ? "completed" : ""} ${isPopping ? "spring-pop" : ""}`}
+                aria-busy={isCompleting}
                 aria-label={isCompleted ? "任务已完成" : `标记完成: ${task.title}`}
-                title={isCompleted ? "已完成" : "轻点打卡完成"}
-                style={{
-                  width: 44,
-                  height: 44,
-                  minWidth: 44,
-                  minHeight: 44,
-                  borderRadius: "50%",
-                  border: isCompleted ? "none" : "2px solid var(--border)",
-                  backgroundColor: isCompleted ? "var(--cell-perfect, #34C759)" : "var(--card)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: isCompleted ? "default" : "pointer",
-                  boxShadow: isCompleted ? "0 2px 6px rgba(52, 199, 89, 0.35)" : "none",
-                  padding: 0,
-                }}
+                title={isCompleted ? "已完成" : completionQueued ? "完成结果待同步" : "标记任务完成"}
               >
-                {isCompleted ? (
-                  <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "#FFFFFF", lineHeight: 1 }}>
-                    ✓
-                  </span>
-                ) : isCompleting ? (
-                  <span style={{ fontSize: "1rem", fontWeight: 700, color: "var(--accent)" }}>…</span>
-                ) : (
-                  <span
-                    style={{
-                      fontSize: "1.1rem",
-                      fontWeight: 700,
-                      color: "transparent",
-                      lineHeight: 1,
-                    }}
-                  >
-                    ✓
-                  </span>
-                )}
+                {!isCompleting && <CheckIcon aria-hidden="true" strokeWidth={2.2} />}
+                <span>{isCompleted ? "已完成" : isCompleting ? "提交中…" : completionQueued ? "待同步" : "完成"}</span>
               </button>
             ) : (
               <div
