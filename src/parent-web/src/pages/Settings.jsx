@@ -87,7 +87,7 @@ export default function Settings({
   onExpired,
 }) {
   const { toast, confirm } = useFeedback();
-  const { preference: themePreference, effectiveTheme, setTheme } = useTheme();
+  const { preference: themePreference, setTheme } = useTheme();
 
   // Active modal drawer: 'profiles' | 'accessCode' | 'routineTasks' | 'freeze' | null
   const [activeDrawer, setActiveDrawer] = useState(null);
@@ -650,8 +650,7 @@ export default function Settings({
 
         {/* Item 6: 外观与主题 */}
         <div
-          className="ios-list-row"
-          style={{ cursor: "default", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}
+          className="ios-list-row settings-theme-row"
         >
           <div className="ios-squircle-icon squircle-theme">
             <ThemeIcon size={18} />
@@ -659,14 +658,15 @@ export default function Settings({
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
             <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text)" }}>外观与主题</span>
             <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
-              {themePreference === "auto" ? "跟随系统 (" + (effectiveTheme === "dark" ? "深色" : "浅色") + ")" : themePreference === "dark" ? "深色模式" : "浅色模式"}
+              {themePreference === "auto" ? "跟随系统" : themePreference === "dark" ? "深色模式" : "浅色模式"}
             </span>
           </div>
           {/* iOS 三态分段选择器 (Segmented Control) */}
-          <div className="ios-segmented-control" role="group" aria-label="外观主题切换" style={{ flexShrink: 0, width: "190px" }}>
+          <div className="ios-segmented-control" role="group" aria-label="外观主题切换">
             <button
               type="button"
               className={`ios-segment-item ${themePreference === "auto" ? "active" : ""}`}
+              aria-pressed={themePreference === "auto"}
               onClick={() => setTheme("auto")}
               title="跟随系统设置"
             >
@@ -675,6 +675,7 @@ export default function Settings({
             <button
               type="button"
               className={`ios-segment-item ${themePreference === "light" ? "active" : ""}`}
+              aria-pressed={themePreference === "light"}
               onClick={() => setTheme("light")}
               title="浅色模式"
             >
@@ -683,6 +684,7 @@ export default function Settings({
             <button
               type="button"
               className={`ios-segment-item ${themePreference === "dark" ? "active" : ""}`}
+              aria-pressed={themePreference === "dark"}
               onClick={() => setTheme("dark")}
               title="深色模式"
             >

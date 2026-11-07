@@ -1,48 +1,44 @@
-# Apple task stopwatch design QA
+# Authentication and settings visual QA — 2026-11-07
 
-## Comparison evidence
+## Target and evidence
 
-- Source visual truth: `docs/design/apple-stopwatch/selected.png`, first displayed concept explicitly selected by the user.
-- Rendered implementation: `docs/design/apple-stopwatch/running.jpg`; local isolated synthetic preview on port19152, running08:32, light, same task/child/date content as source.
-- Full comparison: `docs/design/apple-stopwatch/comparison.jpg`, both artifacts together in one browser-rendered image.
-- Source852×1846 normalized to375×812; implementation native IAB capture375×812 from requested CSS390×844. Native capture scales the viewport and reserves a15px scrollbar. Source and implementation are aligned at page top and equal display size; no OS/browser chrome. Earlier explicit-clip capture omitted the fixed navigation and was rejected as final evidence.
-- Timer digits, status, menu and both controls are clearly readable in the full comparison; no separate focused crop is necessary.
-- Additional rendered states: `docs/design/apple-stopwatch/paused-dark.jpg` (actual CSS390×844,01:02:05 paused, dark), `completed-menu.jpg` (completion result and unclipped secondary menu, dark).
+This is a scoped correction of the existing two entry forms and settings row, following the Family Plan visual language already selected by the user. It is not a pixel clone of the old login pages. User-provided current screenshots identify the problems; the accepted stopwatch concept establishes the quiet system typography, surfaces and control hierarchy.
 
-## Findings and resolution
+- Current-flow source captures: `docs/design/auth-settings/parent-before.jpg`, `child-before.jpg`, fresh unauthenticated public-origin captures at1280×720 CSS/pixels, no browser chrome. No credentials entered.
+- Same-state implementation: `parent-after.jpg`, `child-after.jpg`, synthetic local previews at1280×720, light, empty fields.
+- Full combined comparison: `comparison-full.jpg`, source and implementation together, each1280×720 image displayed at640×360, equal density normalization.
+- Focused combined comparison: `comparison-focused.jpg`, same source pixels at1:1 in480×500 crops from x400,y40. This makes text, brand and inputs readable while retaining the full comparison for composition.
+- Additional accepted captures: `parent-dark.jpg`, `child-dark-filled.jpg`, and `settings-auto.jpg`. Actual viewport changed during later IAB work; these are state/color evidence, not equal-viewport comparisons. Filled access code is fictional.
 
-No actionable P0/P1/P2 findings remain.
+## Findings and fixes
 
-1. [P1, resolved] Initial platform fallback made the thin numerals too heavy. Added self-hosted variable Inter fallback after native Apple type and before generic system-ui. Post-fix comparison shows thin, stable tabular digits.
-2. [P2, resolved] First implementation was too tall and pushed add-task below the first viewport. Removed redundant summary ring, tightened header/card rhythm, kept44px targets, and placed secondary actions in the task menu. Final comparison retains add-task and persistent navigation in the initial viewport.
-3. [P2, resolved] Active-row separator disappeared with the light theme's missing separator token. Added border-token fallback; final comparison has a quiet visible divider.
-4. [P2, resolved] Secondary menu was clipped by grouped-card overflow. Scoped visible overflow and edge-row radii preserve the card while allowing the menu to extend; completed-menu evidence and actual scheduling action confirm accessibility.
-5. [P2, resolved] Existing undefined completed-fill token made the white check invisible. Added green fallback and removed whole-row opacity so completed result and optional elapsed time remain readable.
+- [P1, resolved] Existing parent brand has an unstyled tiny emoji and blue heading, while Kids has a large blue badge. Shared AuthShell now uses the same56px existing🌟mark,28px system heading and14px description in both apps.
+- [P2, resolved] Kids placeholder is as large and spaced as a real access code. Placeholder now16px with normal spacing; entered six-digit code is30px tabular text. A persistent label and concise location hint explain the field.
+- [P2, resolved] Inputs rely on placeholders and remove visible focus. Parent now has visible labels in one divided group; both forms have visible focus, error alerts, busy/disabled feedback and appropriate autocomplete. Login no longer automatically opens the mobile keyboard.
+- [P2, resolved] Theme row adds12px gap to the icon's existing14px margin, shifting its title. Removed duplicate spacing, retained the shared row/icon layout, and placed controls on a second aligned line at narrow widths.
+- [P2, resolved] Automatic theme summary included the current resolved appearance. It now says only“跟随系统”; explicit light/dark labels and actual theme behavior remain.
 
-## Fidelity surfaces
+## Required fidelity surfaces
 
-- Typography: native Apple system text retained; large weight200 tabular digits; hours switch to smaller HH:MM:SS. No per-second live announcements. Native/fallback antialiasing differs slightly from the raster target and is expected.
-- Spacing/layout: same task-local hierarchy, title/status/time/two equal buttons; same grouped list order.44px controls are intentionally larger than the mock's approximate40px controls. Reserved scrollbar slightly narrows the captured content; no hidden app controls.
-- Colors/tokens: existing light/dark surfaces and muted status colors; primary #0071E3 with white text in both themes for legible contrast. Completed indicator solid green preserves app completion semantics.
-- Assets/image quality: existing supplied timer icon plus MIT Heroicons pause/play/ellipsis. No rasterized UI or invented decorative assets. Inter OFL license accompanies bundled font.
-- Copy/content: 计时, 正在计时/已暂停, 暂停/继续, 完成任务, 取消计时. Completed duration is separate; untimed completed task has no duration placeholder. Fixture content is fictional.
+- Fonts/typography: native system stack retained; consistent brand/title/body scale and regular-sized placeholder; no new font or decorative glyph system.
+- Spacing/layout: same360px form width,56px parent rows,48px primary actions, restrained12px grouped corners, common header spacing. Desktop and mobile use the same form hierarchy. Theme title and AI title x coordinates match within1px at320/390/834/1280.
+- Colors/tokens: existing light/dark backgrounds and cards; restrained neutral heading, blue primary control without shadow; secondary text uses legible light/dark values and visible focus.
+- Assets/image quality: original user-visible🌟brand retained. Existing settings icons retained. No new bitmap, drawn logo, rasterized interface or remote asset added.
+- Copy/content: parent login/register modes remain; Kids uses consistent“访问码”wording and“绑定设备”action. Theme summary removes only its parenthetical resolution.
 
 ## Comparison history
 
-1. First combined comparison `/private/tmp/family-plan-timer-audit/comparison-first-full.jpg` found heavy fallback, excessive density, missing divider and extra summary/secondary controls; result blocked.
-2. Recaptured after font and density fixes; fixed navigation was missing from the clip method, so recaptured native viewport at page top instead. Further tightened spacing and fixed completed check fill.
-3. Final equal-size combined comparison `docs/design/apple-stopwatch/comparison.jpg` resolves earlier layout/type/divider findings. Dark paused and completed menu captures plus real menu navigation verify the additional states and overflow correction.
+1. Captured and inspected both public entry pages and user-provided settings image before edits. Identified the brand/placeholder/label/alignment issues above.
+2. Implemented the scoped corrections and captured equal-size full and focused before/after boards. No actionable P0/P1/P2 differences remain against the stated corrections and existing visual direction. A transient dark capture lacked header paint, so it was rejected and recaptured after confirming computed styles and visible title.
+3. Checked dark input/focus and settings automatic label. Automated viewport and functional checks below passed.
 
-## Verification and boundaries
+## Validation
 
-- Parent25 and child15 existing unit tests passed; shared feature model script passed including zero, minutes, hour/day and invalid elapsed formatting.
-- Both production builds passed; font is a48.26KB same-origin WOFF2 and its license is included.
-- Feature browser regression passed: single completion control while timing; menu Escape focus return; cancel confirmation preserves timer; pause excludes elapsed time; reload retains125 seconds; no running timer uploads; offline completion retry keeps its operation ID; final duration visible after sync; explicit cancel does not upload; subsequent untimed completion omits duration.
-- Browser checks at320/390/834 CSSpx passed no horizontal overflow,44px timer targets and hour-format fit. IAB viewport override did not apply alternate sizes reliably, so alternate widths are asserted by the existing automated regression rather than claimed from IAB screenshots.
-- Existing date, share/poster PNG, responsive layout, mutation guard and streak-settings browser regression passed.
-- Dark confirm, pause, completion result and unclipped menu visually inspected. No page errors in automated tests. IAB log contains three older preview SSE reconnect warnings from02:01, preceding current flow; no new application errors observed during final interactions.
-- No backend/API/storage/migration change. No production deployment or household mutations. Physical iPad lock-screen and native VoiceOver are not verified here.
-
-- Anonymous TypeSafe delivery gate: Score1.98/2; local semantics0.95, bounded claims0.97. No code, images, credentials or household data submitted.
+- Existing parent25/child15 unit tests and both production builds passed.
+- New synthetic browser regression passed login validation, trimmed unchanged login payload, failed authentication retaining inputs, registration mode/autocomplete and session save, disabled mode switch during loading, child code sanitization/length/error/retry, unchanged binding payload and successful device session save.
+- Theme auto summary and pressed state checked under both system colors; theme title alignment and group bounds checked at320/390/834/1280. Both entry forms checked for overflow and primary44px minimum target; no automatic initial focus.
+- No page errors in new browser test. Preview-only event-stream fixture was corrected after the initial test failure; no product event transport changed.
+- Backend, authentication endpoints, JWT/device token logic, database schema, rewards, stopwatch and focus behavior have no diff from production923fbb5. CI will run existing browser regressions plus this new authentication regression before publication.
+- No real login, registration, binding or settings mutation submitted. Physical iPad keyboard/Keychain/VoiceOver are not claimed verified.
 
 final result: passed

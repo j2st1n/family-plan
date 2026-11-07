@@ -45,6 +45,7 @@ jobs:
           src/child-pwa/node_modules/.bin/playwright install --with-deps chromium
           PLAYWRIGHT_BROWSER=chromium node scripts/test-integration-browser.mjs
           PLAYWRIGHT_BROWSER=chromium node scripts/test-task-features-browser.mjs
+          PLAYWRIGHT_BROWSER=chromium node scripts/test-auth-settings-browser.mjs
 
   docker:
     runs-on: ubuntu-latest
