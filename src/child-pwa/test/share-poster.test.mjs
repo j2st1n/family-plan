@@ -11,6 +11,8 @@ function createMockCanvas() {
   const textDrawn = [];
   const ctx = {
     save: () => operations.push({ op: "save" }),
+    translate: (x, y) => operations.push({ op: "translate", x, y }),
+    bezierCurveTo: (...points) => operations.push({ op: "bezierCurveTo", points }),
     restore: () => operations.push({ op: "restore" }),
     scale: (x, y) => operations.push({ op: "scale", x, y }),
     clearRect: (x, y, w, h) => operations.push({ op: "clearRect", x, y, w, h }),
@@ -99,9 +101,9 @@ test("Child PWA drawGrowthPoster eliminates title overlap, enforces 10px breathi
     tasks: [{ id: "t1", title: "整理书包", reward_stars: 1, status: "completed" }],
   });
 
-  // 1 任务逻辑高度 404，物理 808
+  // 1 任务逻辑高度 424，物理 848（包含品牌落款）
   assert.equal(canvas1.width, 720);
-  assert.equal(canvas1.height, 808, "1 task poster height should be adaptively compacted to 808px");
+  assert.equal(canvas1.height, 848, "1 task poster height should be adaptively compacted to 848px");
 
   // 3 任务场景自适应高度扩展验证
   const canvas3 = createMockCanvas();
@@ -115,7 +117,7 @@ test("Child PWA drawGrowthPoster eliminates title overlap, enforces 10px breathi
       { id: "t3", title: "自主阅读", reward_stars: 1, status: "completed" },
     ],
   });
-  assert.equal(canvas3.height, 936, "3 tasks poster height should expand to 936px");
+  assert.equal(canvas3.height, 976, "3 tasks poster height should expand to 976px");
 
   // 2. 检查标题与白框的垂直间距（杜绝切字）
   const titleOp = canvas3._operations.find((op) => op.op === "fillText" && op.text === "今日自律清单");

@@ -7,13 +7,12 @@
 html[data-theme="dark"] .auth-page { --auth-secondary: #aeaeb2; }
 .auth-header { text-align: center; margin-bottom: 32px; }
 .auth-mark {
-  width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 15px;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--card); border: 1px solid var(--border); font-size: 28px;
+  display: block; width: 90px; height: 100px; margin: 0 auto 20px;
+  object-fit: contain;
 }
 .auth-header h1 {
-  margin: 0 0 8px; color: var(--text); font-size: 28px; font-weight: 650;
-  line-height: 1.2; letter-spacing: -.025em;
+  margin: 0 0 8px; color: var(--text); font-size: 20px; font-weight: 550;
+  line-height: 1.2; letter-spacing: -.02em;
 }
 .auth-header p { margin: 0; color: var(--auth-secondary); font-size: 14px; line-height: 1.5; }
 .auth-form { width: 100%; }

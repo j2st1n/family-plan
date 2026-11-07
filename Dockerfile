@@ -7,7 +7,6 @@ COPY src/parent-web/index.html src/parent-web/vite.config.js ./parent-web/
 COPY src/parent-web/src ./parent-web/src
 COPY src/child-pwa/index.html src/child-pwa/vite.config.js ./child-pwa/
 COPY src/child-pwa/src ./child-pwa/src
-COPY src/child-pwa/public ./child-pwa/public
 COPY src/shared-web ./shared-web
 RUN cd parent-web && npm run build && cd ../child-pwa && npm run build
 

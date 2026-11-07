@@ -9,6 +9,8 @@ import { formatStars } from "../utils/format.js";
 import { createRefreshQueue } from "../utils/refreshQueue.js";
 import { useFeedback } from "../components/FeedbackContext.jsx";
 
+import { APP_DESCRIPTION, BRAND_MARK_URL, BRAND_SLOGAN } from "../../../shared-web/brand.js";
+
 const AVATARS = ["#0071E3", "#34C759", "#FF9500", "#FF3B30", "#00C7BE", "#5856D6"];
 
 const GRADE_OPTIONS = {
@@ -125,7 +127,7 @@ export default function Home({ token, isActive, onLogout, onExpired }) {
         </div>
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.2rem" }}>
-        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "var(--accent)", letterSpacing: "-0.015em" }}>Family Plan</h1>
+        <h1 style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "clamp(0.8rem, 2.8vw, 1rem)", fontWeight: 550, color: "var(--text)", letterSpacing: "-0.015em" }}><img src={BRAND_MARK_URL} alt={APP_DESCRIPTION} width="32" height="36" />{BRAND_SLOGAN}</h1>
         <button onClick={onLogout} style={{ color: "var(--muted)", fontSize: "0.85rem", cursor: "pointer" }}>退出</button>
       </div>
 

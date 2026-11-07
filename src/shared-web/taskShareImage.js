@@ -1,3 +1,4 @@
+import { APP_DESCRIPTION } from "./brand.js";
 import { isValidTaskDate } from "./date.js";
 import { formatStars } from "./format.js";
 
@@ -110,7 +111,7 @@ function drawPage(ctx, model, positions, page, index) {
   const { titleLines, metricTop, bodyTop, pages } = positions;
   ctx.fillStyle = C.bg; ctx.fillRect(0, 0, WIDTH, page.height);
   ctx.fillStyle = C.mint; ctx.beginPath(); ctx.arc(WIDTH - 60, 28, 180, 0, Math.PI * 2); ctx.fill();
-  text(ctx, "FAMILY PLAN  /  每日任务", MARGIN, 80, 24, C.green, 600);
+  text(ctx, `${APP_DESCRIPTION}  /  每日任务`, MARGIN, 80, 24, C.green, 600);
   const [year, month, day] = model.date.split("-").map(Number);
   const date = new Date(0); date.setUTCFullYear(year, month - 1, day);
   const weekday = new Intl.DateTimeFormat("zh-CN", { weekday: "long", timeZone: "UTC" }).format(date);
@@ -150,7 +151,7 @@ function drawPage(ctx, model, positions, page, index) {
   ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(MARGIN, page.height - 94); ctx.lineTo(WIDTH - MARGIN, page.height - 94); ctx.stroke();
   text(ctx, model.generatedLabel ? `状态生成于 ${model.generatedLabel}` : "每日任务记录", MARGIN, page.height - 48, 22, C.muted);
   ctx.textAlign = "right";
-  text(ctx, pages.length > 1 ? `${index + 1} / ${pages.length}` : "Family Plan", WIDTH - MARGIN, page.height - 48, 22, C.muted);
+  text(ctx, pages.length > 1 ? `${index + 1} / ${pages.length}` : APP_DESCRIPTION, WIDTH - MARGIN, page.height - 48, 22, C.muted);
   ctx.textAlign = "left";
 }
 

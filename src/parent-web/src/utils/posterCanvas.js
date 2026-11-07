@@ -1,3 +1,5 @@
+import { BRAND_SLOGAN, drawBrandMark } from "../../../shared-web/brand.js";
+
 /**
  * Apple iOS HIG 极简质感自律成长成就海报 Canvas 原生绘制引擎
  * - 高分辨率 Retina 2x 原生 HTML5 Canvas 绘制，杜绝低质脚本绘图与高 DPI 模糊
@@ -182,7 +184,7 @@ export function drawGrowthPoster(canvas, {
   // 【自适应画布物理高度】：任务框下方距离底部落款保持黄金比例 24px
   const footerGap = 24;
   const footerY = taskBoxBottomY + footerGap;
-  const cardBottomPad = 20;
+  const cardBottomPad = 40;
   const cardH = (footerY + cardBottomPad) - cardY;
   const logicalHeight = footerY + cardBottomPad + cardPad;
   const dpr = 2;
@@ -414,7 +416,8 @@ export function drawGrowthPoster(canvas, {
   ctx.textBaseline = "middle";
   ctx.font = "500 9.5px -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
   ctx.fillStyle = APPLE_SYSTEM_COLORS.textTertiary;
-  ctx.fillText("家庭成长自律计划 · 陪伴孩子走好每一步", logicalWidth / 2, footerY);
+  drawBrandMark(ctx, logicalWidth / 2 - 9, footerY - 10, 20);
+  ctx.fillText(BRAND_SLOGAN, logicalWidth / 2, footerY + 20);
 
   ctx.restore();
 }
