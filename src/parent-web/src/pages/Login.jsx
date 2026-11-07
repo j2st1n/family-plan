@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../api.js";
+import AuthShell from "../../../shared-web/AuthShell.jsx";
 
 export default function Login({ onLogin }) {
   const [mode, setMode] = useState("login");
@@ -21,28 +22,27 @@ export default function Login({ onLogin }) {
     } finally { setLoading(false); }
   }
 
-  return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "18vh" }}>
-      <div className="brand-icon">🌟</div>
-      <h1 style={{ fontSize: "1.6rem", fontWeight: 700, letterSpacing: "-0.015em", marginBottom: 6, color: "var(--accent)" }}>Family Plan</h1>
-      <p style={{ color: "var(--muted)", fontSize: "0.9rem", marginBottom: 28 }}>家长端 · 亲子计划管理</p>
-
-      <div style={{ width: "100%", maxWidth: 340 }}>
-        <input placeholder="用户名" value={username} onChange={e => setUsername(e.target.value)} autoFocus style={st} />
-        <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} style={st} />
-
-        {error && <p style={{ color: "var(--danger)", marginBottom: "0.6rem", fontSize: "0.9rem", textAlign: "center" }}>{error}</p>}
-
-        <button type="submit" disabled={loading} style={{ width: "100%", padding: "0.75rem", fontSize: "1rem", fontWeight: 650, color: "#FFFFFF", background: loading ? "var(--border)" : "var(--accent)", borderRadius: "14px", marginBottom: "0.8rem", letterSpacing: "-0.01em", border: "none", cursor: loading ? "not-allowed" : "pointer", boxShadow: "0 2px 8px rgba(67, 106, 84, 0.2)" }}>
-          {loading ? "处理中…" : mode === "login" ? "登录" : "注册"}
-        </button>
-
-        <button type="button" onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }} style={{ width: "100%", color: "var(--accent)", fontSize: "0.88rem", fontWeight: 600, background: "none", border: "none", cursor: "pointer", textAlign: "center" }}>
-          {mode === "login" ? "没有账号？注册" : "已有账号？登录"}
-        </button>
+  return <AuthShell subtitle={mode === "login" ? "家长端 · 亲子计划管理" : "创建家长账号"}>
+    <form className="auth-form" onSubmit={handleSubmit} noValidate aria-busy={loading}>
+      <div className="auth-fields">
+        <label className="auth-field"><span>用户名</span>
+          <input name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required
+            placeholder="输入用户名" value={username} onChange={e => setUsername(e.target.value)}
+            aria-invalid={error ? true : undefined} aria-describedby={error ? "auth-error" : undefined}/>
+        </label>
+        <label className="auth-field"><span>密码</span>
+          <input name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} required
+            placeholder="输入密码" value={password} onChange={e => setPassword(e.target.value)}
+            aria-invalid={error ? true : undefined} aria-describedby={error ? "auth-error" : undefined}/>
+        </label>
       </div>
+      {error && <p className="auth-error" id="auth-error" role="alert">{error}</p>}
+      <button type="submit" className="auth-submit" disabled={loading}>
+          {loading ? "处理中…" : mode === "login" ? "登录" : "注册"}
+      </button>
+      <button type="button" className="auth-switch" disabled={loading} onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }}>
+          {mode === "login" ? "没有账号？注册" : "已有账号？登录"}
+      </button>
     </form>
-  );
+  </AuthShell>;
 }
-
-const st = { width: "100%", padding: "0.7rem 0.8rem", fontSize: "1rem", border: "1px solid var(--border)", borderRadius: "12px", outline: "none", marginBottom: "0.65rem", display: "block", background: "var(--card)", color: "var(--text)", fontVariantNumeric: "tabular-nums" };

@@ -638,6 +638,14 @@ textarea {
   background-color: var(--card-subtle);
 }
 
+.settings-theme-row { cursor: default; }
+.settings-theme-row > .ios-segmented-control { flex-shrink: 0; width: 190px; margin-left: 16px; }
+.settings-theme-row .ios-segment-item { min-height: 44px; }
+@media (max-width: 520px) {
+  .settings-theme-row { flex-wrap: wrap; }
+  .settings-theme-row > .ios-segmented-control { margin: 12px 0 0 44px; width: calc(100% - 44px); }
+}
+
 /* 4. iOS Colorful Squircles (Icon Box in Settings) */
 .ios-squircle-icon {
   width: 30px;
