@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createServer } from "../src/child-pwa/node_modules/vite/dist/node/index.js";
 import { chromium } from "../src/child-pwa/node_modules/playwright/index.mjs";
 
-const output = process.env.BROWSER_ARTIFACT_DIR || "/private/tmp/family-plan-brand-qa";
+const output = process.env.BROWSER_ARTIFACT_DIR || join(tmpdir(), "family-plan-brand-qa");
 const servers = await Promise.all(["parent-web", "child-pwa"].map((app, i) => createServer({
   root: fileURLToPath(new URL(`../src/${app}/`, import.meta.url)),
   server: { host: "127.0.0.1", port: 19173 + i, strictPort: true },
