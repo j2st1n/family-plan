@@ -46,6 +46,15 @@ class InsightsResponse(BaseModel):
     stars: StarStats
 
 
+class GrowthSummary(BaseModel):
+    total_tasks: int
+    completed_tasks: int
+    qualified_days: int
+    task_days: int
+    recorded_tasks: int
+    actual_seconds: int
+
+
 class AnalyticsResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -56,3 +65,18 @@ class AnalyticsResponse(BaseModel):
     heatmap: list[HeatmapItem]
     categories: list[CategoryStat]
     insights: InsightsResponse
+    summary: GrowthSummary
+
+
+class ChildAnalyticsResponse(BaseModel):
+    """Device-scoped growth data, without parent insights or ledger details."""
+
+    child_name: str
+    days: int
+    start_date: str
+    end_date: str
+    heatmap: list[HeatmapItem]
+    categories: list[CategoryStat]
+    summary: GrowthSummary
+    streak: StreakStats
+    stars_earned: Decimal

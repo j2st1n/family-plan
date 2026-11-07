@@ -98,10 +98,10 @@ test("UI Craft: Entire codebase has eradicated window.confirm and window.alert",
 
 test("UI Craft: Analytics.jsx uses natural forest green scale without harsh greens", () => {
   const anaPath = path.resolve(__dirname, "../src/pages/Analytics.jsx");
-  const content = fs.readFileSync(anaPath, "utf-8");
+  const content = fs.readFileSync(anaPath, "utf-8") + fs.readFileSync(path.resolve(__dirname, "../../shared-web/growth.css"), "utf-8");
 
   assert.ok(!content.includes("#8FB299"), "Analytics must not use legacy green #8FB299");
   assert.ok(!content.includes("#76A28A"), "Analytics must not use legacy green #76A28A");
-  assert.ok(content.includes("var(--cell-perfect)"), "Analytics must use var(--cell-perfect)");
-  assert.ok(content.includes("var(--cell-qualified)"), "Analytics must use var(--cell-qualified)");
+  assert.ok(/var\(--cell-perfect(?:,|\))/.test(content), "Analytics must use var(--cell-perfect)");
+  assert.ok(/var\(--cell-qualified(?:,|\))/.test(content), "Analytics must use var(--cell-qualified)");
 });

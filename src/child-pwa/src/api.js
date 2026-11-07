@@ -178,3 +178,16 @@ export async function purchaseChildFreeze(onExpired) {
   }
   return res.json();
 }
+
+export async function fetchGrowth(days, onExpired) {
+  const res = await fetch(`${API}/child/analytics?days=${days}`, { headers: headers() });
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("device_token");
+      onExpired?.();
+      throw new Error("token_expired");
+    }
+    throw new Error("加载成长记录失败");
+  }
+  return res.json();
+}

@@ -1,29 +1,13 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
-import { alignHeatmapToCalendar } from "../utils/calendar.js";
+import GrowthBoard, { GrowthShareButton } from "../../../shared-web/GrowthBoard.jsx";
+import GrowthReportDialog from "../../../shared-web/GrowthReportDialog.jsx";
+import { GROWTH_PERIODS, growthSnapshot } from "../../../shared-web/growth.js";
 import StreakFreezeModal from "../components/StreakFreezeModal.jsx";
 import { useFeedback } from "../components/FeedbackContext.jsx";
-
-const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
-
-const STATUS_CONFIG = {
-  perfect: { label: "满分达标", color: "#248A3D", bg: "var(--cell-perfect)", icon: "🌲" },
-  qualified: { label: "达标完成", color: "#34C759", bg: "var(--cell-qualified)", icon: "🌱" },
-  missed: { label: "未达标", color: "#FF3B30", bg: "var(--cell-missed)", icon: "🍂" },
-  rest: { label: "休息日", color: "#86868B", bg: "var(--cell-rest)", icon: "☁️" },
-  vacation: { label: "休假中", color: "#FF9500", bg: "var(--cell-vacation)", icon: "🌴" },
-  frozen: { label: "保护卡抵扣", color: "#00C7BE", bg: "var(--cell-frozen)", icon: "❄️" },
-};
-
-const CATEGORY_ICONS = {
-  学习思考: "📚",
-  体育运动: "🏃",
-  生活自理: "🪥",
-  家务协助: "🧹",
-};
 
 export default function Analytics({ token, isActive, onExpired }) {
   const { toast, confirm } = useFeedback();
@@ -47,13 +31,12 @@ export default function Analytics({ token, isActive, onExpired }) {
   });
   const [vacationError, setVacationError] = useState("");
 
-  // Selected cell hover/click preview
-  const [selectedCell, setSelectedCell] = useState(null);
+  const requestRef = useRef(0);
+  const [loadedKey, setLoadedKey] = useState("");
+  const [report, setReport] = useState(null);
+  const closeReport = useCallback(() => setReport(null), []);
+  const requestKey = `${selectedChildId}:${days}`;
   const [showFreezeModal, setShowFreezeModal] = useState(false);
-
-  const alignedHeatmap = useMemo(() => {
-    return alignHeatmapToCalendar(analyticsData?.heatmap || []);
-  }, [analyticsData?.heatmap]);
 
   // Initial load children
   const loadChildren = useCallback(async () => {
@@ -75,6 +58,7 @@ export default function Analytics({ token, isActive, onExpired }) {
   // Load analytics and freeze info for selected child
   const loadData = useCallback(async () => {
     if (!selectedChildId) return;
+    const request = ++requestRef.current;
     setLoading(true);
     setError(null);
     try {
@@ -82,22 +66,23 @@ export default function Analytics({ token, isActive, onExpired }) {
         api.fetchAnalytics(token, selectedChildId, days),
         api.fetchChildFreeze(token, selectedChildId).catch(() => null),
       ]);
+      if (request !== requestRef.current) return;
+      setLoadedKey(`${selectedChildId}:${days}`);
       setAnalyticsData(ana);
       setFreezeInfo(freeze);
-      // Default select the last day in heatmap
-      if (ana?.heatmap?.length > 0) {
-        setSelectedCell(ana.heatmap[ana.heatmap.length - 1]);
-      }
     } catch (err) {
-      setError("加载成长数据失败: " + (err.message || "未知错误"));
+      if (request === requestRef.current) setError("加载成长数据失败: " + (err.message || "未知错误"));
     } finally {
-      setLoading(false);
+      if (request === requestRef.current) setLoading(false);
     }
   }, [token, selectedChildId, days]);
 
   useEffect(() => {
     loadData();
+    return () => { requestRef.current++; };
   }, [loadData]);
+
+  useEffect(() => { setReport(null); }, [requestKey, isActive]);
 
   useSseRefresh({
     token,
@@ -186,14 +171,17 @@ export default function Analytics({ token, isActive, onExpired }) {
       )}
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+      <div className="growth-toolbar">
         <div>
           <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>成长看板</h1>
           <p style={{ fontSize: "0.8rem", color: "var(--muted)" }}>统计分析与连击防断签</p>
         </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <GrowthShareButton disabled={!analyticsData || loadedKey !== requestKey || loading || !!error} onClick={() => setReport(growthSnapshot(analyticsData, currentChild?.name))} />
         <button onClick={handleOpenVacationModal} style={styles.vacationBtn}>
           🌴 休假管理
         </button>
+        </div>
       </div>
 
       {/* Child selector */}
@@ -215,23 +203,12 @@ export default function Analytics({ token, isActive, onExpired }) {
       )}
 
       {/* Time Range Selector & Freeze status */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-        <div style={styles.toggleGroup}>
-          <button
-            onClick={() => setDays(30)}
-            style={{ ...styles.toggleBtn, ...(days === 30 ? styles.toggleBtnActive : {}) }}
-          >
-            30 天
-          </button>
-          <button
-            onClick={() => setDays(90)}
-            style={{ ...styles.toggleBtn, ...(days === 90 ? styles.toggleBtnActive : {}) }}
-          >
-            90 天
-          </button>
+      <div className="growth-toolbar">
+        <div className="growth-periods" role="group" aria-label="成长统计时段">
+          {GROWTH_PERIODS.map(value => <button type="button" key={value} aria-pressed={days === value} onClick={() => { setDays(value); setReport(null); }}>{value} 天</button>)}
         </div>
 
-        {freezeInfo && (
+        {freezeInfo && loadedKey === requestKey && (
           <button
             type="button"
             onClick={() => setShowFreezeModal(true)}
@@ -252,131 +229,16 @@ export default function Analytics({ token, isActive, onExpired }) {
         )}
       </div>
 
-      {loading && !analyticsData && (
+      {loading && loadedKey !== requestKey && (
         <p style={{ textAlign: "center", color: "var(--muted)", padding: "2rem 0" }}>加载统计中…</p>
       )}
 
-      {analyticsData && (
+      {analyticsData && loadedKey === requestKey && (
         <>
-          {/* Heatmap Card */}
-          <div className="compact-heatmap-card" style={styles.card}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
-              <h2 style={styles.cardTitle}>📅 习惯微日历 ({days}天)</h2>
-              <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
-                {analyticsData.start_date} ~ {analyticsData.end_date}
-              </span>
-            </div>
-
-            {/* Heatmap Grid */}
-            <div style={styles.heatmapWrapper}>
-              <div className="heatmap-matrix-box">
-                {/* 星期微标行 */}
-                <div className="weekday-header-row">
-                  {WEEKDAYS.map((w, idx) => (
-                    <span key={idx} className="weekday-micro-label">
-                      {w}
-                    </span>
-                  ))}
-                </div>
-
-                {/* 7 列严格对齐微日历网格 */}
-                <div className="micro-calendar-grid">
-                  {alignedHeatmap.map((item) => {
-                    if (item.isPlaceholder) {
-                      return <div key={item.key} className="cell-placeholder" />;
-                    }
-                    const isSelected = selectedCell?.date === item.date;
-                    const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.rest;
-                    return (
-                      <button
-                        type="button"
-                        key={item.key}
-                        onClick={() => setSelectedCell(item)}
-                        title={`${item.date}: ${cfg.label} (${item.completed_tasks}/${item.total_tasks})`}
-                        className={`heatmap-cell status-${item.status} ${isSelected ? "selected" : ""}`}
-                      >
-                        {item.status === "frozen" && "❄️"}
-                        {item.status === "vacation" && "🌴"}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 内联单行详情微胶囊 */}
-              {selectedCell && (
-                <div className={`selected-pill status-${selectedCell.status}`}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "0.85rem" }}>
-                      {selectedCell.status === "frozen" ? "❄️" : selectedCell.status === "vacation" ? "🌴" : STATUS_CONFIG[selectedCell.status]?.icon || "🌟"}
-                    </span>
-                    <strong style={{ fontSize: "0.78rem" }}>{selectedCell.date}</strong>
-                    <span
-                      style={{
-                        fontSize: "0.68rem",
-                        padding: "1px 6px",
-                        borderRadius: "var(--radius-pill)",
-                        background: STATUS_CONFIG[selectedCell.status]?.bg || "var(--card-subtle)",
-                        color: STATUS_CONFIG[selectedCell.status]?.color || "var(--text)",
-                        fontWeight: 650,
-                      }}
-                    >
-                      {STATUS_CONFIG[selectedCell.status]?.label || selectedCell.status}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: "0.72rem", color: "var(--muted)" }}>
-                    {selectedCell.total_tasks > 0
-                      ? `完成 ${selectedCell.completed_tasks}/${selectedCell.total_tasks} 项 (${selectedCell.completion_rate}%)`
-                      : "休息日无任务"}
-                  </div>
-                </div>
-              )}
-
-              {/* 单行横向微图例 */}
-              <div className="compact-legend-row">
-                <span className="legend-chip"><i className="dot dot-perfect" />完美</span>
-                <span className="legend-chip"><i className="dot dot-qualified" />达标</span>
-                <span className="legend-chip"><i className="dot dot-missed" />未达标</span>
-                <span className="legend-chip">❄️ 保护</span>
-                <span className="legend-chip">🌴 休假</span>
-                <span className="legend-chip"><i className="dot dot-rest" />休息</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Categories Progress Card */}
-          <div style={styles.card}>
-            <h2 style={styles.cardTitle}>🎯 四维习惯分类完成率</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem", marginTop: "0.7rem" }}>
-              {analyticsData.categories.map((cat) => (
-                <div key={cat.category}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem", fontSize: "0.85rem" }}>
-                    <span>
-                      {CATEGORY_ICONS[cat.category] || "📌"} <strong>{cat.category}</strong>
-                      <span style={{ fontSize: "0.75rem", color: "var(--muted)", marginLeft: "6px" }}>
-                        ({cat.completed_tasks}/{cat.total_tasks} 项)
-                      </span>
-                    </span>
-                    <strong style={{ color: cat.completion_rate >= 80 ? "var(--accent)" : "inherit" }}>
-                      {cat.completion_rate}%
-                    </strong>
-                  </div>
-                  <div style={styles.progressTrack}>
-                    <div
-                      style={{
-                        ...styles.progressBar,
-                        width: `${cat.completion_rate}%`,
-                        backgroundColor: cat.completion_rate >= 80 ? "var(--cell-perfect)" : "var(--accent)",
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <GrowthBoard key={selectedChildId} data={analyticsData} />
 
           {/* Insights Card */}
-          <div style={styles.card}>
+          <div style={{ ...styles.card, marginTop: "18px" }}>
             <h2 style={styles.cardTitle}>💡 自律洞察与表现</h2>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.8rem", marginTop: "0.8rem" }}>
               {/* Best habit */}
@@ -412,16 +274,7 @@ export default function Analytics({ token, isActive, onExpired }) {
               </div>
             </div>
 
-            {/* Streak & Star Metrics */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "0.5rem", marginTop: "0.8rem" }}>
-              <div style={styles.metricItem}>
-                <div style={styles.metricVal}>🔥 {analyticsData.insights.streak.current_streak_days}</div>
-                <div style={styles.metricLbl}>当前连击</div>
-              </div>
-              <div style={styles.metricItem}>
-                <div style={styles.metricVal}>🏆 {analyticsData.insights.streak.longest_streak_days}</div>
-                <div style={styles.metricLbl}>最长连击</div>
-              </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "0.8rem" }}>
               <div style={styles.metricItem}>
                 <div style={styles.metricVal}>❄️ {analyticsData.insights.streak.freeze_usages_count}</div>
                 <div style={styles.metricLbl}>保护卡使用</div>
@@ -433,13 +286,15 @@ export default function Analytics({ token, isActive, onExpired }) {
             </div>
 
             <div style={{ marginTop: "0.8rem", paddingTop: "0.8rem", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.8rem", color: "var(--muted)", flexWrap: "wrap", gap: "6px" }}>
-              <span style={{ whiteSpace: "nowrap" }}>⭐ 本期获得: <strong style={{ color: "var(--star)", fontVariantNumeric: "tabular-nums" }}>+{formatStars(analyticsData.insights.stars.stars_earned)}</strong></span>
-              <span style={{ whiteSpace: "nowrap" }}>🛍️ 本期兑换: <strong style={{ color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>-{formatStars(analyticsData.insights.stars.stars_spent)}</strong></span>
-              <span style={{ whiteSpace: "nowrap" }}>💰 结余: <strong style={{ color: "var(--accent)", fontVariantNumeric: "tabular-nums" }}>{formatStars(analyticsData.insights.stars.current_stars)}</strong></span>
+              <span style={{ whiteSpace: "nowrap" }}>🌟 本期获得: <strong style={{ color: "var(--star)", fontVariantNumeric: "tabular-nums" }}>+{formatStars(analyticsData.insights.stars.stars_earned)}</strong></span>
+              <span style={{ whiteSpace: "nowrap" }}>🛍️ 本期支出: <strong style={{ color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>-{formatStars(analyticsData.insights.stars.stars_spent)}</strong></span>
+              <span style={{ whiteSpace: "nowrap" }}>💰 当前余额: <strong style={{ color: "var(--accent)", fontVariantNumeric: "tabular-nums" }}>{formatStars(analyticsData.insights.stars.current_stars)}</strong></span>
             </div>
           </div>
         </>
       )}
+
+      {report && <GrowthReportDialog report={report} onClose={closeReport} />}
 
       {/* Vacation Management Modal (iOS 标准底部抽屉 Sheet) */}
       {showVacationModal && (
@@ -712,7 +567,7 @@ const styles = {
     padding: "0.8rem",
   },
   metricItem: {
-    background: "#F5F5F7",
+    background: "var(--card-subtle)",
     border: "1px solid var(--border)",
     borderRadius: "10px",
     padding: "0.6rem 0.4rem",

@@ -47,6 +47,7 @@ jobs:
           PLAYWRIGHT_BROWSER=chromium node scripts/test-task-features-browser.mjs
           PLAYWRIGHT_BROWSER=chromium node scripts/test-auth-settings-browser.mjs
           PLAYWRIGHT_BROWSER=chromium node scripts/test-brand-browser.mjs
+          PLAYWRIGHT_BROWSER=chromium node scripts/test-growth-browser.mjs
 
   docker:
     runs-on: ubuntu-latest
