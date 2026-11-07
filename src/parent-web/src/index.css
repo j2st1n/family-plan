@@ -233,6 +233,37 @@ h1, h2, h3, h4, .display-text {
    ========================================================================== */
 
 /* 1. 移动端默认规则 (< 768px) */
+.app-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin-right: 16px;
+}
+
+.app-header-brand img {
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.app-header-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.app-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 @media (max-width: 767px) {
   #root {
     max-width: 100%;

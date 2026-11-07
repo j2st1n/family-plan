@@ -23,3 +23,9 @@
 ## 内置 imagegen 尝试的完整提示词（输出未采用）
 
 > Use case: background-extraction. Edit target is the supplied parent-star Family Plan logo concept. Produce the same standalone icon mark on a genuinely transparent background. Remove ALL the text 'Family Plan' and the white canvas; keep ONLY the existing large parent on the left and smaller child on the right reaching toward the single rounded golden star above them. Preserve their original silhouette, scale relationship, poses, negative spaces and blue/gold colors as faithfully as possible. Clean solid cobalt blue #0071E3 figures and warm golden #FFB547 star; crisp flat edges, no gradients, glow, shadows, grain, halo, white outline or extra shapes. No lettering or words at all. Center just this mark in a square image, preserving proportions, with about 12 percent transparent clear margin on every side. The image is to be used as the app's real logo in light and dark interfaces.
+
+## 已登录家长主导航补齐
+
+实际生效的顶栏位于 `src/parent-web/src/App.jsx`。左侧统一显示32×36像素的同款Logo与当前孩子姓名；姓名过长时省略，完整姓名保留在原文本与title中。右侧桌面导航、手机底部导航及主题切换保持原行为，顶栏不重复页面标题或完整Slogan。
+
+认证浏览器回归现在覆盖登录后的实际顶栏，验证320/390/767/768/834/1280宽度下Logo、长姓名和导航不重叠，深浅色及切换到设置后标记稳定。新增截图为合成数据的本地预览，不是正式家庭账号截图。320像素下原日期工具栏仍有独立溢出现象，本次未改日期栏，不将顶栏边界验证描述为整页320像素适配通过。
