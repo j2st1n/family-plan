@@ -11,3 +11,12 @@ export function formatActualSeconds(value) {
   if(seconds<60) return seconds===0?'小于1秒':`${seconds}秒`;
   return `${Math.floor(seconds/60)}分${seconds%60?`${seconds%60}秒`:''}`;
 }
+
+export function formatElapsedSeconds(value) {
+  const seconds = Number.isFinite(Number(value)) ? Math.max(0, Math.floor(Number(value))) : 0;
+  const pad = n => String(n).padStart(2, '0');
+  const minutes = Math.floor(seconds / 60);
+  return seconds >= 3600
+    ? `${pad(Math.floor(seconds / 3600))}:${pad(minutes % 60)}:${pad(seconds % 60)}`
+    : `${pad(minutes)}:${pad(seconds % 60)}`;
+}
