@@ -30,7 +30,29 @@ try {
       const url = await page.locator(selector).getAttribute("href");
       const response = await page.request.get(new URL(url, page.url()).href);
       assert.equal(response.status(), 200); assert.match(response.headers()["content-type"], /image\/png/);
-      assert.deepEqual([...(await response.body()).subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+      const bytes = await response.body();
+      assert.deepEqual([...bytes.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+      const pixels = await page.evaluate(async base64 => {
+        const img = new Image(); img.src = "data:image/png;base64," + base64; await img.decode();
+        const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+        const ctx = c.getContext("2d"); ctx.drawImage(img, 0, 0);
+        const p = ctx.getImageData(0, 0, c.width, c.height).data;
+        let white = 0, visible = 0;
+        for (let i = 0; i < p.length; i += 4) {
+          if (p[i + 3]) visible++;
+          if (p[i] === 255 && p[i + 1] === 255 && p[i + 2] === 255 && p[i + 3]) white++;
+        }
+        return { corners: [p[3], p[c.width * 4 - 1], p[(c.height - 1) * c.width * 4 + 3], p[p.length - 1]], white, visible, size: c.width };
+      }, bytes.toString("base64"));
+      if (selector === 'link[rel="icon"]') {
+        assert.equal(url, "/assets/brand/favicon-32-v2.png");
+        assert.equal(pixels.size, 32); assert.deepEqual(pixels.corners, [0, 0, 0, 0]);
+        assert.equal(pixels.white, 0, "favicon has no white backing, including interior negative space");
+        assert.ok(pixels.visible > 80 && pixels.visible < 700, "mark is visible with transparent space");
+      } else {
+        assert.equal(pixels.size, 180); assert.deepEqual(pixels.corners, [255, 255, 255, 255]);
+        assert.ok(pixels.white > 0, "touch icon keeps its separate opaque backing");
+      }
     }
     const manifest = await (await page.request.get(new URL(await page.locator('link[rel="manifest"]').getAttribute("href"), page.url()).href)).json();
     assert.equal(manifest.name, "Family Habit Planner");
@@ -68,5 +90,5 @@ try {
     await page.close();
   }
   assert.deepEqual(errors, []);
-  console.log("Brand browser passed: both entries, 320/390/834 light/dark, real favicon/touch/manifest PNGs, vector poster mark/slogan and export, no page errors.");
+  console.log("Brand browser passed: both entries, transparent favicon corners/interior with visible mark, opaque touch icon, 320/390/834 light/dark, real PNG/manifest resources, vector poster mark/slogan and export, no page errors.");
 } finally { await browser?.close(); for (const server of servers) await server.close(); }
