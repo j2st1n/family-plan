@@ -95,8 +95,32 @@ try{
  await kid.getByPlaceholder('任务名称，如：练琴、口算一页...').fill('孩子的建议');
  await kid.getByRole('button',{name:'添加',exact:true}).click();
  assert.ok(!('reward_stars' in childCreated));assert.equal(childCreated.expected_minutes,20);assert.equal(childCreated.scheduled_start,null);assert.equal(childCreated.scheduled_end,null);
- await kid.getByLabel('任务选项：计时任务',{exact:true}).click();
- await kid.getByRole('menuitem',{name:'安排时间',exact:true}).click();await kid.getByLabel('开始小时',{exact:true}).waitFor();
+ const actions=kid.getByRole('group',{name:'任务操作：计时任务',exact:true});
+ const complete=kid.getByLabel('标记完成: 计时任务',{exact:true});
+ assert.equal((await complete.innerText()).trim(),'完成','completion is an explicit labelled action');
+ assert.equal(await actions.getByRole('button').allTextContents().then(a=>a.map(s=>s.trim()).join('|')),'计时|专注|安排时间');
+ assert.equal(await kid.getByLabel('任务选项：计时任务',{exact:true}).count(),0,'common actions are not hidden in a menu');
+ for(const theme of ['light','dark']){
+  await kid.emulateMedia({colorScheme:theme});
+  for(const width of [320,390,834,1280]){
+   await kid.setViewportSize({width,height:950});await kid.clock.runFor(32);
+   assert.ok(await kid.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'task actions fit '+width);
+   const bounds=await actions.getByRole('button').evaluateAll(nodes=>nodes.map(e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height,font:s.font,color:s.color};}));
+   if(width>=390)assert.equal(new Set(bounds.map(b=>b.y)).size,1,'common actions share a row when space allows');
+   assert.equal(new Set(bounds.map(b=>b.font+'|'+b.color)).size,1,'all actions have the same typography/color');
+   for(const b of bounds)assert.ok(b.width>=44&&b.height>=44&&b.x>=0&&b.right<=width,'visible touch target');
+   for(let a=0;a<bounds.length;a++)for(let b=a+1;b<bounds.length;b++)assert.ok(bounds[a].right<=bounds[b].x||bounds[b].right<=bounds[a].x||bounds[a].bottom<=bounds[b].y||bounds[b].bottom<=bounds[a].y,'actions do not overlap');
+   assert.ok(await complete.evaluate(e=>{const r=e.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.right<=innerWidth;}));
+   if(screenshotDir&&(width===390||width===834))await kid.screenshot({animations:'disabled',path:`${screenshotDir}/task-actions-${theme}-${width}.png`});
+  }
+ }
+ await kid.setViewportSize({width:768,height:950});
+ await actions.getByRole('button',{name:'专注',exact:true}).click();
+ await kid.getByLabel('关闭专注模式',{exact:true}).waitFor();
+ await kid.getByLabel('关闭专注模式',{exact:true}).click();
+ await kid.getByRole('button',{name:'确认结束',exact:true}).click();
+ await kid.getByLabel('关闭专注模式',{exact:true}).waitFor({state:'detached'});
+ await actions.getByRole('button',{name:'安排时间',exact:true}).click();await kid.getByLabel('开始小时',{exact:true}).waitFor();
  await kid.getByRole('button',{name:'取消',exact:true}).click();
  await kid.getByRole('button',{name:'计时',exact:true}).first().click();
  assert.equal(await kid.getByLabel('标记完成: 计时任务',{exact:true}).count(),0,'only one completion control while timing');
@@ -144,5 +168,5 @@ try{
  const short=kid.getByRole('button',{name:'还差7星',exact:true});await short.waitFor();assert.ok(await short.isDisabled());assert.equal(redeemCount,1);
  await kid.setViewportSize({width:390,height:850});assert.ok(await kid.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  assert.deepEqual(errors,[]);
- console.log('Feature browser passed: parent custom reward, linked 5-minute schedule, child reward removal, timer without uploads, pause/reload/offline retry, final-only duration and discounted affordability.');
+ console.log('Feature browser passed: explicit completion action, directly visible matching timer/focus/schedule controls, responsive light/dark touch targets and focus entry; parent rewards/schedule, local-only timer, pause/reload/retry, final duration and affordability preserved.');
 }finally{await browser?.close();for(const s of servers)await s.close();}

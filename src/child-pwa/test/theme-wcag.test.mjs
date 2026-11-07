@@ -73,10 +73,10 @@ test("Theme System: WCAG 2.2 AA Contrast & Token Integrity in Child PWA", () => 
     );
   }
 
-  // 3. Child ergonomic 72px check button exists
+  // 3. Completion remains an explicit action with a minimum 44px touch target
   assert.ok(cssContent.includes(".task-check-btn"), ".task-check-btn class must be defined");
-  assert.ok(cssContent.includes("width: 72px;"), "Button must have 72px width");
-  assert.ok(cssContent.includes("height: 72px;"), "Button must have 72px height");
+  assert.ok(cssContent.includes(".task-complete-action"), "Completion has a labelled action style");
+  assert.ok(cssContent.includes("min-height: 44px;"), "Controls retain minimum touch height");
   assert.ok(cssContent.includes("stampSpringPop"), "Spring pop tactile animation must be present");
 
   // 4. No legacy colors or dead black in child pwa pages
