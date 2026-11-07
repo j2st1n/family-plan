@@ -8,6 +8,7 @@ import api from "./api.js";
 import useSseRefresh from "./hooks/useSseRefresh.js";
 import { TodayIcon, AnalyticsIcon, ShopIcon, SettingsIcon, SunIcon, MoonIcon } from "./components/Icons.jsx";
 import { useTheme } from "./context/ThemeContext.jsx";
+import { APP_DESCRIPTION, BRAND_MARK_URL } from "../../shared-web/brand.js";
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem("parent_token"));
@@ -139,19 +140,17 @@ export default function App() {
     <>
       {/* iOS Frosted Navigation Bar */}
       <header className="app-header">
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
-          <span style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "-0.02em", color: "var(--text)", whiteSpace: "nowrap" }}>
-            {tab === "today" ? "今天" : tab === "analytics" ? "成长统计" : tab === "shop" ? "星星商城" : "设置"}
-          </span>
+        <div className="app-header-brand">
+          <img src={BRAND_MARK_URL} alt={APP_DESCRIPTION} width="32" height="36" />
           {activeChild && (
-            <span style={{ fontSize: "0.82rem", color: "var(--muted)", fontWeight: 500, whiteSpace: "nowrap" }}>
+            <span className="app-header-child" title={activeChild.name}>
               · {activeChild.name}
             </span>
           )}
         </div>
 
         {/* 桌面端顶部导航链接（>=768px 显示，移动端由 CSS display:none 隐藏）与一键日月切换 */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div className="app-header-controls">
           <nav className="desktop-nav-links" role="navigation">
             <button
               type="button"

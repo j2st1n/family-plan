@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
+import {mkdir} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {createServer} from '../src/child-pwa/node_modules/vite/dist/node/index.js';
 import {chromium} from '../src/child-pwa/node_modules/playwright/index.mjs';
 const servers=await Promise.all(['parent-web','child-pwa'].map((app,i)=>createServer({root:fileURLToPath(new URL(`../src/${app}/`,import.meta.url)),server:{host:'127.0.0.1',port:19163+i,strictPort:true}})));
@@ -8,12 +11,15 @@ try {
  for(const server of servers)await server.listen();
  browser=await chromium.launch({...(process.env.PLAYWRIGHT_BROWSER==='chromium'?{}:{channel:'chrome'}),headless:true});
  const errors=[],writes=[];let failAuth=true,release;
+ const childName='合成孩子的较长姓名用于验证顶栏省略显示';
+ const artifacts=process.env.BROWSER_ARTIFACT_DIR || join(tmpdir(),'family-plan-header-brand-qa');
+ await mkdir(artifacts,{recursive:true});
  const context=await browser.newContext({viewport:{width:1280,height:900}});
  await context.route('https://**/*',r=>r.abort());
  await context.route('**/api/v1/**',async r=>{
   const p=new URL(r.request().url()).pathname;
   if(p.includes('/events'))return r.fulfill({body:': ready\n\n',contentType:'text/event-stream'});
-  if(p==='/api/v1/children')return r.fulfill({json:[{id:'kid',name:'合成孩子',streak_threshold:80}]});
+  if(p==='/api/v1/children')return r.fulfill({json:[{id:'kid',name:childName,streak_threshold:80}]});
   if(p.endsWith('/dashboard'))return r.fulfill({json:{today:{submitted_tasks:0},rewards:{stars_total:1,current_streak_days:0}}});
   if(p.endsWith('/daily-tasks'))return r.fulfill({json:{date:'2026-11-07',tasks:[],rewards:{stars_total:1,current_streak_days:0}}});
   if(p==='/api/v1/plans')return r.fulfill({json:[]});
@@ -51,7 +57,27 @@ try {
  await parent.getByRole('button',{name:'设置',exact:true}).first().waitFor();
  assert.equal(await parent.evaluate(()=>localStorage.getItem('parent_token')),'synthetic-parent');
  assert.equal(writes.at(-1).path,'/api/v1/auth/register');
+ const header=parent.locator('.app-header'),brand=header.locator('.app-header-brand');
+ await brand.getByRole('img',{name:'Family Habit Planner',exact:true}).evaluate(img=>img.decode());
+ assert.equal(await brand.locator('.app-header-child').getAttribute('title'),childName);
+ assert.equal((await brand.innerText()).trim(),'· '+childName);
+ for(const scheme of ['light','dark']) {
+  await parent.emulateMedia({colorScheme:scheme});
+  for(const width of [320,390,767,768,834,1280]) {
+   await parent.setViewportSize({width,height:900});
+   assert.ok(await header.evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&e.scrollWidth<=e.clientWidth;}),'header fits at '+width);
+   const bounds=await brand.boundingBox(), controls=await header.locator('.app-header-controls').boundingBox();
+   assert.ok(bounds.x+bounds.width+8<=controls.x,'brand and navigation do not overlap at '+width);
+   assert.ok(controls.x+controls.width<=width,'navigation remains within viewport');
+   const nav=parent.locator(width>=768?'.desktop-nav-links':'.bottom-tabbar');
+   assert.equal(await nav.getByRole('button',{name:'今天',exact:true}).count(),1);
+   assert.equal(await header.getByText('今天',{exact:true}).count(),1,'one desktop Today label only');
+   assert.equal(await brand.getByText('Small steps. Shared growth.',{exact:true}).count(),0,'no full slogan in compact header');
+   if(width===390 || width===834) await parent.screenshot({path:join(artifacts,`parent-header-${scheme}-${width}.png`),animations:'disabled'});
+  }
+ }
  await parent.getByRole('button',{name:'设置',exact:true}).first().click();
+ assert.equal((await brand.innerText()).trim(),'· '+childName,'brand stays stable when navigating');
  const theme=parent.locator('.settings-theme-row'),group=parent.getByRole('group',{name:'外观主题切换'});
  for(const scheme of ['light','dark']) {
   await parent.emulateMedia({colorScheme:scheme});await group.getByRole('button',{name:'系统',exact:true}).click();
@@ -80,5 +106,5 @@ try {
  failAuth=false;await code.press('Enter');await kid.getByRole('button',{name:'今天',exact:true}).waitFor();
  assert.equal(await kid.evaluate(()=>localStorage.getItem('device_token')),'synthetic-device');
  assert.deepEqual(errors,[]);
- console.log('Auth/settings browser passed: login/register and binding validation, unchanged payloads/session storage, loading/error recovery, no autofocus, theme text/alignment, mobile/tablet layout.');
+ console.log('Auth/settings browser passed: login/register and binding, authenticated brand mark/child name and no duplicated title, long-name bounds at 320/390/767/768/834/1280 in light/dark, stable brand across navigation, unchanged payload/session, theme text/alignment.');
 } finally {await browser?.close();for(const server of servers)await server.close();}
