@@ -20,6 +20,7 @@ try{
  let tasks=[{id:'timed',title:'计时任务',status:'pending',approved:true,created_by:'parent',require_approval:false,reward_stars:2,expected_minutes:20,completion_version:0,plan_id:'plan'},
  {id:'plain',title:'普通任务',status:'pending',approved:true,created_by:'parent',require_approval:false,reward_stars:1,expected_minutes:10,completion_version:0,plan_id:'plan'}];
  let stars=6, created, childCreated, mutationBodies=[],failCompletion=false,redeemCount=0,parentPosts=0;
+ let failCopilotPublish=false,publishWait=null,parseWait=null;const publishBodies=[];
  const today=()=>({date:'2026-11-06',tasks,rewards:{stars_total:stars,current_streak_days:12}});
  const goods=[{id:'item',title:'折扣礼物',status:'active',star_cost:10,discounted_star_cost:8,stock:2}];
  await context.route('https://**/*',r=>r.abort());
@@ -28,8 +29,8 @@ try{
   if(p==='/api/v1/children')return route.fulfill({json:[{id:'kid',name:'测试孩子',streak_threshold:80}]});
   if(p.endsWith('/dashboard'))return route.fulfill({json:{today:{submitted_tasks:0},rewards:today().rewards}});
   if(p==='/api/v1/plans')return route.fulfill({json:[{id:'plan',status:'active',tasks:[]}]});
-  if(p.endsWith('/daily-tasks')){if(req.method()==='POST'){parentPosts++;created=req.postDataJSON();return route.fulfill({status:201,json:created.tasks});}return route.fulfill({json:today()});}
-  if(p==='/api/v1/ai/copilot/parse-tasks')return route.fulfill({json:{raw_summary:'分类校验草稿',resolved_date:'2026-11-06',tasks:[{title:'AI分类任务',expected_minutes:20,reward_stars:1,category:'未知分类'}]}});
+  if(p.endsWith('/daily-tasks')){if(req.method()==='POST'){parentPosts++;created=req.postDataJSON();publishBodies.push(created);if(publishWait)await publishWait;if(failCopilotPublish){failCopilotPublish=false;return route.fulfill({status:500,json:{error:{message:'合成发布失败'}}});}return route.fulfill({status:201,json:created.tasks});}return route.fulfill({json:today()});}
+  if(p==='/api/v1/ai/copilot/parse-tasks'){if(parseWait)await parseWait;return route.fulfill({json:{raw_summary:'分类校验草稿',resolved_date:'2026-11-06',tasks:[{title:'AI分类任务',expected_minutes:20,reward_stars:1,category:'未知分类'}]}});}
   if(p==='/api/v1/child/today')return route.fulfill({json:today()});
   if(p==='/api/v1/child/tasks'&&req.method()==='POST'){childCreated=req.postDataJSON();return route.fulfill({status:201,json:{id:'proposal',...childCreated,approved:false,reward_stars:null}});}
   if(p.endsWith('/complete')){
@@ -79,6 +80,31 @@ try{
  await parent.getByRole('button',{name:'发布',exact:true}).click();await parent.getByText('请为每个任务选择习惯分类',{exact:true}).waitFor();assert.equal(parentPosts,1);
  await parent.getByRole('button',{name:'🧹 家务协助',exact:true}).click();await parent.getByRole('button',{name:'发布',exact:true}).click();
  await parent.getByText('AI 智能建任务',{exact:true}).waitFor({state:'detached'});assert.equal(parentPosts,2);assert.equal(created.tasks[0].description,'[家务协助]');
+ // The closed Copilot stays mounted: successful publication must consume its local draft.
+ const aiPrompt=parent.getByPlaceholder(/^如：每天晚上7点/);
+ async function openCopilot(){await parent.getByRole('button',{name:'AI 建议建任务',exact:true}).click();await aiPrompt.waitFor();}
+ async function assertFreshCopilot(){assert.equal(await aiPrompt.inputValue(),'');assert.equal(await parent.locator('#draft-task-title-0').count(),0);assert.equal(await parent.getByRole('button',{name:'发布',exact:true}).count(),0);assert.equal(await parent.getByRole('button',{name:/^确认发布/}).count(),0);assert.equal(await parent.getByText(/发布任务失败/).count(),0);}
+ await openCopilot();await assertFreshCopilot();assert.equal(parentPosts,2,'reopening a consumed draft sends no write');
+ await aiPrompt.fill('保留失败后的编辑');await parent.getByRole('button',{name:'开始智能解析',exact:true}).click();
+ const draftTitle=parent.locator('#draft-task-title-0');await draftTitle.waitFor();
+ await parent.getByRole('button',{name:'🧹 家务协助',exact:true}).click();await draftTitle.fill('重试保留草稿');
+ await parent.getByRole('button',{name:'自定义',exact:true}).click();await parent.getByLabel('自定义奖励星星').fill('8');
+ const draftDate=await parent.locator('.ios-sheet-content input[type="date"]').inputValue();
+ await parent.getByRole('button',{name:'取消',exact:true}).click();await openCopilot();
+ assert.equal(await aiPrompt.inputValue(),'保留失败后的编辑');assert.equal(await draftTitle.inputValue(),'重试保留草稿');assert.equal(parentPosts,2,'cancel retains the unsent draft');
+ failCopilotPublish=true;let releasePublish;publishWait=new Promise(resolve=>releasePublish=resolve);
+ await parent.getByRole('button',{name:'发布',exact:true}).click();await parent.getByRole('button',{name:'正在发布中…',exact:true}).waitFor();
+ assert.ok(await parent.getByRole('button',{name:'发布中…',exact:true}).isDisabled());assert.ok(await parent.getByRole('button',{name:'正在发布中…',exact:true}).isDisabled());assert.ok(await parent.getByRole('button',{name:'开始智能解析',exact:true}).isDisabled(),'no new parse can refill a consumed draft during publication');
+ releasePublish();publishWait=null;await parent.getByText('发布任务失败：合成发布失败',{exact:true}).waitFor();
+ assert.equal(parentPosts,3);assert.equal(await aiPrompt.inputValue(),'保留失败后的编辑');assert.equal(await draftTitle.inputValue(),'重试保留草稿');assert.equal(await parent.getByLabel('自定义奖励星星').inputValue(),'8');assert.equal(await parent.locator('.ios-sheet-content input[type="date"]').inputValue(),draftDate);
+ const failedBody=publishBodies.at(-1);await parent.getByRole('button',{name:/^确认发布/}).click();
+ await parent.getByText('AI 智能建任务',{exact:true}).waitFor({state:'detached'});assert.equal(parentPosts,4);assert.deepEqual(publishBodies.at(-1),failedBody,'retry preserves title, category, reward and date');
+ await openCopilot();await assertFreshCopilot();assert.equal(parentPosts,4,'footer success clears draft and error without reposting');
+ await aiPrompt.fill('全新的任务');await parent.getByRole('button',{name:'开始智能解析',exact:true}).click();await draftTitle.waitFor();
+ let releaseParse;parseWait=new Promise(resolve=>releaseParse=resolve);await parent.getByRole('button',{name:'开始智能解析',exact:true}).click();await parent.getByRole('button',{name:'正在智能解析中…',exact:true}).waitFor();
+ assert.ok(await parent.getByRole('button',{name:'发布',exact:true}).isDisabled());assert.ok(await parent.getByRole('button',{name:/^确认发布/}).isDisabled(),'no publication overlaps an in-flight parse');
+ releaseParse();parseWait=null;await parent.getByRole('button',{name:'开始智能解析',exact:true}).waitFor();assert.equal(parentPosts,4);await parent.getByRole('button',{name:'取消',exact:true}).click();
+
  const kid=await context.newPage();kid.setDefaultTimeout(15000);kid.on('pageerror',e=>errors.push(e.message));
  await kid.clock.install({time:new Date('2026-11-06T12:00:00Z')});
  await kid.clock.pauseAt(new Date('2026-11-06T12:00:01Z'));
@@ -170,5 +196,5 @@ try{
  const short=kid.getByRole('button',{name:'还差7星',exact:true});await short.waitFor();assert.ok(await short.isDisabled());assert.equal(redeemCount,1);
  await kid.setViewportSize({width:390,height:850});assert.ok(await kid.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  assert.deepEqual(errors,[]);
- console.log('Feature browser passed: deliberate slide completion, directly visible matching timer/focus/schedule controls, responsive light/dark touch targets and focus entry; parent rewards/schedule, local-only timer, pause/reload/retry, final duration and affordability preserved.');
+ console.log('Feature browser passed: Copilot consumes published drafts, retains cancelled/failed edits for retry, guards parse/publish overlap; deliberate slide completion, directly visible matching timer/focus/schedule controls, responsive light/dark touch targets and focus entry; parent rewards/schedule, local-only timer, pause/reload/retry, final duration and affordability preserved.');
 }finally{await browser?.close();for(const s of servers)await s.close();}
