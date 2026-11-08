@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {slideTaskCompletion} from './browser-slide-helpers.mjs';
 import {mkdir} from 'node:fs/promises';
 const screenshotDir=process.env.FORM_SCREENSHOT_DIR;
 if(screenshotDir)await mkdir(screenshotDir,{recursive:true});
@@ -96,8 +97,8 @@ try{
  await kid.getByRole('button',{name:'添加',exact:true}).click();
  assert.ok(!('reward_stars' in childCreated));assert.equal(childCreated.expected_minutes,20);assert.equal(childCreated.scheduled_start,null);assert.equal(childCreated.scheduled_end,null);
  const actions=kid.getByRole('group',{name:'任务操作：计时任务',exact:true});
- const complete=kid.getByLabel('标记完成: 计时任务',{exact:true});
- assert.equal((await complete.innerText()).trim(),'完成','completion is an explicit labelled action');
+ const complete=kid.getByRole('button',{name:'滑动完成: 计时任务',exact:true});
+ assert.equal(await complete.locator('svg').count(),1,'pending thumb has a direction icon, not a completion check');
  assert.equal(await actions.getByRole('button').allTextContents().then(a=>a.map(s=>s.trim()).join('|')),'计时|专注|安排时间');
  assert.equal(await kid.getByLabel('任务选项：计时任务',{exact:true}).count(),0,'common actions are not hidden in a menu');
  for(const theme of ['light','dark']){
@@ -123,7 +124,7 @@ try{
  await actions.getByRole('button',{name:'安排时间',exact:true}).click();await kid.getByLabel('开始小时',{exact:true}).waitFor();
  await kid.getByRole('button',{name:'取消',exact:true}).click();
  await kid.getByRole('button',{name:'计时',exact:true}).first().click();
- assert.equal(await kid.getByLabel('标记完成: 计时任务',{exact:true}).count(),0,'only one completion control while timing');
+ assert.equal(await kid.getByRole('button',{name:'滑动完成: 计时任务',exact:true}).count(),1,'one slide completion control while timing');
  await kid.getByLabel('计时选项',{exact:true}).click();await kid.getByRole('menuitem',{name:'取消计时',exact:true}).press('Escape');
  assert.equal(await kid.getByRole('menu').count(),0);
  assert.equal(await kid.getByLabel('计时选项',{exact:true}).evaluate(e=>e===document.activeElement),true);
@@ -137,7 +138,7 @@ try{
  assert.equal(mutationBodies.length,0,'timer actions must never upload a running timer');
  await kid.reload();await kid.getByLabel('本机计时').filter({hasText:'02:05'}).waitFor();
  assert.equal(await parent.getByText(/计时中|未记录/).count(),0);
- failCompletion=true;await kid.getByLabel('本机计时').getByRole('button',{name:'完成任务',exact:true}).click();
+ failCompletion=true;await slideTaskCompletion(kid,'计时任务',kid.getByLabel('本机计时'));
  await kid.getByText('完成结果待同步，联网后会自动重试',{exact:true}).waitFor();
  await kid.getByText('完成结果待同步',{exact:true}).first().waitFor();
  assert.equal(mutationBodies[0].actual_seconds,125);const operation=mutationBodies[0].operation_id;
@@ -158,7 +159,8 @@ try{
  await kid.getByRole('alertdialog').getByRole('button',{name:'取消计时',exact:true}).click();
  await kid.getByLabel('本机计时').waitFor({state:'detached'});
  assert.equal(mutationBodies.length,2,'cancelling a local timer never uploads');
- await kid.getByLabel('标记完成: 普通任务',{exact:true}).click();await kid.getByLabel('任务已完成').nth(1).waitFor();
+ await slideTaskCompletion(kid,'普通任务');await kid.getByLabel('任务已完成').nth(1).waitFor();
+ assert.equal(await kid.getByLabel('任务已完成').nth(1).locator('svg').count(),1,'checkmark appears only after completion');
  assert.ok(!('actual_seconds' in mutationBodies.at(-1)));
  assert.equal(await kid.getByText('未记录',{exact:true}).count(),0);
  // Balance is now 9. A successful 8-star redemption must disable the remaining item.
@@ -168,5 +170,5 @@ try{
  const short=kid.getByRole('button',{name:'还差7星',exact:true});await short.waitFor();assert.ok(await short.isDisabled());assert.equal(redeemCount,1);
  await kid.setViewportSize({width:390,height:850});assert.ok(await kid.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  assert.deepEqual(errors,[]);
- console.log('Feature browser passed: explicit completion action, directly visible matching timer/focus/schedule controls, responsive light/dark touch targets and focus entry; parent rewards/schedule, local-only timer, pause/reload/retry, final duration and affordability preserved.');
+ console.log('Feature browser passed: deliberate slide completion, directly visible matching timer/focus/schedule controls, responsive light/dark touch targets and focus entry; parent rewards/schedule, local-only timer, pause/reload/retry, final duration and affordability preserved.');
 }finally{await browser?.close();for(const s of servers)await s.close();}

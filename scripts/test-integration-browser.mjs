@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {slideTaskCompletion} from './browser-slide-helpers.mjs';
 import { fileURLToPath } from 'node:url';
 import { mkdir, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -153,7 +154,7 @@ try {
   assert.deepEqual([...(await readFile(childPng)).subarray(0,8)],[137,80,78,71,13,10,26,10]);
   await childDialog.getByRole('button',{name:'完成',exact:true}).click();
   const mutation=child.waitForRequest(r=>r.url().endsWith('/complete'));
-  await child.getByLabel('标记完成: 测试阅读').click();await mutation;
+  await slideTaskCompletion(child,'测试阅读');await mutation;
   assert.equal(await childShare.isDisabled(),true);
   await child.getByLabel('任务已完成').waitFor();
   await childShare.waitFor({state:'visible'});
