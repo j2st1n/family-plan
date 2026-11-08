@@ -144,7 +144,7 @@ export default function App() {
           <img src={BRAND_MARK_URL} alt={APP_DESCRIPTION} width="32" height="36" />
           {activeChild && (
             <span className="app-header-child" title={activeChild.name}>
-              · {activeChild.name}
+              {activeChild.name}
             </span>
           )}
         </div>

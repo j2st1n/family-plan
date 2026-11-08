@@ -1,4 +1,5 @@
 import FieldLabel from "../../../shared-web/FieldLabel.jsx";
+import { APP_DESCRIPTION, BRAND_MARK_URL } from "../../../shared-web/brand.js";
 import {readTimer, readCompletions, startTimer, pauseTimer, saveTimer, timerMilliseconds, freezeCompletion, acknowledgeCompletion} from "../utils/taskTimer.js";
 import TaskTimingFields from "../../../shared-web/TaskTimingFields.jsx";
 import {plannedEnd, formatActualSeconds, formatElapsedSeconds} from "../../../shared-web/taskTiming.js";
@@ -363,17 +364,20 @@ export default function Today({ child, onExpired, active }) {
         <TaskStopwatch timer={localTimer} elapsedSeconds={Math.floor(timerMilliseconds(localTimer,clock)/1000)} onToggle={()=>toggleTimer({id:localTimer.taskId,title:localTimer.title})} onCancel={cancelTimer}/>
       </div>}
       {/* 顶部标题区 (Apple iOS Large Title) */}
-      <div style={{ marginBottom: "8px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
-            <h1 className="ios-large-title">
+      <div className="child-today-header">
+        <div className="child-today-header-row">
+          <div className="child-today-identity">
+            <img className="child-today-brand" src={BRAND_MARK_URL} alt={APP_DESCRIPTION} width="36" height="42" />
+            <div className="child-today-heading">
+            <h1 className="ios-large-title child-today-title" title={`你好，${child?.name ?? "小朋友"}`}>
               你好，{child?.name ?? "小朋友"}
             </h1>
             <p className="ios-page-subtitle">
               {dateStr}
             </p>
+            </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div className="child-today-tools">
             {data?.rewards?.is_on_vacation && (
               <span
                 style={{
@@ -403,8 +407,8 @@ export default function Today({ child, onExpired, active }) {
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: "36px",
-                height: "36px",
+                width: "44px",
+                height: "44px",
                 borderRadius: "50%",
                 backgroundColor: "var(--card)",
                 border: "1px solid var(--border)",
@@ -436,7 +440,7 @@ export default function Today({ child, onExpired, active }) {
           border: "1px solid var(--border)",
           borderRadius: "16px",
           padding: "16px 20px",
-          marginBottom: "16px",
+          marginBottom: data?.tasks?.length === 0 ? 0 : "16px",
           boxShadow: "var(--shadow-sm)",
           display: "flex",
           alignItems: "center",
@@ -445,7 +449,7 @@ export default function Today({ child, onExpired, active }) {
       >
         <div>
           <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.015em" }}>
-            今日已完成 {completed.length} / {(data?.tasks || []).length} 项
+            今日进度 {completed.length} / {(data?.tasks || []).length} 项
           </div>
           <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "10px", flexWrap: "wrap" }}>
             <span className="stat-chip">⭐ {formatStars(data?.rewards?.stars_total ?? 0)} 星</span>
@@ -458,23 +462,10 @@ export default function Today({ child, onExpired, active }) {
       </div>
 
       {data?.tasks?.length === 0 && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "40px 16px",
-            background: "var(--card)",
-            border: "1px solid var(--border)",
-            borderRadius: "14px",
-            boxShadow: "var(--shadow-sm)",
-            color: "var(--muted)",
-          }}
-        >
-          <p style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text)", marginBottom: "4px" }}>
-            今天的所有任务都整理好啦
-          </p>
-          <p style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
-            享受充实的一天，尽情去探索与玩耍吧！
-          </p>
+        <div className="child-today-empty">
+          <img src={BRAND_MARK_URL} alt="" aria-hidden="true" width="58" height="64" />
+          <p className="child-today-empty-title">今天还没有任务</p>
+          <p className="child-today-empty-note">从一件小事开始吧。</p>
         </div>
       )}
 
@@ -563,25 +554,10 @@ export default function Today({ child, onExpired, active }) {
       )}
 
       {/* 新建任务入口 (统一 iOS Sheet 底部滑出模式) */}
-      <div style={{ marginTop: "1rem" }}>
+      <div className={data?.tasks?.length === 0 ? "child-today-add child-today-add--empty" : "child-today-add"}>
         <button
+          className="child-today-add-button"
           onClick={() => setShowAdd(true)}
-          style={{
-            width: "100%",
-            padding: "12px",
-            fontSize: "0.95rem",
-            fontWeight: 600,
-            color: "var(--accent)",
-            borderRadius: "14px",
-            background: "var(--card)",
-            border: "1px solid var(--border)",
-            boxShadow: "var(--shadow-sm)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-          }}
         >
           <span>+ 添加日常任务</span>
         </button>

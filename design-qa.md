@@ -1,3 +1,47 @@
+# Paired brand identity QA — 2026-11-08
+
+## Target and evidence
+
+- Selected visual truth: `docs/design/paired-brand-identity/selected-20261108.png`, first displayed concept,1487×1058 source pixels. One coherent parent/Kids design, using fictional小禾,18 stars,6-day streak,2026-11-08 Sunday.
+- Implementation uses real production-built parent and child apps on local synthetic APIs. Parent header screenshot820×54 CSS/pixels at1280×900 viewport; child focused crop680×560 at834×760 viewport, full capture834×760. Screenshots are JPEG with density1. All evidence is under the same design folder.
+- Full paired comparison in one input: `comparison-final.jpg`. Source displayed720px wide; actual parent header642px wide; actual child root558px wide, matching the source's component widths while preserving the existing product max-widths. Screenshot density normalized by region width. Existing sticky parent navigation and persistent child bottom tabs stay functional; generated outer presentation frames/labels are not product chrome.
+- Additional state evidence: `child-full-final.jpg`, `child-mobile-dark.jpg`, `parent-long-dark.jpg`, `layout-checks.json` and `final-layout-checks.json`.
+
+## Findings and comparison history
+
+1. [P1, resolved] Parent name was a muted secondary annotation preceded by a dot. Name is now18px/600 primary text beside the unchanged32×36 logo. Existing truncation and full-name tooltip retained.
+2. [P1, resolved] Kids had no brand anchor and zero tasks used all-complete wording. Greeting now includes the supplied logo; zero tasks explicitly say今天还没有任务, with neutral monochrome decorative brand, supporting text and a single compact add action. Nonempty task/action/timer paths remain.
+3. [P2, resolved after first visual comparison] Initial child28px title/50px logo and52px summary-to-empty gap were larger than the selected source. Reduced to24px title,42px brand,32px gap,64px decorative mark and a minimum44px add action. Captured final built app and repeated the same-input comparison. No actionable P0/P1/P2 differences remain.
+4. Rejected transient mobile capture with incomplete paint; stable dark capture accepted. An initial viewport batch affected a different active tab; discarded the mismatched width readings and reran with actual `innerWidth` recorded. Local demo server initialization was corrected before visual review; product runtime was unaffected.
+
+## Fidelity surfaces
+
+- Typography: native system/PingFang stack; primary18px/600 parent name,24px/700 child greeting, muted14px date,22px empty title (20px narrow),16px supporting copy. Long text ellipsizes and retains accessible/title content. No new font or wordmark.
+- Spacing/layout: logo/name baseline group, date aligned to greeting, existing right navigation preserved. Kids header16px gap,24px section gap, one progress surface and unboxed empty content. Mobile utility row wraps below identity to preserve44px tools rather than compressing text. Existing application max widths and bottom navigation remain intentionally. Presentation-frame radii from the generated board are not applied to the whole application.
+- Colors/tokens: existing light/dark background/card/text/accent tokens. Parent name uses primary text; pending empty state is neutral. Existing reward colors and semantic statuses remain. Decorative gray brand is intentionally quiet and excluded from the accessibility tree.
+- Assets: supplied shared vector logo is used in both headers and as a grayscale decorative empty-state image. Transparent geometry and sharp vector rendering retained; no rasterized interface, approximate logo or remote asset.
+- Copy/content: no dot before parent name; child greeting/date remain personal.今日进度0/0 is a count, while empty explanatory copy no longer claims completion. One add entry opens the existing sheet; sharing opens the existing poster modal. No new feature or product name.
+
+## Validation and limits
+
+- Parent25 and child21 unit tests passed; both production builds and `git diff --check` passed. Final layout-only size refinement rebuilt the child app successfully.
+- IAB synthetic built-app checks: add sheet opens and submits a proposal, correctly transitions out of no-task state to pending parent approval; share poster opens/closes; parent settings/Today navigation preserves brand; theme toggles work. No browser error logs on inspected final app tabs.
+- Actual measured320/390/834/1280 child widths: no horizontal overflow,24px title,44px share/theme controls and44.8px primary add action. Parent short/long names fit320/390/768/834/1280, header controls do not overlap; child long names truncate at320/390/834; vacation controls fit320.
+- Existing authentication/browser regression updated for no-dot/primary name and child branding/empty-state/action layout. The updated automated browser script has syntax validation but has not been executed in CI in this local-design phase. Full CI remains required before publication. Manual IAB checks above are completed evidence.
+- No backend, schema, authentication payload, reward, timer, focus, completion or sharing implementation changed. No production writes, GitHub push or deployment in this phase. Physical iPad/VoiceOver and full accessibility compliance are not claimed.
+
+## Implementation checklist
+
+- [x] Parent readable identity and unchanged navigation.
+- [x] Child brand/greeting and neutral compact empty state.
+- [x] Existing add/share flows and theme verified in browser.
+- [x] Reference/actual comparison repeated after scale correction.
+- [ ] Full CI and production release if publication is requested.
+
+final result: passed
+
+---
+
 # Slide-to-complete design QA — 2026-11-08
 
 Scope: Kids task completion, including the active stopwatch and finished focus session. User selected the third generated concept, slide-to-complete, after rejecting the blue checked pending button and bare completion text.

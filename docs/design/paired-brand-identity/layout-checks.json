@@ -1,0 +1,261 @@
+{
+  "parent": [
+    {
+      "brandRight": 93.6171875,
+      "color": "rgb(29, 29, 31)",
+      "controlsLeft": 255,
+      "font": "18px",
+      "header": {
+        "bottom": 154,
+        "height": 48,
+        "left": 0,
+        "right": 305,
+        "top": 106,
+        "width": 305,
+        "x": 0,
+        "y": 106
+      },
+      "overflow": false,
+      "width": 320
+    },
+    {
+      "brandRight": 93.6171875,
+      "color": "rgb(29, 29, 31)",
+      "controlsLeft": 325,
+      "font": "18px",
+      "header": {
+        "bottom": 109,
+        "height": 48,
+        "left": 0,
+        "right": 375,
+        "top": 61,
+        "width": 375,
+        "x": 0,
+        "y": 61
+      },
+      "overflow": false,
+      "width": 390
+    },
+    {
+      "brandRight": 101.6171875,
+      "color": "rgb(29, 29, 31)",
+      "controlsLeft": 412.34375,
+      "font": "18px",
+      "header": {
+        "bottom": 86.5,
+        "height": 54,
+        "left": 0,
+        "right": 819,
+        "top": 32.5,
+        "width": 819,
+        "x": 0,
+        "y": 32.5
+      },
+      "overflow": false,
+      "width": 834
+    },
+    {
+      "brandRight": 324.1171875,
+      "color": "rgb(29, 29, 31)",
+      "controlsLeft": 635.84375,
+      "font": "18px",
+      "header": {
+        "bottom": 86.5,
+        "height": 54,
+        "left": 222.5,
+        "right": 1042.5,
+        "top": 32.5,
+        "width": 820,
+        "x": 222.5,
+        "y": 32.5
+      },
+      "overflow": false,
+      "width": 1280
+    }
+  ],
+  "child": [
+    {
+      "overflow": false,
+      "surface": "child",
+      "title": {
+        "bottom": 134,
+        "height": 32.5,
+        "left": 68,
+        "right": 194.109375,
+        "top": 101.5,
+        "width": 126.109375,
+        "x": 68,
+        "y": 101.5
+      },
+      "tools": [
+        {
+          "height": 44,
+          "right": 248,
+          "width": 44,
+          "x": 204
+        },
+        {
+          "height": 44,
+          "right": 300,
+          "width": 44,
+          "x": 256
+        }
+      ],
+      "width": 320
+    },
+    {
+      "overflow": false,
+      "surface": "child",
+      "title": {
+        "bottom": 117.5,
+        "height": 32.5,
+        "left": 68,
+        "right": 194.109375,
+        "top": 85,
+        "width": 126.109375,
+        "x": 68,
+        "y": 85
+      },
+      "tools": [
+        {
+          "height": 44,
+          "right": 318,
+          "width": 44,
+          "x": 274
+        },
+        {
+          "height": 44,
+          "right": 370,
+          "width": 44,
+          "x": 326
+        }
+      ],
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "surface": "child",
+      "title": {
+        "bottom": 99.5,
+        "height": 35,
+        "left": 169,
+        "right": 304.8046875,
+        "top": 64.5,
+        "width": 135.8046875,
+        "x": 169,
+        "y": 64.5
+      },
+      "tools": [
+        {
+          "height": 44,
+          "right": 673,
+          "width": 44,
+          "x": 629
+        },
+        {
+          "height": 44,
+          "right": 725,
+          "width": 44,
+          "x": 681
+        }
+      ],
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "surface": "child",
+      "title": {
+        "bottom": 99.5,
+        "height": 35,
+        "left": 392,
+        "right": 527.8046875,
+        "top": 64.5,
+        "width": 135.8046875,
+        "x": 392,
+        "y": 64.5
+      },
+      "tools": [
+        {
+          "height": 44,
+          "right": 896,
+          "width": 44,
+          "x": 852
+        },
+        {
+          "height": 44,
+          "right": 948,
+          "width": 44,
+          "x": 904
+        }
+      ],
+      "width": 1280
+    }
+  ],
+  "childLong": [
+    {
+      "fullTitle": "你好，小禾和超级超级超级超级超级超级超级超级长的昵称",
+      "overflow": false,
+      "titleRight": 300,
+      "titleWidth": 232,
+      "toolsRight": 300,
+      "truncated": true,
+      "width": 320
+    },
+    {
+      "fullTitle": "你好，小禾和超级超级超级超级超级超级超级超级长的昵称",
+      "overflow": false,
+      "titleRight": 370,
+      "titleWidth": 302,
+      "toolsRight": 370,
+      "truncated": true,
+      "width": 390
+    },
+    {
+      "fullTitle": "你好，小禾和超级超级超级超级超级超级超级超级长的昵称",
+      "overflow": false,
+      "titleRight": 613,
+      "titleWidth": 444,
+      "toolsRight": 725,
+      "truncated": true,
+      "width": 834
+    }
+  ],
+  "parentLong": [
+    {
+      "headerOverflow": false,
+      "name": "小禾和超级超级超级超级超级超级超级超级长的昵称",
+      "nonoverlap": true,
+      "truncated": true,
+      "width": 320
+    },
+    {
+      "headerOverflow": false,
+      "name": "小禾和超级超级超级超级超级超级超级超级长的昵称",
+      "nonoverlap": true,
+      "truncated": true,
+      "width": 390
+    },
+    {
+      "headerOverflow": false,
+      "name": "小禾和超级超级超级超级超级超级超级超级长的昵称",
+      "nonoverlap": true,
+      "truncated": true,
+      "width": 768
+    },
+    {
+      "headerOverflow": false,
+      "name": "小禾和超级超级超级超级超级超级超级超级长的昵称",
+      "nonoverlap": true,
+      "truncated": true,
+      "width": 834
+    },
+    {
+      "headerOverflow": false,
+      "name": "小禾和超级超级超级超级超级超级超级超级长的昵称",
+      "nonoverlap": true,
+      "truncated": true,
+      "width": 1280
+    }
+  ],
+  "synthetic": true
+}

@@ -252,9 +252,9 @@ h1, h2, h3, h4, .display-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--muted);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .app-header-controls {
