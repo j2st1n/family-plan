@@ -37,6 +37,7 @@ export default function TaskCopilotModal({
   if (!isOpen) return null;
 
   async function handleParse() {
+    if (loading || publishing) return;
     if (!prompt.trim()) {
       setError("请输入口语描述");
       return;
@@ -107,6 +108,7 @@ export default function TaskCopilotModal({
   }
 
   async function handlePublish() {
+    if (publishing || loading) return;
     if (!result?.tasks || result.tasks.length === 0) {
       setError("没有可发布的任务");
       return;
@@ -133,6 +135,10 @@ export default function TaskCopilotModal({
       }));
 
       await api.createManualTasks(token, planId, taskDate, payloadTasks);
+      // The modal stays mounted when closed; only confirmed publication consumes its draft.
+      setPrompt("");
+      setResult(null);
+      setError("");
       onSuccess?.(taskDate);
       onClose();
     } catch (err) {
@@ -162,7 +168,7 @@ export default function TaskCopilotModal({
             <button
               type="button"
               className="ios-sheet-nav-action-btn"
-              disabled={publishing}
+              disabled={publishing || loading}
               onClick={handlePublish}
             >
               {publishing ? "发布中…" : "发布"}
@@ -235,7 +241,7 @@ export default function TaskCopilotModal({
             type="button"
             className="ios-btn-primary"
             onClick={handleParse}
-            disabled={loading}
+            disabled={loading || publishing}
             style={{ width: "100%", padding: "12px", fontSize: "0.95rem", marginBottom: "18px" }}
           >
             {loading ? "正在智能解析中…" : "开始智能解析"}
@@ -451,7 +457,7 @@ export default function TaskCopilotModal({
               type="button"
               className="ios-btn-primary"
               onClick={handlePublish}
-              disabled={publishing}
+              disabled={publishing || loading}
               style={{ width: "100%", padding: "12px", fontSize: "0.95rem" }}
             >
               {publishing
