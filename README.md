@@ -133,7 +133,3 @@ pytest src/backend/tests
 ## 📄 开源许可证
 
 本项目基于 [MIT License](LICENSE) 协议开源。
-
-## 双账号开发与增量同步
-
-主仓为 `j2st1n/family-plan`，继续在 `meiohi/family-plan` 开发。通过主仓 Actions 的 **Sync meiohi development** 手动准备同步分支，创建 PR 并在 CI 通过后使用合并提交合入。具体见[同步操作说明](docs/sync-meiohi.md)。仓库同步不会部署生产或修改数据库。
