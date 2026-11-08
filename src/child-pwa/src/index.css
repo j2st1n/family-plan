@@ -555,6 +555,33 @@ textarea {
   margin-bottom: 16px;
 }
 
+/* A shared identity anchors Today without turning the greeting into a toolbar. */
+.child-today-header { margin-bottom: 24px; }
+.child-today-header-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.child-today-identity { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.child-today-brand { display: block; object-fit: contain; flex-shrink: 0; }
+.child-today-heading { min-width: 0; }
+.child-today-title { font-size: 24px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.child-today-heading .ios-page-subtitle { margin: 4px 0 0; }
+.child-today-tools { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.child-today-tools .ios-theme-trigger-btn { width: 44px; height: 44px; }
+.child-today-empty { text-align: center; padding: 32px 16px 0; }
+.child-today-empty > img { display: block; object-fit: contain; margin: 0 auto 18px; filter: grayscale(1); opacity: .22; }
+.child-today-empty-title { color: var(--text); font-size: 22px; font-weight: 600; line-height: 1.4; }
+.child-today-empty-note { color: var(--muted); font-size: 16px; margin-top: 6px; }
+.child-today-add { margin-top: 16px; }
+.child-today-add-button { width: 100%; min-height: 44px; padding: 12px 20px; font-size: .95rem; font-weight: 600; color: var(--accent); border-radius: 14px; background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.child-today-add--empty { margin-top: 24px; text-align: center; }
+.child-today-add--empty > .child-today-add-button { width: auto; max-width: 100%; margin: 0 auto; min-width: 210px; padding: 10px 20px; color: #fff; background: var(--accent); border-color: transparent; box-shadow: none; }
+.child-today-add-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 479px) {
+  .child-today-header-row { align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+  .child-today-identity { width: 100%; gap: 12px; }
+  .child-today-brand { width: 36px; height: 42px; }
+  .child-today-tools { margin-left: auto; }
+  .child-today-empty-title { font-size: 20px; }
+}
+
 /* 2. iOS Inset Grouped Card */
 .ios-grouped-card {
   background: var(--card);

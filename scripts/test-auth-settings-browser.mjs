@@ -60,7 +60,8 @@ try {
  const header=parent.locator('.app-header'),brand=header.locator('.app-header-brand');
  await brand.getByRole('img',{name:'Family Habit Planner',exact:true}).evaluate(img=>img.decode());
  assert.equal(await brand.locator('.app-header-child').getAttribute('title'),childName);
- assert.equal((await brand.innerText()).trim(),'· '+childName);
+ assert.equal((await brand.innerText()).trim(),childName);
+ assert.ok(await brand.locator('.app-header-child').evaluate(e=>{const s=getComputedStyle(e);return parseFloat(s.fontSize)>=18&&Number(s.fontWeight)>=600&&s.color==='rgb(29, 29, 31)';}),'child name has primary readable weight and color');
  for(const scheme of ['light','dark']) {
   await parent.emulateMedia({colorScheme:scheme});
   for(const width of [320,390,767,768,834,1280]) {
@@ -77,7 +78,7 @@ try {
   }
  }
  await parent.getByRole('button',{name:'设置',exact:true}).first().click();
- assert.equal((await brand.innerText()).trim(),'· '+childName,'brand stays stable when navigating');
+ assert.equal((await brand.innerText()).trim(),childName,'brand stays stable when navigating');
  const theme=parent.locator('.settings-theme-row'),group=parent.getByRole('group',{name:'外观主题切换'});
  for(const scheme of ['light','dark']) {
   await parent.emulateMedia({colorScheme:scheme});await group.getByRole('button',{name:'系统',exact:true}).click();
@@ -105,6 +106,19 @@ try {
  }
  failAuth=false;await code.press('Enter');await kid.getByRole('button',{name:'今天',exact:true}).waitFor();
  assert.equal(await kid.evaluate(()=>localStorage.getItem('device_token')),'synthetic-device');
+ await kid.locator('.child-today-header').getByRole('img',{name:'Family Habit Planner',exact:true}).evaluate(img=>img.decode());
+ await kid.getByText('今天还没有任务',{exact:true}).waitFor();
+ assert.equal(await kid.getByText('今天的所有任务都整理好啦',{exact:true}).count(),0,'empty day is not described as completed');
+ await kid.getByRole('button',{name:'+ 添加日常任务',exact:true}).click();await kid.getByText('添加任务',{exact:true}).waitFor();
+ await kid.getByRole('button',{name:'取消',exact:true}).click();
+ for(const scheme of ['light','dark'])for(const width of [320,390,834,1280]) {
+  await kid.emulateMedia({colorScheme:scheme});await kid.setViewportSize({width,height:900});
+  assert.ok(await kid.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'child identity fits '+width);
+  const geometry=await kid.locator('.child-today-header').evaluate(e=>{const title=e.querySelector('h1').getBoundingClientRect(),tools=e.querySelector('.child-today-tools').getBoundingClientRect();return{right:tools.right,noOverlap:title.right<=tools.left||title.bottom<=tools.top};});
+  assert.ok(geometry.right<=width&&geometry.noOverlap,'identity and utility controls do not overlap');
+  assert.ok(await kid.locator('.child-today-tools button').evaluateAll(es=>es.every(e=>{let r=e.getBoundingClientRect();return r.width>=44&&r.height>=44;})),'44px child utility targets');
+ }
+
  assert.deepEqual(errors,[]);
  console.log('Auth/settings browser passed: login/register and binding, authenticated brand mark/child name and no duplicated title, long-name bounds at 320/390/767/768/834/1280 in light/dark, stable brand across navigation, unchanged payload/session, theme text/alignment.');
 } finally {await browser?.close();for(const server of servers)await server.close();}
