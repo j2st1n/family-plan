@@ -1,5 +1,6 @@
 import {PauseIcon, PlayIcon} from "@heroicons/react/24/solid";
 import TaskOptionsMenu from "./TaskOptionsMenu.jsx";
+import SlideToComplete from "./SlideToComplete.jsx";
 import {TimerIcon} from "./Icons.jsx";
 import {formatActualSeconds, formatElapsedSeconds} from "../../../shared-web/taskTiming.js";
 
@@ -21,9 +22,8 @@ export default function TaskStopwatch({timer, elapsedSeconds, onToggle, onComple
         {running ? <PauseIcon aria-hidden="true" /> : <PlayIcon aria-hidden="true" />}
         {running ? "暂停" : "继续"}
       </button>}
-      {onComplete && <button type="button" className="task-stopwatch-primary" disabled={busy} onClick={onComplete}>
-        {busy ? "正在完成…" : "完成任务"}
-      </button>}
+
     </div>
+    {onComplete && <SlideToComplete taskName={timer.title} status={busy ? "busy" : "ready"} onComplete={onComplete} />}
   </section>;
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import useScreenWakeLock from "../hooks/useScreenWakeLock.js";
+import SlideToComplete from "./SlideToComplete.jsx";
 import { playTimerDone } from "../utils/soundFx.js";
 
 /**
@@ -100,7 +101,7 @@ export default function FocusTimer({ task, onClose, onComplete }) {
   };
 
   return (
-    <div style={styles.overlay}>
+    <div role="dialog" aria-modal="true" aria-label="专注模式" style={styles.overlay}>
       {/* 顶部导航与任务信息 */}
       <div style={styles.header}>
         <button
@@ -224,14 +225,7 @@ export default function FocusTimer({ task, onClose, onComplete }) {
 
         {status === "completed" && (
           <div style={styles.buttonGroup}>
-            {onComplete && (
-              <button
-                onClick={handleFinishAndComplete}
-                style={styles.completeBtn}
-              >
-                🌟 领取奖励并完成任务
-              </button>
-            )}
+            {onComplete && <SlideToComplete taskName={task?.title || "专注任务"} onComplete={handleFinishAndComplete} />}
             <button onClick={onClose} style={styles.secondaryBtn}>
               返回今日任务
             </button>

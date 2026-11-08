@@ -1,3 +1,38 @@
+# Slide-to-complete design QA — 2026-11-08
+
+Scope: Kids task completion, including the active stopwatch and finished focus session. User selected the third generated concept, slide-to-complete, after rejecting the blue checked pending button and bare completion text.
+
+## Reference and comparison evidence
+
+- Selected source: `docs/design/task-completion/slide-selected-20261107.png`.
+- Same-input comparison: `docs/design/task-completion/comparison.jpg`, captured from an IAB comparison board showing the selected source and both actual states together. Source normalized to674px wide; actual card crops rendered614px wide from an834px viewport. Screenshot density differs from the generated artboard; comparison uses card width and matching light pending/completed states.
+- Actual built application: `pending-light.jpg`, `completed-light.jpg`, `dark-mobile.jpg` in the same folder. All captures use synthetic data; no production family records.
+
+## Findings and fixes
+
+- [P1, resolved] Pending checked pill looked already completed. Replaced with a neutral track and draggable white thumb with blue double chevrons. Only released full travel submits; taps, partial/backtracked/vertical gestures reset.
+- [P2, resolved] Previous bare text lacked a distinct deliberate action. Full-width52px track now sits below the three visible common actions. Completion alone shows a quiet check/status.
+- [P2, resolved] First implementation title/metadata were undersized. Increased to18/14px and card padding18px, recaptured final pending and stable completed states. A confetti-obscured capture was rejected in favor of the stable capture.
+
+## Fidelity surfaces
+
+- Typography: native system fonts, semibold title, muted metadata, matching14px icon/text common actions. Existing product type scale is retained rather than copying raster text. Clear hierarchy matches the selected concept.
+- Spacing/layout:52px full-width track,44px thumb, neutral inset, capsule corners and consistent16px spacing. Existing grouped task containers remain, so card-edge composition differs from the standalone generated artboard intentionally.320/390/834px DOM measurements show no horizontal overflow; actions remain directly visible.
+- Colors: existing light/dark tokens, neutral track, white/light or gray/dark thumb, blue action icons, muted status; no green or success mark on pending state.
+- Assets/icons: existing library vector icons and original🌟reward emoji; no raster UI or generated glyphs in the product.
+- Copy/content:计时、专注、安排时间 directly visible when eligible;向右滑动完成 states the gesture. Pending approval, submitting and offline queued results are explicit states. Keyboard/assistive activation asks for confirmation rather than silently completing.
+
+## Verification and limits
+
+- IAB on actual production-built preview: thumb tap ignored, partial drag reset, full drag completed synthetic task, keyboard Enter opened confirmation and cancellation retained pending state. Light/dark and narrow layouts inspected.
+- Child21/parent25 unit tests and child production build passed on2026-11-08. Browser CI adds real pointer/touch, cancellation, request-lock, keyboard, stopwatch duration and focus completion coverage; CI must pass before merge/deployment.
+- Existing completion callbacks, final-only elapsed result, offline retry and approval rules remain. No backend/schema/auth or parent UI changes. Physical iPad/VoiceOver behavior is not claimed verified.
+- No actionable P0/P1/P2 design findings remain within this change.
+
+final result: passed
+
+---
+
 # Authentication and settings visual QA — 2026-11-07
 
 ## Target and evidence

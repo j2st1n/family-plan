@@ -569,7 +569,7 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 18px 16px;
   background: var(--card);
   position: relative;
   transition: background-color 0.12s ease;
@@ -1004,18 +1004,40 @@ html[data-theme="dark"] .task-text-action { --timer-muted: #AEAEB2; }
 .task-text-action--secondary { color: var(--timer-muted); }
 .task-stopwatch-digits.is-long { font-size: clamp(44px, 14vw, 72px); }
 .task-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0 12px; margin-top: 4px; }
-.task-card-actions .task-text-action { white-space: nowrap; }
-.task-check-btn.task-complete-action {
-  width: auto; height: auto; min-width: 80px; min-height: 44px; padding: 10px 14px;
-  gap: 5px; border: 0; border-radius: 999px; background: var(--accent); color: #fff;
-  font: inherit; font-size: 14px; font-weight: 600; white-space: nowrap; box-shadow: none;
-}
-.task-complete-action > svg { width: 17px; height: 17px; flex-shrink: 0; }
-.task-check-btn.task-complete-action.completed { background: var(--card-subtle); color: var(--muted); box-shadow: none; }
-.task-check-btn.task-complete-action:disabled:not(.completed) { opacity: .5; cursor: default; }
-.task-check-btn.task-complete-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.task-card-actions .task-text-action { white-space: nowrap; color: var(--accent); font-size: 14px; font-weight: 400; }
+.task-card-actions .task-text-action svg { width: 16px; height: 16px; stroke-width: 1.6; }
+
 
 /* Menus may extend beyond a grouped row without clipping their actions. */
 .task-list-card { overflow: visible; }
 .task-list-card > .reminders-task-row:first-child { border-top-left-radius: 13px; border-top-right-radius: 13px; }
 .task-list-card > .reminders-task-row:last-child { border-bottom-left-radius: 13px; border-bottom-right-radius: 13px; }
+
+/* Completion is a deliberate gesture; neither tapping the track nor the thumb submits. */
+.slide-complete {
+  --slide-thumb-width: clamp(60px, 14%, 80px);
+  --slide-progress: 0; --slide-label: #6E6E73; --slide-thumb: #fff;
+  position: relative; width: 100%; min-width: 0; height: 52px; margin-top: 16px;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  border-radius: 999px; background: var(--card-subtle); color: var(--slide-label);
+  font: 500 15px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  user-select: none; -webkit-user-select: none; touch-action: pan-y;
+}
+.slide-complete-label { padding: 0 16px 0 calc(var(--slide-thumb-width) + 8px); text-align: center; pointer-events: none; }
+.slide-complete-thumb {
+  position: absolute; left: 4px; top: 4px; width: var(--slide-thumb-width); height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: 999px; padding: 0;
+  color: var(--accent); background: var(--slide-thumb); box-shadow: 0 1px 3px #00000014;
+  cursor: grab; touch-action: none; transition: transform .18s ease-out;
+}
+.slide-complete-thumb > svg { width: 22px; height: 22px; stroke-width: 1.8; }
+.slide-complete.is-dragging .slide-complete-thumb { cursor: grabbing; transition: none; }
+.slide-complete-thumb:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.slide-complete > svg { width: 19px; height: 19px; stroke-width: 1.8; }
+.slide-complete-instructions { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.slide-complete--completed { font-weight: 400; }
+.slide-complete--busy, .slide-complete--queued, .slide-complete--unapproved, .slide-complete--submitted { font-size: 14px; }
+html[data-theme="dark"] .slide-complete { --slide-label: #AEAEB2; --slide-thumb: #48484A; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .slide-complete { --slide-label: #AEAEB2; --slide-thumb: #48484A; } }
+@media (prefers-reduced-motion: reduce) { .slide-complete-thumb { transition: none; } }

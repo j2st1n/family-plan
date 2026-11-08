@@ -17,7 +17,8 @@ import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
 import { playTaskComplete, playTaskSubmitted, initAudioUnlock } from "../utils/soundFx.js";
 import TaskStopwatch from "../components/TaskStopwatch.jsx";
-import { ClockIcon, CalendarDaysIcon, CheckIcon } from "@heroicons/react/24/outline";
+import SlideToComplete from "../components/SlideToComplete.jsx";
+import { ClockIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
 import FocusTimer from "../components/FocusTimer.jsx";
 import SharePosterModal from "../components/SharePosterModal.jsx";
 import { ShareIcon, SunIcon, MoonIcon, TimerIcon } from "../components/Icons.jsx";
@@ -808,7 +809,7 @@ function TaskCard({
             <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", paddingRight: isTiming ? 40 : 0 }}>
               <p
                 style={{
-                  fontSize: "1rem",
+                  fontSize: "1.125rem",
                   lineHeight: "1.25",
                   fontWeight: 600,
                   color: isCompleted ? "var(--muted)" : "var(--text)",
@@ -850,8 +851,8 @@ function TaskCard({
               )}
             </div>
 
-            <p style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: "4px" }}>
-              {task.expected_minutes ? `${task.expected_minutes} 分钟 · ` : ""}{isUnapproved ? "待家长定星" : `⭐+${task.reward_stars}`}
+            <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginTop: "4px" }}>
+              {task.expected_minutes ? `${task.expected_minutes} 分钟 · ` : ""}{isUnapproved ? "待家长定星" : `🌟+${task.reward_stars}`}
               {isScheduled ? ` · ${task.scheduled_start}${task.scheduled_end ? `-${task.scheduled_end}` : ""}` : " · 自由安排"}
             </p>
 
@@ -863,11 +864,10 @@ function TaskCard({
               onCancel={onCancelTimer} onComplete={event=>onComplete(task,event)} busy={isCompleting}/>}
 
             {/* 常用操作直接展示，使用相同的图标与文字样式。 */}
-            {!isCompleted && !isSubmitted && !isTiming && <div
+            {!isCompleted && !isSubmitted && !isTiming && !completionQueued && <div
               className="task-card-actions" role="group" aria-label={`任务操作：${task.title}`}
             >
               {!isCompleted && !isSubmitted && !isUnapproved && !completionQueued && !timer && <button type="button" onClick={()=>onStartTimer(task)} className="task-text-action"><span aria-hidden="true"><TimerIcon size={18}/></span>计时</button>}
-              {completionQueued&&<p className="task-completion-queued" role="status">完成结果待同步</p>}
               {!isUnapproved && !completionQueued && task.expected_minutes > 0 && <button type="button" onClick={() => onStartFocus(task)} className="task-text-action" title={`专注 ${task.expected_minutes} 分钟`}><span aria-hidden="true"><ClockIcon strokeWidth={1.8}/></span>专注</button>}
               {!isUnapproved && !completionQueued && !isScheduled && task.created_by === "parent" && <button type="button" onClick={() => onSchedule(task)} className="task-text-action"><span aria-hidden="true"><CalendarDaysIcon strokeWidth={1.8}/></span>安排时间</button>}
 
@@ -886,56 +886,10 @@ function TaskCard({
               )}
 
             </div>}
+            {!isTiming && <SlideToComplete taskName={task.title} celebrating={isPopping}
+              status={isCompleted ? "completed" : isSubmitted ? "submitted" : isUnapproved ? "unapproved" : isCompleting ? "busy" : completionQueued ? "queued" : "ready"}
+              onComplete={event => onComplete(task, event)} />}
           </div>
-
-          {/* 计时中使用面板内唯一的完成按钮 */}
-          {!isTiming && <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {isSubmitted ? (
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "50%",
-                  background: "var(--star-bg)",
-                  border: "1.5px solid var(--star-border)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                title="等待家长点赞发星"
-              >
-                <span style={{ fontSize: "1.1rem", lineHeight: 1 }}>⏳</span>
-              </div>
-            ) : !isUnapproved ? (
-              <button
-                type="button"
-                onClick={(e) => onComplete(task, e)}
-                disabled={isCompleted || isCompleting || completionQueued}
-                className={`task-check-btn task-complete-action ${isCompleted ? "completed" : ""} ${isPopping ? "spring-pop" : ""}`}
-                aria-busy={isCompleting}
-                aria-label={isCompleted ? "任务已完成" : `标记完成: ${task.title}`}
-                title={isCompleted ? "已完成" : completionQueued ? "完成结果待同步" : "标记任务完成"}
-              >
-                {!isCompleting && <CheckIcon aria-hidden="true" strokeWidth={2.2} />}
-                <span>{isCompleted ? "已完成" : isCompleting ? "提交中…" : completionQueued ? "待同步" : "完成"}</span>
-              </button>
-            ) : (
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "50%",
-                  border: "1px solid var(--danger-border)",
-                  background: "var(--danger-bg)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span style={{ fontSize: "0.68rem", color: "var(--danger)", fontWeight: 700 }}>待确认</span>
-              </div>
-            )}
-          </div>}
         </div>
       )}
     </div>
