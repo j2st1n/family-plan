@@ -7,6 +7,7 @@ export default function TaskOptionsMenu({label, items, disabled = false, inTimer
   const root = useRef(null);
   const trigger = useRef(null);
   const firstItem = useRef(null);
+  const pointerActivation = useRef(false);
 
   useEffect(() => {
     if (!open) return;
@@ -19,8 +20,16 @@ export default function TaskOptionsMenu({label, items, disabled = false, inTimer
   if (!items.length) return null;
 
   return <div className={`task-stopwatch-menu${inTimer ? " task-stopwatch-menu--timer" : ""}`} ref={root}
-    onBlur={event => {if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);}}
+    onPointerDownCapture={() => {pointerActivation.current = true;}}
+    onPointerCancelCapture={() => {pointerActivation.current = false;}}
+    onClickCapture={() => {pointerActivation.current = false;}}
+    onBlur={event => {
+      // Safari touch activation blurs buttons to no target before click; keep the item mounted.
+      // Keyboard focus leaving (including Tab to browser chrome) still dismisses the menu.
+      if (!event.currentTarget.contains(event.relatedTarget) && (event.relatedTarget || !pointerActivation.current)) setOpen(false);
+    }}
     onKeyDown={event => {
+      pointerActivation.current = false;
       if (event.key === "Escape") {event.stopPropagation(); setOpen(false); trigger.current?.focus();}
       if (open && ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
         event.preventDefault();
