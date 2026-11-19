@@ -37,10 +37,14 @@ export default function Shop({ onExpired, active }) {
     }
     setError("");
     try {
+      // Today's reward calculation can consume a card before we check purchase eligibility.
+      const todayRequest = fetchToday(onExpired)
+        .catch((err) => { console.warn("Failed to load rewards", err); return null; });
       const [all, today, freeze] = await Promise.all([
         fetchShop(onExpired),
-        fetchToday(onExpired).catch((err) => { console.warn("Failed to load rewards", err); return null; }),
-        fetchChildFreeze(onExpired).catch((err) => { console.warn("Failed to load freeze", err); return null; }),
+        todayRequest,
+        todayRequest.then(() => fetchChildFreeze(onExpired))
+          .catch((err) => { console.warn("Failed to load freeze", err); return null; }),
       ]);
       if (all) {
         setItems(all.filter((i) => i.status === "active" && !i.redeemed_by_child));
@@ -217,7 +221,7 @@ export default function Shop({ onExpired, active }) {
               <div>
                 <div style={{ fontWeight: 650, fontSize: "0.98rem", color: "var(--text)" }}>连击保护卡</div>
                 <div style={{ fontSize: "0.76rem", color: "var(--muted)", marginTop: "2px" }}>
-                  拥有 {freezeInfo.available_count ?? 0} / 上限 {maxLimit} 张 · 防断签护航
+                  持有上限 {maxLimit} 张
                 </div>
               </div>
             </div>

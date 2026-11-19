@@ -289,6 +289,34 @@ h1, h2, h3, h4, .display-text {
   border-color: var(--protect-border);
 }
 
+.child-freeze-card {
+  margin-bottom: 14px;
+}
+
+.child-freeze-card p,
+.child-freeze-card li {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.child-freeze-card details {
+  margin-top: 12px;
+  font-size: 0.82rem;
+}
+
+.child-freeze-card summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.child-freeze-card ul {
+  margin: 8px 0 0;
+  padding-inline-start: 20px;
+}
+
 button {
   font: inherit;
   cursor: pointer;

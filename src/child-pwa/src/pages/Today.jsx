@@ -454,9 +454,6 @@ export default function Today({ child, onExpired, active }) {
           <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "10px", flexWrap: "wrap" }}>
             <span className="stat-chip">⭐ {formatStars(data?.rewards?.stars_total ?? 0)} 星</span>
             <span className="stat-chip flame">🔥 {data?.rewards?.current_streak_days ?? 0} 天连胜</span>
-            {data?.rewards?.streak_freeze_count > 0 && (
-              <span className="stat-chip protect">❄️ {data?.rewards?.streak_freeze_count} 卡</span>
-            )}
           </div>
         </div>
       </div>
