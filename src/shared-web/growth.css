@@ -28,7 +28,8 @@
 .growth-day small { position:absolute; right:2px; bottom:0; font-size:.5rem; }
 .growth-day-perfect { background:var(--cell-perfect,#248a3d); color:#fff; }
 .growth-day-qualified { background:var(--cell-qualified,#c8efcd); color:var(--text); }
-.growth-day-missed { background:var(--border); color:var(--text); }
+.growth-day-missed { background:var(--danger-bg,#fff1f0); color:var(--text); border:1px solid var(--danger-border,#ffd1cf); }
+.growth-day-missed small { color:var(--text); font-weight:750; }
 .growth-day-rest { background:var(--card-subtle); color:var(--muted); }
 .growth-day-vacation { background:#ffe2b8; color:#795007; }
 .growth-day-frozen { background:#b7efec; color:#15645f; }

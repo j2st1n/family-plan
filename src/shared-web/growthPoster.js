@@ -36,7 +36,7 @@ export function drawGrowthReport(canvas, report, showName = true) {
     ctx.fillStyle = DAY_STATES[day.status]?.color || "#ebebef";
     ctx.beginPath(); ctx.roundRect(x, y, 58, 19, 4); ctx.fill();
     const cfg = DAY_STATES[day.status] || DAY_STATES.rest;
-    text(`${Number(day.date.slice(-2))}${cfg.mark === "假" || cfg.mark === "❄" ? " " + cfg.mark : ""}`, x + 10, y + 13, 10, day.status === "perfect" ? "#fff" : "#414146", 500);
+    text(`${Number(day.date.slice(-2))}${cfg.mark && day.status !== "rest" ? " " + cfg.mark : ""}`, x + 10, y + 13, 10, day.status === "perfect" ? "#fff" : "#414146", 500);
   });
   let y = 336 + rows * 25 + 24;
   Object.values(DAY_STATES).forEach((cfg, i) => {

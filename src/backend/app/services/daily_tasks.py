@@ -3,6 +3,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import CursorResult, Date, cast, delete, func, select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.core.errors import api_error
@@ -15,17 +16,20 @@ from app.models.streak import Streak
 from app.models.task_template import TaskTemplate
 from app.schemas.daily_task import ChildScheduleRequest, ChildTaskCreate, ManualTaskItem
 from app.services.reward_settings import get_or_create_reward_settings
-from app.services.streak_freeze import consume_freeze_for_date, get_or_create_streak_freeze, is_date_frozen
+from app.services.streak_freeze import get_or_create_streak_freeze, is_date_frozen, record_freeze_use
 from app.services.vacations import is_child_on_vacation
 
 
-def _get_or_create_streak(db: Session, child_id: UUID) -> Streak:
-    streak = db.scalar(select(Streak).where(Streak.child_id == child_id))
+def _get_or_create_streak(db: Session, child_id: UUID, *, for_update: bool = False) -> Streak:
+    stmt = select(Streak).where(Streak.child_id == child_id)
+    if for_update:
+        stmt = stmt.with_for_update().execution_options(populate_existing=True)
+    streak = db.scalar(stmt)
     if streak is None:
-        streak = Streak(child_id=child_id)
-        db.add(streak)
-        db.commit()
-        db.refresh(streak)
+        db.execute(insert(Streak).values(child_id=child_id).on_conflict_do_nothing(index_elements=[Streak.child_id]))
+        streak = db.scalars(stmt).one()
+        if not for_update:
+            db.commit()
     return streak
 
 
@@ -36,6 +40,24 @@ def _get_stars_total(db: Session, child_id: UUID) -> Decimal:
         )
     )
     return Decimal(result or "0.00")
+
+
+def _is_missed_day(completed: int, total: int, threshold: int) -> bool:
+    return total > 0 and (completed == 0 if threshold <= 0 else completed * 100 < total * threshold)
+
+
+def can_protect_task_day(tasks: list[DailyTask], task_date: date, threshold: int) -> bool:
+    eligible = [task for task in tasks if task.created_at.astimezone(UTC).date() <= task_date]
+    return _is_missed_day(sum(task.status == "completed" for task in eligible), len(eligible), threshold)
+
+
+def _get_streak_threshold(db: Session, child_id: UUID) -> int:
+    threshold = db.scalar(select(ChildRewardSettings.streak_threshold).where(
+        ChildRewardSettings.child_id == child_id,
+    ))
+    if threshold is not None:
+        return threshold
+    return db.scalar(select(Child.streak_threshold).where(Child.id == child_id)) or 80
 
 
 def _has_missed_task_day(
@@ -63,14 +85,7 @@ def _has_missed_task_day(
     for task_date in sorted(tasks_by_date.keys()):
         statuses = tasks_by_date[task_date]
         completed = sum(1 for status in statuses if status == "completed")
-        is_missed = False
-        if threshold <= 0:
-            if completed == 0:
-                is_missed = True
-        elif int((completed / len(statuses)) * 100) < threshold:
-            is_missed = True
-
-        if not is_missed:
+        if not _is_missed_day(completed, len(statuses), threshold):
             continue
 
         # 1. Vacation exemption: dates within any vacation interval are automatically exempt
@@ -81,11 +96,7 @@ def _has_missed_task_day(
         if is_date_frozen(db, child_id, task_date):
             continue
 
-        # 3. Try to consume 1 available freeze card
-        if consume_freeze_for_date(db, child_id, task_date):
-            continue
-
-        # Cannot be exempted or protected -> missed day breaks streak
+        # An unprotected missed day breaks the streak until a card is applied.
         return True
 
     return False
@@ -127,7 +138,8 @@ def _award_task_and_update_streak(db: Session, task: DailyTask) -> None:
         db.rollback()
         raise api_error("conflict", "Task already completed", 409)
 
-    streak = _get_or_create_streak(db, task.child_id)
+    threshold = get_or_create_reward_settings(db, task.child_id).streak_threshold
+    streak = _get_or_create_streak(db, task.child_id, for_update=True)
     if _has_new_historical_deletion(db, streak):
         streak = _recalculate_streak_from_tasks(db, task.child_id)
     today = date.today()
@@ -135,8 +147,6 @@ def _award_task_and_update_streak(db: Session, task: DailyTask) -> None:
     # Always track that a task was completed today (for get_reward_summary)
     previous_date = streak.streak_updated_date or streak.last_completed_date
     streak.last_completed_date = today
-
-    threshold = get_or_create_reward_settings(db, task.child_id).streak_threshold
 
     # Only parent-approved tasks count toward the daily completion rate.
     if streak.streak_updated_date != today:
@@ -363,20 +373,19 @@ def revoke_daily_task(db: Session, task_id: UUID, parent_id: UUID) -> DailyTask:
 
 def get_reward_summary(db: Session, child_id: UUID) -> dict:
     stars_total = _get_stars_total(db, child_id)
-    streak = _get_or_create_streak(db, child_id)
+    threshold = get_or_create_reward_settings(db, child_id).streak_threshold
+    streak = _get_or_create_streak(db, child_id, for_update=True)
 
     # Use streak_updated_date as the authoritative date that counted toward the
     # streak. Fall back to last_completed_date for legacy rows. Dates without
     # approved tasks are rest days and do not break the streak.
     effective_date = streak.streak_updated_date or streak.last_completed_date
     today = date.today()
-    threshold = get_or_create_reward_settings(db, child_id).streak_threshold
     if _has_new_historical_deletion(db, streak):
         streak = _recalculate_streak_from_tasks(db, child_id)
-        db.commit()
     elif effective_date and _has_missed_task_day(db, child_id, effective_date, today, threshold):
         streak.current_days = 0
-        db.commit()
+    db.commit()
 
     freeze = get_or_create_streak_freeze(db, child_id)
     on_vacation = is_child_on_vacation(db, child_id, today)
@@ -389,19 +398,46 @@ def get_reward_summary(db: Session, child_id: UUID) -> dict:
     }
 
 
+def apply_streak_freeze(db: Session, child_id: UUID, task_date: date) -> None:
+    if task_date >= date.today():
+        raise api_error("unprocessable", "只能保护过去的任务日", 422)
+
+    child = db.scalar(select(Child.id).where(Child.id == child_id).with_for_update(key_share=True))
+    if child is None:
+        raise api_error("not_found", "Child not found", 404)
+    threshold = _get_streak_threshold(db, child_id)
+    _get_or_create_streak(db, child_id, for_update=True)
+    if is_date_frozen(db, child_id, task_date):
+        db.commit()
+        return
+
+    tasks = list(db.scalars(select(DailyTask).where(
+        DailyTask.child_id == child_id,
+        DailyTask.task_date == task_date,
+        DailyTask.approved.is_(True),
+        DailyTask.status != "deleted",
+    )))
+    if (
+        not _is_missed_day(sum(task.status == "completed" for task in tasks), len(tasks), threshold)
+        or not can_protect_task_day(tasks, task_date, threshold)
+        or is_child_on_vacation(db, child_id, task_date)
+    ):
+        raise api_error("conflict", "该日期无需使用保护卡", 409)
+
+    freeze = get_or_create_streak_freeze(db, child_id, for_update=True)
+    if freeze.available_count <= 0:
+        raise api_error("conflict", "没有可用的保护卡", 409)
+
+    record_freeze_use(db, freeze, task_date)
+    db.flush()
+    _recalculate_streak_from_tasks(db, child_id)
+    db.commit()
+
+
 def _recalculate_streak_from_tasks(db: Session, child_id: UUID) -> Streak:
     """Rebuild corrected history atomically with its edit, without changing rewards."""
-    streak = db.scalar(select(Streak).where(Streak.child_id == child_id).with_for_update())
-    if streak is None:
-        streak = Streak(child_id=child_id, current_days=0, longest_days=0)
-        db.add(streak)
-        db.flush()
-    threshold = db.scalar(select(ChildRewardSettings.streak_threshold).where(
-        ChildRewardSettings.child_id == child_id,
-    ))
-    if threshold is None:
-        child = db.get(Child, child_id)
-        threshold = (child.streak_threshold or 80) if child else 80
+    streak = _get_or_create_streak(db, child_id, for_update=True)
+    threshold = _get_streak_threshold(db, child_id)
     today = date.today()
     rows = db.execute(select(DailyTask.task_date, DailyTask.status).where(
         DailyTask.child_id == child_id,

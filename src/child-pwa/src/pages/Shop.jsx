@@ -217,7 +217,7 @@ export default function Shop({ onExpired, active }) {
               <div>
                 <div style={{ fontWeight: 650, fontSize: "0.98rem", color: "var(--text)" }}>连击保护卡</div>
                 <div style={{ fontSize: "0.76rem", color: "var(--muted)", marginTop: "2px" }}>
-                  拥有 {freezeInfo.available_count ?? 0} / 上限 {maxLimit} 张 · 防断签护航
+                  持有上限 {maxLimit} 张
                 </div>
               </div>
             </div>

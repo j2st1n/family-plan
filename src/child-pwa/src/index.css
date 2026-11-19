@@ -289,6 +289,34 @@ h1, h2, h3, h4, .display-text {
   border-color: var(--protect-border);
 }
 
+.child-freeze-card {
+  margin-bottom: 14px;
+}
+
+.child-freeze-card p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.growth-freeze-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+  color: var(--protect);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.growth-freeze-action .btn-primary {
+  width: auto;
+  padding: 6px 14px;
+  min-height: 44px;
+}
+
 button {
   font: inherit;
   cursor: pointer;

@@ -15,12 +15,13 @@ from app.schemas.shop import (
     FreezeLogItem,
     FreezeSettingsUpdate,
     FreezeUsageItem,
+    FreezeUseRequest,
     ShopItemCreate,
     ShopItemResponse,
     WishApprove,
     WishCreate,
 )
-from app.services.daily_tasks import _get_stars_total
+from app.services.daily_tasks import _get_stars_total, apply_streak_freeze
 from app.services.event_hub import event_hub
 from app.services.shop import (
     _verify_child_for_parent,
@@ -269,4 +270,16 @@ def purchase_child_freeze(
     child, _ = child_device
     purchase_streak_freeze(db, child.id, operator="child")
     event_hub.publish(child.parent_id, "shop", "freeze_purchased", child.id)
+    return _make_child_freeze_response(db, child.id)
+
+
+@child_router.post("/freeze/use", response_model=ChildFreezeResponse)
+def use_child_freeze(
+    payload: FreezeUseRequest,
+    child_device: tuple[Child, ChildDevice] = Depends(get_current_child),
+    db: Session = Depends(get_db),
+) -> ChildFreezeResponse:
+    child, _ = child_device
+    apply_streak_freeze(db, child.id, payload.task_date)
+    event_hub.publish(child.parent_id, "shop", "freeze_used", child.id)
     return _make_child_freeze_response(db, child.id)

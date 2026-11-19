@@ -191,3 +191,20 @@ export async function fetchGrowth(days, onExpired) {
   }
   return res.json();
 }
+
+export async function applyChildFreeze(taskDate, onExpired) {
+  const res = await fetch(`${API}/child/shop/freeze/use`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ task_date: taskDate }),
+  });
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("device_token");
+      onExpired?.();
+      throw new Error("token_expired");
+    }
+    throw new Error(await extractError(res, "使用保护卡失败，请重试"));
+  }
+  return res.json();
+}
