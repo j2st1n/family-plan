@@ -13,8 +13,11 @@ env:
 
 jobs:
   frontend:
-    # Playwright 1.60 cannot install Chromium on Ubuntu 26.04.
     runs-on: ubuntu-24.04
+    container:
+      # Keep the bundled browsers aligned with the Playwright version in the lockfile.
+      image: mcr.microsoft.com/playwright:v1.60.0-noble
+      options: --ipc=host
     permissions:
       contents: read
     steps:
@@ -41,8 +44,8 @@ jobs:
           node scripts/test-task-features.mjs
 
       - name: Browser date and growth-poster regressions
+        timeout-minutes: 10
         run: |
-          src/child-pwa/node_modules/.bin/playwright install --with-deps chromium webkit
           PLAYWRIGHT_BROWSER=chromium node scripts/test-integration-browser.mjs
           PLAYWRIGHT_BROWSER=chromium node scripts/test-task-features-browser.mjs
           PLAYWRIGHT_BROWSER=chromium node scripts/test-auth-settings-browser.mjs
