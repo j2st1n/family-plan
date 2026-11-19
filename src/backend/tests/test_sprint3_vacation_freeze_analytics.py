@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from uuid import UUID, uuid4
@@ -12,9 +13,8 @@ from app.models.daily_task import DailyTask
 from app.models.reward_ledger import RewardLedger
 from app.models.streak import Streak
 from app.services.analytics import classify_task_category, get_child_analytics
-from app.services.daily_tasks import _get_or_create_streak, _has_missed_task_day, get_reward_summary
+from app.services.daily_tasks import _get_or_create_streak, get_reward_summary
 from app.services.streak_freeze import (
-    consume_freeze_for_date,
     get_or_create_streak_freeze,
     purchase_streak_freeze,
 )
@@ -221,71 +221,71 @@ class TestStreakFreeze:
         assert res.status_code == 200
         assert res.json()["available_count"] == 1
 
-    def test_auto_deduct_freeze_on_missed_day(self, client, db_session):
-        _token, dtoken, cid, plan_id = _create_user_and_child(client, "frz2")
-        child_headers = {"Authorization": f"Bearer {dtoken}"}
+    def test_child_protects_historical_missed_day_and_restores_streak(self, client, db_session):
+        _token, device_token, child_id, plan_id = _create_user_and_child(client, "frz2")
+        headers = {"Authorization": f"Bearer {device_token}"}
+        today = date.today()
+        previous_missed = today - timedelta(days=8)
+        missed = today - timedelta(days=4)
+        latest = today - timedelta(days=1)
 
-        # Setup streak = 7
-        streak = _get_or_create_streak(db_session, UUID(cid))
-        streak.current_days = 7
-        streak.longest_days = 7
-        streak.streak_updated_date = date.today() - timedelta(days=2)
+        def add_tasks(task_date, statuses, *, created_date=None):
+            for status in statuses:
+                db_session.add(DailyTask(
+                    child_id=UUID(child_id), plan_id=UUID(plan_id), task_date=task_date,
+                    created_at=datetime.combine(created_date or task_date, time.min, tzinfo=UTC),
+                    title="Reading", reward_stars=1, approved=True, status=status,
+                ))
 
-        # Grant 1 freeze card
-        freeze = get_or_create_streak_freeze(db_session, UUID(cid))
+        add_tasks(previous_missed, ["pending"])
+        add_tasks(today - timedelta(days=6), ["completed"])
+        add_tasks(today - timedelta(days=5), ["completed"])
+        add_tasks(missed, ["completed", "completed", "pending"])
+        add_tasks(today - timedelta(days=3), ["pending"], created_date=today)
+        add_tasks(today - timedelta(days=2), ["completed"])
+        add_tasks(latest, ["completed"])
+        streak = _get_or_create_streak(db_session, UUID(child_id))
+        streak.current_days = streak.longest_days = 2
+        streak.streak_updated_date = latest
+        freeze = get_or_create_streak_freeze(db_session, UUID(child_id))
         freeze.available_count = 1
         db_session.commit()
 
-        # Yesterday had an approved task that was NOT completed
-        yesterday = date.today() - timedelta(days=1)
-        db_session.add(
-            DailyTask(
-                child_id=UUID(cid),
-                plan_id=UUID(plan_id),
-                task_date=yesterday,
-                created_at=datetime.combine(yesterday, time.min, tzinfo=UTC),
-                title="Morning Reading",
-                reward_stars=1,
-                approved=True,
-                status="pending",
-            )
-        )
-        db_session.commit()
+        url = "/api/v1/child/shop/freeze"
+        target = missed.isoformat()
+        rest = (today - timedelta(days=7)).isoformat()
+        late_entry = (today - timedelta(days=3)).isoformat()
 
-        # Fetch child today: freeze card should be automatically consumed, saving streak!
-        res = client.get("/api/v1/child/today", headers=child_headers)
-        assert res.status_code == 200
-        rewards = res.json()["rewards"]
-        assert rewards["current_streak_days"] == 7
-        assert rewards["streak_freeze_count"] == 0
+        def analytics():
+            return client.get("/api/v1/child/analytics?days=14", headers=headers).json()
 
-        # Verify usage record exists
-        usage = db_session.scalar(
-            select(ChildStreakFreezeUsage).where(
-                ChildStreakFreezeUsage.child_id == UUID(cid),
-                ChildStreakFreezeUsage.used_date == yesterday,
-            )
-        )
-        assert usage is not None
+        heatmap = {item["date"]: item for item in analytics()["heatmap"]}
+        assert heatmap[target]["status"] == "missed"
+        assert heatmap[target]["can_apply_freeze"] is True
+        assert heatmap[rest]["can_apply_freeze"] is False
+        assert heatmap[late_entry]["can_apply_freeze"] is False
+        assert client.get("/api/v1/child/today", headers=headers).status_code == 200
+        before = client.get(url, headers=headers).json()
+        assert before["available_count"] == 1 and before["usages"] == []
 
-        # Another missed day without available freeze cards breaks streak to 0
-        db_session.add(
-            DailyTask(
-                child_id=UUID(cid),
-                plan_id=UUID(plan_id),
-                task_date=date.today() - timedelta(days=3),
-                created_at=datetime.combine(date.today() - timedelta(days=3), time.min, tzinfo=UTC),
-                title="Science Project",
-                reward_stars=1,
-                approved=True,
-                status="pending",
-            )
-        )
-        streak.streak_updated_date = date.today() - timedelta(days=4)
-        db_session.commit()
+        assert client.post(url + "/use", json={"task_date": target}).status_code == 401
+        for day in (rest, latest.isoformat(), late_entry):
+            assert client.post(url + "/use", headers=headers, json={"task_date": day}).status_code == 409
+        assert client.post(url + "/use", headers=headers, json={"task_date": today.isoformat()}).status_code == 422
 
-        summary = get_reward_summary(db_session, UUID(cid))
-        assert summary["current_streak_days"] == 0
+        response = client.post(url + "/use", headers=headers, json={"task_date": target})
+        assert response.status_code == 200, response.text
+        assert response.json()["available_count"] == 0
+        assert response.json()["usages"][0]["used_date"] == target
+        assert response.json()["history"][0]["event_type"] == "manual_use"
+        after = analytics()
+        protected = next(day for day in after["heatmap"] if day["date"] == target)
+        assert protected["status"] == "frozen" and not protected["can_apply_freeze"]
+        assert (protected["completed_tasks"], protected["total_tasks"]) == (2, 3)
+        assert after["streak"]["current_streak_days"] == 4
+        assert after["streak"]["longest_streak_days"] == 4
+        assert client.post(url + "/use", headers=headers, json={"task_date": previous_missed.isoformat()}).status_code == 409
+
 
 
 class TestAnalyticsAPI:
@@ -519,28 +519,62 @@ class TestEdgeCasesAndConcurrencyHardening:
         assert persisted.available_count == 1
         db4.close()
 
-    def test_concurrent_freeze_deduct_race_protection(self, client, db_session):
-        token, _dtoken, cid, _plan_id = _create_user_and_child(client, "deduct")
+    def test_concurrent_freeze_use_is_idempotent(self, client, db_session):
+        _token, device_token, cid, plan_id = _create_user_and_child(client, "deduct")
         child_id = UUID(cid)
-
-        # Grant 1 freeze card
         freeze = get_or_create_streak_freeze(db_session, child_id)
         freeze.available_count = 1
+        target = date.today() - timedelta(days=2)
+        db_session.add(DailyTask(
+            child_id=child_id, plan_id=UUID(plan_id), task_date=target,
+            created_at=datetime.combine(target, time.min, tzinfo=UTC),
+            title="Reading", reward_stars=1, approved=True, status="pending",
+        ))
         db_session.commit()
+        headers = {"Authorization": f"Bearer {device_token}"}
+        url = "/api/v1/child/shop/freeze/use"
 
-        target_date = date(2026, 11, 1)
+        def use_card():
+            return client.post(url, headers=headers, json={"task_date": target.isoformat()})
 
-        # First consumption succeeds
-        ok1 = consume_freeze_for_date(db_session, child_id, target_date)
-        assert ok1 is True
+        with ThreadPoolExecutor(max_workers=2) as workers:
+            requests = [workers.submit(use_card) for _ in range(2)]
+            results = [request.result(timeout=15) for request in requests]
 
-        # Freeze count should now be 0
-        db_session.refresh(freeze)
-        assert freeze.available_count == 0
+        for response in results:
+            assert response.status_code == 200, response.text
+            assert response.json()["available_count"] == 0
+            assert len(response.json()["usages"]) == 1
+            assert len(response.json()["history"]) == 1
 
-        # Second consumption for same date: returns True without double-decrementing or raising IntegrityError
-        ok2 = consume_freeze_for_date(db_session, child_id, target_date)
-        assert ok2 is True
-        db_session.refresh(freeze)
-        assert freeze.available_count == 0  # Still 0, not negative!
+    def test_failed_streak_rebuild_rolls_back_card_use(self, client, db_session, monkeypatch):
+        _token, device_token, cid, plan_id = _create_user_and_child(client, "freeze_rollback")
+        child_id = UUID(cid)
+        target = date.today() - timedelta(days=1)
+        streak = _get_or_create_streak(db_session, child_id)
+        streak.streak_updated_date = target - timedelta(days=1)
+        streak.current_days = 1
+        get_or_create_streak_freeze(db_session, child_id).available_count = 1
+        db_session.add(DailyTask(
+            child_id=child_id, plan_id=UUID(plan_id), task_date=target,
+            created_at=datetime.combine(target, time.min, tzinfo=UTC),
+            title="Reading", reward_stars=1, approved=True, status="pending",
+        ))
+        db_session.commit()
+        headers = {"Authorization": f"Bearer {device_token}"}
+        url = "/api/v1/child/shop/freeze"
 
+        today = client.get("/api/v1/child/today", headers=headers)
+        assert today.json()["rewards"]["current_streak_days"] == 0
+        assert client.get(url, headers=headers).json()["available_count"] == 1
+
+        def fail_rebuild(*_):
+            raise RuntimeError("streak rebuild failed")
+
+        monkeypatch.setattr("app.services.daily_tasks._recalculate_streak_from_tasks", fail_rebuild)
+        with pytest.raises(RuntimeError, match="streak rebuild failed"):
+            client.post(url + "/use", headers=headers, json={"task_date": target.isoformat()})
+
+        result = client.get(url, headers=headers).json()
+        assert result["available_count"] == 1
+        assert result["usages"] == result["history"] == []

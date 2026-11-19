@@ -399,6 +399,8 @@ export default function StreakFreezeModal({
                       } else if (item.event_type === "auto_deduct") {
                         typeLabel = "遗漏自动保活";
                         icon = "🤖";
+                      } else if (item.event_type === "manual_use") {
+                        typeLabel = "孩子使用保护卡";
                       } else if (item.event_type === "shop_purchase") {
                         typeLabel = "商城星星兑换";
                         icon = "⭐";

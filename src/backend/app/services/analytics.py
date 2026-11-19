@@ -11,6 +11,7 @@ from app.models.child_vacation import ChildVacation
 from app.models.daily_task import DailyTask
 from app.models.reward_ledger import RewardLedger
 from app.models.streak import Streak
+from app.services.daily_tasks import can_protect_task_day
 from app.services.reward_settings import get_or_create_reward_settings
 
 CATEGORIES = ["学习思考", "体育运动", "生活自理", "家务协助"]
@@ -138,6 +139,7 @@ def get_child_analytics(db: Session, child_id: UUID, days: int = 30) -> dict:
             "completed_tasks": completed,
             "completion_rate": rate,
             "status": status,
+            "can_apply_freeze": status == "missed" and d < today and can_protect_task_day(day_tasks, d, threshold),
         })
 
     # 5. Category breakdown

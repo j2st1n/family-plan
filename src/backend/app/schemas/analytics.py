@@ -10,6 +10,7 @@ class HeatmapItem(BaseModel):
     completed_tasks: int
     completion_rate: int
     status: str
+    can_apply_freeze: bool = False
 
 
 class CategoryStat(BaseModel):

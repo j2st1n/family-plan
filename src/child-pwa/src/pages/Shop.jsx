@@ -37,14 +37,10 @@ export default function Shop({ onExpired, active }) {
     }
     setError("");
     try {
-      // Today's reward calculation can consume a card before we check purchase eligibility.
-      const todayRequest = fetchToday(onExpired)
-        .catch((err) => { console.warn("Failed to load rewards", err); return null; });
       const [all, today, freeze] = await Promise.all([
         fetchShop(onExpired),
-        todayRequest,
-        todayRequest.then(() => fetchChildFreeze(onExpired))
-          .catch((err) => { console.warn("Failed to load freeze", err); return null; }),
+        fetchToday(onExpired).catch((err) => { console.warn("Failed to load rewards", err); return null; }),
+        fetchChildFreeze(onExpired).catch((err) => { console.warn("Failed to load freeze", err); return null; }),
       ]);
       if (all) {
         setItems(all.filter((i) => i.status === "active" && !i.redeemed_by_child));

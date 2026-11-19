@@ -3,7 +3,7 @@ export const GROWTH_PERIODS = [7, 30, 90];
 export const DAY_STATES = {
   perfect: { label: "全部完成", mark: "", color: "#248a3d" },
   qualified: { label: "已达标", mark: "", color: "#34c759" },
-  missed: { label: "继续加油", mark: "", color: "#c7c7cc" },
+  missed: { label: "未达标", mark: "!", color: "#f4aaa5" },
   rest: { label: "休息", mark: "·", color: "#ebebef" },
   vacation: { label: "休假", mark: "假", color: "#ffd9a0" },
   frozen: { label: "已保护", mark: "❄", color: "#a1e8e4" },

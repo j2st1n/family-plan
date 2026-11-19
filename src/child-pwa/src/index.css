@@ -293,28 +293,28 @@ h1, h2, h3, h4, .display-text {
   margin-bottom: 14px;
 }
 
-.child-freeze-card p,
-.child-freeze-card li {
+.child-freeze-card p {
   margin: 8px 0 0;
   color: var(--muted);
   font-size: 0.82rem;
 }
 
-.child-freeze-card details {
-  margin-top: 12px;
-  font-size: 0.82rem;
+.growth-freeze-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+  color: var(--protect);
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
-.child-freeze-card summary {
-  width: fit-content;
-  cursor: pointer;
-  color: var(--accent);
-  font-weight: 650;
-}
-
-.child-freeze-card ul {
-  margin: 8px 0 0;
-  padding-inline-start: 20px;
+.growth-freeze-action .btn-primary {
+  width: auto;
+  padding: 6px 14px;
+  min-height: 44px;
 }
 
 button {

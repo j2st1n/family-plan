@@ -3,6 +3,7 @@ from decimal import Decimal
 from uuid import UUID, uuid4
 
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.core.errors import api_error
@@ -23,34 +24,27 @@ def get_or_create_streak_freeze(
     for_update: bool = False,
 ) -> ChildStreakFreeze:
     stmt = select(ChildStreakFreeze).where(ChildStreakFreeze.child_id == child_id)
-    if for_update:
-        stmt = stmt.with_for_update()
-
-    freeze = db.scalar(stmt)
+    locked_stmt = stmt.with_for_update().execution_options(populate_existing=True)
+    freeze = db.scalar(locked_stmt if for_update else stmt)
     current_month = date.today().strftime("%Y-%m")
 
     if freeze is None:
-        freeze = ChildStreakFreeze(
+        db.execute(insert(ChildStreakFreeze).values(
             child_id=child_id,
             available_count=0,
             star_cost=FREEZE_CARD_DEFAULT_STAR_COST,
             max_limit=FREEZE_CARD_DEFAULT_MAX_LIMIT,
             monthly_grant=FREEZE_CARD_DEFAULT_MONTHLY_GRANT,
             last_granted_month=current_month,
-        )
-        db.add(freeze)
-        try:
+        ).on_conflict_do_nothing(index_elements=[ChildStreakFreeze.child_id]))
+        freeze = db.scalars(locked_stmt).one()
+        if not for_update:
             db.commit()
             db.refresh(freeze)
-        except Exception:
-            db.rollback()
-            stmt2 = select(ChildStreakFreeze).where(ChildStreakFreeze.child_id == child_id)
-            if for_update:
-                stmt2 = stmt2.with_for_update()
-            freeze = db.scalar(stmt2)
-            if freeze is None:
-                raise
         return freeze
+
+    if not for_update and freeze.last_granted_month != current_month:
+        freeze = db.scalars(locked_stmt).one()
 
     if freeze.last_granted_month != current_month:
         grant = getattr(freeze, "monthly_grant", FREEZE_CARD_DEFAULT_MONTHLY_GRANT)
@@ -69,8 +63,9 @@ def get_or_create_streak_freeze(
                 )
                 db.add(log)
         freeze.last_granted_month = current_month
-        db.commit()
-        db.refresh(freeze)
+        if not for_update:
+            db.commit()
+            db.refresh(freeze)
 
     return freeze
 
@@ -226,39 +221,22 @@ def is_date_frozen(db: Session, child_id: UUID, missed_date: date) -> bool:
     return usage is not None
 
 
-def consume_freeze_for_date(db: Session, child_id: UUID, missed_date: date) -> bool:
-    if is_date_frozen(db, child_id, missed_date):
-        return True
-
-    freeze = get_or_create_streak_freeze(db, child_id, for_update=True)
-    if is_date_frozen(db, child_id, missed_date):
-        return True
-
-    if freeze.available_count <= 0:
-        return False
-
+def record_freeze_use(db: Session, freeze: ChildStreakFreeze, missed_date: date) -> None:
+    """Record a validated use while the caller holds the balance row lock."""
     freeze.available_count -= 1
     usage = ChildStreakFreezeUsage(
-        child_id=child_id,
+        child_id=freeze.child_id,
         used_date=missed_date,
-        reason="auto_deduct_missed_day",
+        reason="child_selected_date",
     )
     db.add(usage)
     log = ChildStreakFreezeLog(
-        child_id=child_id,
-        event_type="auto_deduct",
+        child_id=freeze.child_id,
+        event_type="manual_use",
         delta=-1,
         balance_after=freeze.available_count,
         target_date=missed_date,
-        reason="auto_deduct_missed_day",
-        operator="system",
+        reason=f"孩子使用保护卡：{missed_date.isoformat()}",
+        operator="child",
     )
     db.add(log)
-    try:
-        db.commit()
-    except Exception:
-        db.rollback()
-        if is_date_frozen(db, child_id, missed_date):
-            return True
-        raise
-    return True

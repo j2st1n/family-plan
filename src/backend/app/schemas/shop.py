@@ -46,6 +46,10 @@ class FreezeAdjustRequest(BaseModel):
     reason: str | None = Field(default=None, max_length=200)
 
 
+class FreezeUseRequest(BaseModel):
+    task_date: date
+
+
 class FreezeSettingsUpdate(BaseModel):
     star_cost: Decimal | None = Field(default=None, ge=Decimal("0.01"), max_digits=10, decimal_places=2)
     max_limit: int | None = Field(default=None, ge=1, le=100)
