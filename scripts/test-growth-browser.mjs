@@ -65,6 +65,8 @@ try {
       await page.emulateMedia({ colorScheme: scheme });
       for (const width of [320, 390, 834, 1280]) {
         await page.setViewportSize({ width, height: 900 });
+        const shareBounds = await share.boundingBox();
+        assert.deepEqual([shareBounds.width, shareBounds.height], [44, 44]);
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${app} overflow ${scheme} ${width}`);
         assert.equal(await page.locator('.growth-day').count(), 30);
         if (width === 390 || width === 834) await page.screenshot({ path: join(output, `${app}-${scheme}-${width}.png`), fullPage: true });
@@ -72,6 +74,9 @@ try {
     }
     await share.click(); const dialog = page.getByRole('dialog', { name: '成长报告 · 近 30 天', exact: true });
     await dialog.getByRole('img', { name: '成长报告预览' }).evaluate(img => img.decode());
+    const actions = await dialog.locator('.share-dialog-actions > button').evaluateAll(buttons => buttons.map(button => [button.offsetWidth, button.offsetHeight]));
+    assert.deepEqual(actions, [actions[0], actions[0]]);
+    assert.equal(actions[0][1], 44);
     const initialTexts = await page.evaluate(() => window.__reportTexts);
     assert.ok(initialTexts.includes('小禾的成长')); assert.ok(!initialTexts.includes('PRIVATE TASK TITLE'));
     assert.ok(!initialTexts.includes('999.25'));
@@ -103,7 +108,7 @@ try {
     await share.click(); await page.getByRole('dialog', { name: '成长报告 · 近 90 天', exact: true }).waitFor(); await page.keyboard.press('Escape');
     if (app === 'parent') {
       await page.getByRole('button', { name: '小叶', exact: true }).click();
-      await page.waitForFunction(() => !document.querySelector('.growth-share').disabled);
+      await page.locator('button[aria-label="分享成长报告"]:enabled').waitFor();
       await share.click(); await page.getByRole('dialog').getByRole('img').evaluate(img => img.decode());
       assert.ok(await page.evaluate(() => window.__reportTexts.includes('小叶的成长'))); await page.keyboard.press('Escape');
     } else {

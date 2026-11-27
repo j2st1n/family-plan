@@ -66,7 +66,7 @@ try {
     throw Error(`Unexpected synthetic request ${path}`);
   });
   const count = suffix => requests.filter(path => path.endsWith(suffix)).length;
-  const ready = () => page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => b.textContent === '分享图片' && !b.disabled));
+  const ready = () => page.locator('button[aria-label="分享图片"]:enabled').waitFor();
   await page.goto('http://127.0.0.1:19129/.refresh-regression.html'); await page.getByText('刷新测试', { exact: true }).click();
   await ready(); await wait(1000);
   assert.equal(count('/daily-tasks'), 1);
@@ -109,7 +109,7 @@ try {
   await page.getByRole('button', { name: '取消', exact: true }).click(); await page.getByText(title, { exact: true }).waitFor(); taskDelay = 220;
   const beforeInactive = count('/daily-tasks'); await page.evaluate(() => window.setActive(false)); await wait(100); await page.evaluate(() => window.__return()); await wait(850); assert.equal(count('/daily-tasks'), beforeInactive);
   await page.evaluate(() => window.setActive(true)); await ready(); await wait(1000); assert.equal(count('/daily-tasks'), beforeInactive + 1);
-  await page.getByRole('button', { name: '← 首页', exact: true }).click(); await wait(1000); assert.equal(count('/children'), homeBefore + 1);
+  await page.getByRole('button', { name: '← 返回首页', exact: true }).click(); await wait(1000); assert.equal(count('/children'), homeBefore + 1);
   const result = { initialTaskLoads: initial, loadsFromKeepaliveAndShortFocus: 0, loadsFromVisibilityAndFocus: 1, loadsFromStreamReconnect: 1, backgroundLoadingEpisodes: 0, editDomFocusCaretScrollPreserved: true, failedSyncRetryPassed: true, eventDuringOlderReadCaughtUp: true, maxConcurrentSameDayReads: maxReads, homeInactiveIsolationPassed: true, taskReactivationPassed: true, documentNavigations: navigations };
   result.editorObserved = editorObserved;
   result.loadingObserved = { beforeBackground: loadingBefore, afterBackground: loadingAfter, pendingObserved };
@@ -119,10 +119,12 @@ try {
   await wait(2000); assert.equal(count('/daily-tasks'), beforeLate + 2, 'late subscription must catch up changes missed before it connected');
   assert.equal(await page.evaluate(() => window.__loadingEpisodes), lateInitialLoading); result.lateSubscriptionCatchupPassed = true;
   await page.goto('http://127.0.0.1:19129/.refresh-regression.html?shop'); await page.getByText('合成商品', { exact: true }).waitFor();
-  await page.getByRole('button', { name: '✎', exact: true }).click(); await page.getByPlaceholder('名称', { exact: true }).fill('商城编辑保留');
-  await page.getByPlaceholder('名称', { exact: true }).evaluate(el => { window.__shopInput = el; el.focus(); });
+  await page.getByRole('button', { name: '编辑', exact: true }).click();
+  const shopName = page.getByPlaceholder(/^奖励名称/);
+  await shopName.fill('商城编辑保留');
+  await shopName.evaluate(el => { window.__shopInput = el; el.focus(); });
   await page.evaluate(() => window.__send('shop')); await wait(1000);
-  assert.deepEqual(await page.getByPlaceholder('名称', { exact: true }).evaluate(el => [el === window.__shopInput, document.activeElement === el, el.value]), [true, true, '商城编辑保留']);
+  assert.deepEqual(await shopName.evaluate(el => [el === window.__shopInput, document.activeElement === el, el.value]), [true, true, '商城编辑保留']);
   assert.deepEqual(errors, []); result.shopEditorPreserved = true;
   await writeFile(output + '/verification.json', JSON.stringify(result, null, 2)); console.log(JSON.stringify(result));
 } finally { await browser?.close(); await server?.close(); await unlink(harness).catch(() => {}); }

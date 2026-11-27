@@ -1,0 +1,56 @@
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--accent-light);
+  cursor: pointer;
+}
+
+.share-dialog-actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.share-dialog-actions > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--accent);
+  background: var(--accent-light);
+  cursor: pointer;
+}
+
+.share-dialog-actions > .share-dialog-primary {
+  color: #fff;
+  background: var(--accent);
+}
+
+.share-button:disabled,
+.share-dialog-actions > button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.share-button:focus-visible,
+.share-dialog-actions > button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}

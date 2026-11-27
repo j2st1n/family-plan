@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { drawGrowthPoster, shareOrDownloadPoster, downloadPoster } from "../utils/posterCanvas.js";
-import { ShareIcon, DownloadIcon } from "./Icons.jsx";
+import { ShareIcon } from "../../../shared-web/ShareButton.jsx";
+import { DownloadIcon } from "./Icons.jsx";
 
 export default function SharePosterModal({
   open = false,
@@ -157,42 +158,21 @@ export default function SharePosterModal({
             </div>
           )}
 
-          <div style={{ display: "flex", gap: "10px", width: "100%" }}>
+          <div className="share-dialog-actions">
             <button
               type="button"
-              className="ios-btn-primary"
+              className="share-dialog-primary"
               onClick={handleShare}
               disabled={isSharing || isGenerating}
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                padding: "12px",
-                fontSize: "0.95rem",
-                fontWeight: 600,
-              }}
             >
-              <ShareIcon size={18} color="#FFFFFF" />
+              <ShareIcon size={18} />
               <span>{isSharing ? "正在分享…" : "分享"}</span>
             </button>
 
             <button
               type="button"
-              className="ios-btn-secondary"
               onClick={handleDownload}
               disabled={isGenerating}
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                padding: "12px",
-                fontSize: "0.95rem",
-                fontWeight: 600,
-              }}
             >
               <DownloadIcon size={18} />
               <span>保存</span>

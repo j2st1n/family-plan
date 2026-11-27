@@ -1,6 +1,7 @@
 import FieldLabel from "../../../shared-web/FieldLabel.jsx";
 import RewardStars, {validReward} from "../../../shared-web/RewardStars.jsx";
 import TaskTimingFields from "../../../shared-web/TaskTimingFields.jsx";
+import ShareButton from "../../../shared-web/ShareButton.jsx";
 import {plannedEnd, formatActualSeconds} from "../../../shared-web/taskTiming.js";
 import { useState, useEffect, useCallback, useRef } from "react";
 import api from "../api.js";
@@ -11,7 +12,7 @@ import { CATEGORIES, CATEGORY_ICONS, inferCategory } from "../utils/category.js"
 import TaskCopilotModal from "../components/TaskCopilotModal.jsx";
 import SharePosterModal from "../components/SharePosterModal.jsx";
 import { useFeedback } from "../components/FeedbackContext.jsx";
-import { CheckCircleIcon, SparklesIcon, PlusIcon, ShareIcon } from "../components/Icons.jsx";
+import { CheckCircleIcon, SparklesIcon, PlusIcon } from "../components/Icons.jsx";
 import { createRefreshQueue } from "../utils/refreshQueue.js";
 import { isValidTaskDate } from "../utils/date.js";
 
@@ -550,29 +551,11 @@ export default function TodayDashboard({
           >
             ›
           </button>
-          <button
-            type="button"
-            className="ios-share-trigger-btn"
+          <ShareButton
+            label="分享自律成长成就海报"
             disabled={loading || !!error || actionInProgress || loadedKey.current !== dataKey}
             onClick={() => { if (loadedKey.current === dataKey && !loading && !error && !actionInProgress) setShowShareModal(true); }}
-            title="生成自律成就海报"
-            aria-label="分享自律成长成就海报"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "36px",
-              height: "36px",
-              borderRadius: "50%",
-              backgroundColor: "rgba(0, 113, 227, 0.08)",
-              border: "none",
-              color: "var(--accent)",
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-            }}
-          >
-            <ShareIcon size={18} color="var(--accent)" />
-          </button>
+          />
         </div>
       </div>
 

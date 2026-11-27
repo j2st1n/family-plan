@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createTaskShareImages } from "./taskShareImage.js";
 import "./TaskShareDialog.css";
+import "./share.css";
 
 export default function TaskShareDialog({ snapshot, onClose, nameLabel = "标题显示孩子姓名" }) {
   const dialogRef = useRef(null);
@@ -81,10 +82,10 @@ export default function TaskShareDialog({ snapshot, onClose, nameLabel = "标题
           <button type="button" aria-label="下一张分享图片" disabled={page === images.length - 1 || sharing} onClick={() => setPage(value => value + 1)}>→</button>
         </div>}
         {error && <p className="task-share-error" role="alert">{error}</p>}
-        {!busy && !images.length && <button type="button" className="task-share-secondary" onClick={() => setRetry(value => value + 1)}>重新生成</button>}
-        <div className="task-share-actions">
-          <button type="button" className={canShare ? "task-share-secondary" : "task-share-primary"} disabled={!current || busy || sharing} onClick={save}>{images.length > 1 ? "保存当前图片" : "保存图片"}</button>
-          {canShare && <button type="button" className="task-share-primary" disabled={busy || sharing} onClick={share}>{sharing ? "正在分享…" : images.length > 1 ? "分享全部图片" : "系统分享"}</button>}
+        {!busy && !images.length && <button type="button" className="task-share-retry" onClick={() => setRetry(value => value + 1)}>重新生成</button>}
+        <div className="task-share-actions share-dialog-actions">
+          <button type="button" className={canShare ? undefined : "share-dialog-primary"} disabled={!current || busy || sharing} onClick={save}>{images.length > 1 ? "保存当前图片" : "保存图片"}</button>
+          {canShare && <button type="button" className="share-dialog-primary" disabled={busy || sharing} onClick={share}>{sharing ? "正在分享…" : images.length > 1 ? "分享全部图片" : "系统分享"}</button>}
         </div>
         <p className="task-share-hint">可以保存后发送给家人，也可以长按预览图保存。</p>
       </div>

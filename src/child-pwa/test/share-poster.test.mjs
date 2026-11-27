@@ -200,13 +200,11 @@ test("Child PWA posterCanvas handles Web Share API and download fallback safely"
   }
 });
 
-test("Child PWA Today.jsx integrates SF Symbol ShareIcon button and mounts SharePosterModal", () => {
+test("Today renders the shared share button and poster preview", () => {
   const todayPath = path.resolve(__dirname, "../src/pages/Today.jsx");
   const content = fs.readFileSync(todayPath, "utf-8");
 
-  // 1. ShareIcon button in top title area
-  assert.ok(content.includes("ShareIcon"), "Today.jsx must import ShareIcon");
-  assert.ok(content.includes("ios-share-trigger-btn"), "Today.jsx must have ios-share-trigger-btn class");
+  assert.ok(content.includes("<ShareButton"), "Today must render the shared share button");
   assert.ok(content.includes("setShowShareModal(true)"), "Must open share modal on click");
 
   // 2. SharePosterModal mount

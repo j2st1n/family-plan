@@ -2,6 +2,7 @@ import FieldLabel from "../../../shared-web/FieldLabel.jsx";
 import { APP_DESCRIPTION, BRAND_MARK_URL } from "../../../shared-web/brand.js";
 import {readTimer, readCompletions, startTimer, pauseTimer, saveTimer, timerMilliseconds, freezeCompletion, acknowledgeCompletion} from "../utils/taskTimer.js";
 import TaskTimingFields from "../../../shared-web/TaskTimingFields.jsx";
+import ShareButton from "../../../shared-web/ShareButton.jsx";
 import {plannedEnd, formatActualSeconds, formatElapsedSeconds} from "../../../shared-web/taskTiming.js";
 import { useState, useEffect, useCallback, useRef } from "react";
 import confetti from "canvas-confetti";
@@ -22,7 +23,7 @@ import SlideToComplete from "../components/SlideToComplete.jsx";
 import { ClockIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
 import FocusTimer from "../components/FocusTimer.jsx";
 import SharePosterModal from "../components/SharePosterModal.jsx";
-import { ShareIcon, SunIcon, MoonIcon, TimerIcon } from "../components/Icons.jsx";
+import { SunIcon, MoonIcon, TimerIcon } from "../components/Icons.jsx";
 import { childFeedback } from "../components/ChildFeedback.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 
@@ -396,30 +397,11 @@ export default function Today({ child, onExpired, active }) {
                 🌴 休假中
               </span>
             )}
-            <button
-              type="button"
+            <ShareButton
+              label="分享今日自律成就卡"
               disabled={savingTask}
-              className="ios-share-trigger-btn"
               onClick={() => setShowShareModal(true)}
-              title="分享今日自律成就卡"
-              aria-label="分享今日自律成就卡"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "44px",
-                height: "44px",
-                borderRadius: "50%",
-                backgroundColor: "var(--card)",
-                border: "1px solid var(--border)",
-                color: "var(--accent)",
-                cursor: "pointer",
-                boxShadow: "var(--shadow-sm)",
-                transition: "opacity 0.15s ease",
-              }}
-            >
-              <ShareIcon size={18} color="var(--accent)" />
-            </button>
+            />
             <button
               type="button"
               className="ios-theme-trigger-btn"
