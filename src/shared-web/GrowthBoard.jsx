@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import ShareButton from "./ShareButton.jsx";
 import { calendarCells, DAY_STATES, durationLabel, earnedStars, growthSnapshot } from "./growth.js";
 import "./growth.css";
 
@@ -6,7 +7,7 @@ export function GrowthIcon({ size = 22 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 20v-6m7 6V9m7 11V4" /></svg>;
 }
 export function GrowthShareButton({ disabled, onClick }) {
-  return <button type="button" className="growth-share" disabled={disabled} onClick={onClick} aria-label="分享成长报告" title="分享成长报告"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 15V3m-4 4 4-4 4 4M7 10H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2" /></svg></button>;
+  return <ShareButton label="分享成长报告" disabled={disabled} onClick={onClick} />;
 }
 export default function GrowthBoard({ data, renderDayAction }) {
   const report = useMemo(() => growthSnapshot(data), [data]);

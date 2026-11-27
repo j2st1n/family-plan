@@ -85,8 +85,10 @@ try {
   await page.goto('http://127.0.0.1:19128/.task-share-regression.html');
   const shareButton = page.getByRole('button', { name: '分享图片', exact: true });
   const dateInput = page.getByLabel('任务日期');
-  const ready = () => page.waitForFunction(() => [...document.querySelectorAll('button')].some(button => button.textContent.trim() === '分享图片' && !button.disabled));
+  const ready = () => page.locator('button[aria-label="分享图片"]:enabled').waitFor();
   await ready();
+  const shareBounds = await shareButton.boundingBox();
+  assert.deepEqual([shareBounds.width, shareBounds.height], [44, 44]);
   await dateInput.fill('2026-10-19');
   assert.equal(await shareButton.isDisabled(), true);
   await page.getByRole('alert').filter({ hasText: 'Synthetic date load failure' }).waitFor();
@@ -98,6 +100,9 @@ try {
   const dialog = page.getByRole('dialog', { name: '分享任务图片' });
   const preview = dialog.getByRole('img');
   await preview.waitFor(); await preview.evaluate(img => img.decode());
+  const actions = await dialog.locator('.share-dialog-actions > button').evaluateAll(buttons => buttons.map(button => [button.offsetWidth, button.offsetHeight]));
+  assert.deepEqual(actions, [actions[0], actions[0]]);
+  assert.equal(actions[0][1], 44);
   assert.equal(requests.length, requestsBeforeShare, 'generating an image adds no API requests');
   const painted = await page.evaluate(() => window.__paintedText);
   assert.ok(painted.includes('小禾的任务记录'));
@@ -111,7 +116,7 @@ try {
   const download = page.waitForEvent('download');
   await dialog.getByRole('button', { name: '保存图片', exact: true }).click();
   const file = await download;
-  assert.equal(file.suggestedFilename(), 'family-plan-2026-10-20.png');
+  assert.equal(file.suggestedFilename(), 'family-habit-planner-2026-10-20.png');
   await file.saveAs(`${output}/share-example.png`);
   const png = await readFile(`${output}/share-example.png`);
   assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
@@ -120,7 +125,7 @@ try {
   await page.screenshot({ path: `${output}/preview-desktop.png` });
   await dialog.getByRole('button', { name: '系统分享', exact: true }).click();
   await page.waitForFunction(() => window.__shares.length === 1);
-  assert.equal((await page.evaluate(() => window.__shares[0].files))[0].name, 'family-plan-2026-10-20.png');
+  assert.equal((await page.evaluate(() => window.__shares[0].files))[0].name, 'family-habit-planner-2026-10-20.png');
   await page.evaluate(() => { window.__shareMode = 'abort'; });
   await dialog.getByRole('button', { name: '系统分享', exact: true }).click();
   await page.waitForFunction(() => window.__shares.length === 2);
@@ -131,6 +136,8 @@ try {
   assert.equal(await dialog.getByRole('button', { name: '保存图片', exact: true }).isEnabled(), true);
   await page.setViewportSize({ width: 390, height: 844 });
   const saveBounds = await dialog.getByRole('button', { name: '保存图片', exact: true }).boundingBox();
+  const systemShareBounds = await dialog.getByRole('button', { name: '系统分享', exact: true }).boundingBox();
+  assert.deepEqual([saveBounds.width, saveBounds.height], [systemShareBounds.width, 44]);
   const dialogBounds = await dialog.boundingBox();
   assert.ok(dialogBounds.x >= 0 && dialogBounds.x + dialogBounds.width <= 390);
   assert.ok(saveBounds.y >= 0 && saveBounds.y + saveBounds.height <= 844, 'mobile actions remain in view');
@@ -171,7 +178,7 @@ try {
   assert.match(await preview.getAttribute('alt'), /第2张/);
   const nextDownload = page.waitForEvent('download');
   await dialog.getByRole('button', { name: '保存当前图片', exact: true }).click();
-  assert.equal((await nextDownload).suggestedFilename(), 'family-plan-2026-10-21-2.png');
+  assert.equal((await nextDownload).suggestedFilename(), 'family-habit-planner-2026-10-21-2.png');
   await dialog.getByRole('button', { name: '关闭分享预览' }).click();
   await page.waitForFunction(() => window.__createdPngUrls.every(url => window.__revokedUrls.includes(url)));
   assert.deepEqual(errors, []);

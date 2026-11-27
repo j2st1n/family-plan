@@ -240,13 +240,11 @@ test("shareOrDownloadPoster handles Web Share API and graceful fallback download
   }
 });
 
-test("TodayDashboard.jsx integrates SF Symbol ShareIcon and SharePosterModal", () => {
+test("TodayDashboard renders the shared share button and poster preview", () => {
   const dashboardPath = path.resolve(__dirname, "../src/pages/TodayDashboard.jsx");
   const content = fs.readFileSync(dashboardPath, "utf-8");
 
-  // 1. 顶部 SF Symbol 分享按钮
-  assert.ok(content.includes("ShareIcon"), "TodayDashboard must import ShareIcon");
-  assert.ok(content.includes("ios-share-trigger-btn"), "TodayDashboard must have share trigger button with ios-share-trigger-btn class");
+  assert.ok(content.includes("<ShareButton"), "TodayDashboard must render the shared share button");
   assert.ok(content.includes("setShowShareModal(true)"), "Share button must trigger setShowShareModal(true)");
 
   // 2. 模态框挂载

@@ -66,11 +66,12 @@ try {
   assert.ok(!/\d{4}[-/]\d{2}[-/]\d{2}/.test(await dateBar.innerText()),'date exists only in the native date control, not repeated as text');
   assert.equal(await page.getByRole('button',{name:'分享图片',exact:true}).count(),0);
   assert.equal(await dateBar.getByRole('button',{name:/分享/}).count(),1,'one share entry');
-  for(const width of [390,768,1440]) {
+  for(const width of [320,390,768,1440]) {
     await page.setViewportSize({width,height:900});
     const bounds=await dateBar.boundingBox();
     assert.ok(bounds.x>=0 && bounds.x+bounds.width<=width);
     const inputBounds=await date.boundingBox(), shareBounds=await share.boundingBox();
+    assert.deepEqual([shareBounds.width,shareBounds.height],[44,44]);
     assert.ok(inputBounds.x+inputBounds.width<=shareBounds.x,'date input must not collide with share icon');
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),'no horizontal overflow');
     await page.screenshot({animations:'disabled',path:join(output,`parent-dark-${width}.png`)});
@@ -79,6 +80,9 @@ try {
   const shareDialog=page.getByRole('dialog',{name:'分享自律成长成就卡'});
   await shareDialog.getByRole('img',{name:'自律成长成就卡预览'}).waitFor();
   await shareDialog.getByRole('img',{name:'自律成长成就卡预览'}).evaluate(img=>img.decode());
+  const parentActions=await shareDialog.locator('.share-dialog-actions > button').evaluateAll(buttons=>buttons.map(button=>[button.offsetWidth,button.offsetHeight]));
+  assert.deepEqual(parentActions,[parentActions[0],parentActions[0]]);
+  assert.equal(parentActions[0][1],44);
   const download=page.waitForEvent('download');
   await shareDialog.getByRole('button',{name:'保存',exact:true}).click();
   const file=await download;
@@ -140,8 +144,10 @@ try {
   assert.equal(await child.getByRole('button',{name:'分享图片',exact:true}).count(),0);
   assert.equal(await child.getByRole('button',{name:/^分享/}).count(),1);
   assert.equal(await child.getByRole('heading',{name:'你好，合并测试',exact:true}).count(),1);
-  for(const width of [390,768]){
+  for(const width of [320,390,768]){
     await child.setViewportSize({width,height:900});
+    const shareBounds=await childShare.boundingBox();
+    assert.deepEqual([shareBounds.width,shareBounds.height],[44,44]);
     assert.ok(await child.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     await child.screenshot({animations:'disabled',path:join(output,`child-dark-${width}.png`)});
   }
@@ -149,6 +155,9 @@ try {
   const childDialog=child.getByRole('dialog',{name:'分享自律成长成就卡'});
   await childDialog.getByRole('img',{name:'自律成长成就卡预览'}).waitFor();
   await childDialog.getByRole('img',{name:'自律成长成就卡预览'}).evaluate(img=>img.decode());
+  const childActions=await childDialog.locator('.share-dialog-actions > button').evaluateAll(buttons=>buttons.map(button=>[button.offsetWidth,button.offsetHeight]));
+  assert.deepEqual(childActions,[childActions[0],childActions[0]]);
+  assert.equal(childActions[0][1],44);
   const childDownload=child.waitForEvent('download');await childDialog.getByRole('button',{name:'保存',exact:true}).click();
   const childFile=await childDownload;const childPng=join(output,'child-growth-poster.png');await childFile.saveAs(childPng);
   assert.deepEqual([...(await readFile(childPng)).subarray(0,8)],[137,80,78,71,13,10,26,10]);

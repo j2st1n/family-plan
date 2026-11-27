@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import ShareButton from "../../../shared-web/ShareButton.jsx";
 import api from "../api.js";
 import useSseRefresh from "../hooks/useSseRefresh.js";
 import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
@@ -319,10 +320,7 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
         {!isToday && <div style={{ textAlign: "center", marginTop: "-0.6rem", marginBottom: "0.4rem" }}><button onClick={() => setDate(todayStr)} style={{ color: "var(--accent)", fontSize: "0.75rem", background: "none", border: "none", cursor: "pointer" }}>回到今天</button></div>}
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.8rem" }}>
-          <button type="button" onClick={openShare} disabled={loading || syncing || taskLoadFailed || loadedTaskDate !== date || savingTask}
-            style={{ padding: "0.45rem 0.8rem", borderRadius: "10px", color: "#367e5b", background: "#edf3e9", fontSize: "0.8rem", fontWeight: 600, opacity: loading || taskLoadFailed || loadedTaskDate !== date ? 0.45 : 1 }}>
-            分享图片
-          </button>
+          <ShareButton label="分享图片" onClick={openShare} disabled={loading || syncing || taskLoadFailed || loadedTaskDate !== date || savingTask} />
         </div>
 
         <div style={s.panel} aria-busy={syncing}>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { drawGrowthReport, downloadGrowthReport, reportBlob } from "./growthPoster.js";
 import "./growth.css";
+import "./share.css";
 
 // Remount for every new snapshot: nickname visibility and image are never reused.
 export default function GrowthReportDialog({ report, onClose }) {
@@ -63,7 +64,10 @@ export default function GrowthReportDialog({ report, onClose }) {
         <p className="growth-dialog-note">报告不包含具体任务名称和星星余额。关闭“显示昵称”后，图片与文件名均不含昵称。</p>
         <p className="growth-dialog-note">手机上也可以长按图片保存或分享。</p>
         {feedback && <p className="growth-dialog-note" role="status">{feedback}</p>}
-        <div className="growth-dialog-actions"><button type="button" disabled={!ready || busy} onClick={share}>{busy ? "正在分享…" : "分享"}</button><button type="button" disabled={!ready || busy} onClick={() => { downloadGrowthReport(image.blob, filename); setFeedback("图片已保存下载。"); }}>保存图片</button></div>
+        <div className="growth-dialog-actions share-dialog-actions">
+          <button type="button" className="share-dialog-primary" disabled={!ready || busy} onClick={share}>{busy ? "正在分享…" : "分享"}</button>
+          <button type="button" disabled={!ready || busy} onClick={() => { downloadGrowthReport(image.blob, filename); setFeedback("图片已保存下载。"); }}>保存图片</button>
+        </div>
       </div>
     </div>
   </div>;
