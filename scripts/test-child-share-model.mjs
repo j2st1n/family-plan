@@ -15,7 +15,7 @@ assert.ok(!/PRIVATE|stars_total|current_streak_days/.test(JSON.stringify(snapsho
 const model = buildTaskShareModel(snapshot);
 assert.equal(model.total, 2); assert.equal(model.completed, 1); assert.equal(model.earnedStars, 2);
 data.tasks[0].title = '后来变化'; assert.equal(snapshot.tasks[0].title, '阅读');
-assert.equal(buildTaskShareModel(snapshot, false).title, '每日任务记录');
+assert.equal(buildTaskShareModel(snapshot, false).name, '');
 assert.equal(createChildTaskShareSnapshot({ date: '', tasks: [] }), null);
 assert.equal(createChildTaskShareSnapshot({ date: '2026-02-30', tasks: [] }), null);
 assert.equal(createChildTaskShareSnapshot({ date: '2026-10-20' }), null);

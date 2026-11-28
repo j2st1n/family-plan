@@ -23,11 +23,11 @@ test("share snapshot allows only aggregate values, excludes task names, ledger a
 test("poster privacy toggle removes nickname from actual drawing and hides absent timing", () => {
   const report = growthSnapshot(data, "昵称示例"), shown = canvasLog(), hidden = canvasLog();
   drawGrowthReport(shown.canvas, report, true); drawGrowthReport(hidden.canvas, { ...report, recorded_tasks: 0 }, false);
-  assert.ok(shown.texts.includes("昵称示例的成长"));
+  assert.ok(shown.texts.includes("昵称示例"));
   assert.ok(shown.texts.some(t => t.includes("2 分 5 秒")));
-  assert.ok(hidden.texts.includes("我的成长"));
+  assert.ok(hidden.texts.includes("成长报告"));
   assert.ok(!hidden.texts.some(t => /昵称示例|实际用时|未记录|PRIVATE TASK|999/.test(t)));
-  assert.ok(hidden.texts.includes("Small steps. Shared growth."));
+  assert.ok(hidden.texts.includes("Family Habit Planner"));
 });
 test("calendar alignment, protected days and decimal stars survive the child projection", () => {
   const child = { ...data, insights: undefined, child_name: "合成孩子", stars_earned: "0.25", streak: { current_streak_days: 8 }, summary: undefined, heatmap: [

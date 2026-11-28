@@ -8,6 +8,7 @@ export default function SharePosterModal({
   onClose,
   childName = "小朋友",
   dateStr = "",
+  isToday = true,
   completionRate = 100,
   completedCount = 0,
   totalCount = 0,
@@ -34,6 +35,7 @@ export default function SharePosterModal({
       drawGrowthPoster(canvas, {
         childName,
         dateStr,
+        isToday,
         completionRate,
         completedCount,
         totalCount,
@@ -50,7 +52,7 @@ export default function SharePosterModal({
     } finally {
       setIsGenerating(false);
     }
-  }, [childName, dateStr, completionRate, completedCount, totalCount, streakDays, stars, starsToday, tasks, quote]);
+  }, [childName, dateStr, isToday, completionRate, completedCount, totalCount, streakDays, stars, starsToday, tasks, quote]);
 
   useEffect(() => {
     if (open) {

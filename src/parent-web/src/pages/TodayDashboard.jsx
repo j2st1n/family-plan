@@ -1126,6 +1126,7 @@ export default function TodayDashboard({
         onClose={() => setShowShareModal(false)}
         childName={activeChild?.name || "小朋友"}
         dateStr={date}
+        isToday={date === fmtDate(new Date())}
         completionRate={completionRate}
         completedCount={completedTasks.length}
         totalCount={tasks.length}

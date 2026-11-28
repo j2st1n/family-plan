@@ -13,7 +13,7 @@ const snapshot = {
   ],
 };
 const model = buildTaskShareModel(snapshot);
-assert.equal(model.title, '小禾的任务记录');
+assert.equal(model.name, '小禾');
 assert.equal(model.date, '2026-10-20');
 assert.equal(model.total, 4);
 assert.equal(model.eligible, 3);
@@ -27,7 +27,7 @@ assert.equal(model.tasks[3].status, '待认可');
 assert.ok(!JSON.stringify(model).includes('PRIVATE_TOKEN'));
 assert.ok(!JSON.stringify(model).includes('999'));
 assert.ok(!JSON.stringify(model).includes('已删除不显示'));
-assert.equal(buildTaskShareModel(snapshot, false).title, '每日任务记录');
+assert.equal(buildTaskShareModel(snapshot, false).name, '');
 const empty = buildTaskShareModel({ date: '2026-10-20', tasks: [] });
 assert.equal(empty.rate, null);
 assert.equal(empty.earnedStars, 0);

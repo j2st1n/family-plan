@@ -78,13 +78,18 @@ try {
     assert.deepEqual(actions, [actions[0], actions[0]]);
     assert.equal(actions[0][1], 44);
     const initialTexts = await page.evaluate(() => window.__reportTexts);
-    assert.ok(initialTexts.includes('小禾的成长')); assert.ok(!initialTexts.includes('PRIVATE TASK TITLE'));
+    assert.ok(initialTexts.includes('成长报告')); assert.ok(initialTexts.includes('小禾'));
+    assert.ok(!initialTexts.includes('PRIVATE TASK TITLE'));
     assert.ok(!initialTexts.includes('999.25'));
+    assert.ok(initialTexts.includes('收获 1.25 星'));
+    assert.ok(initialTexts.includes('Family Habit Planner'));
+    assert.ok(initialTexts.some(text => /^\d+ 护$/.test(text)));
+    assert.doesNotMatch(initialTexts.join(' '), /\p{Extended_Pictographic}/u);
     await page.evaluate(() => { window.__reportTexts = []; });
     await dialog.getByLabel('显示昵称', { exact: true }).uncheck();
     await dialog.getByRole('img').evaluate(img => img.decode());
     const privateTexts = await page.evaluate(() => window.__reportTexts);
-    assert.ok(privateTexts.includes('我的成长')); assert.ok(!privateTexts.some(t => t.includes('小禾')));
+    assert.ok(privateTexts.includes('成长报告')); assert.ok(!privateTexts.some(t => t.includes('小禾')));
     const save = page.waitForEvent('download'); await dialog.getByRole('button', { name: '保存图片', exact: true }).click();
     const file = await save; assert.ok(!file.suggestedFilename().includes('小禾'));
     const dest = join(output, `${app}-growth-report-private.png`); await file.saveAs(dest);
@@ -110,7 +115,7 @@ try {
       await page.getByRole('button', { name: '小叶', exact: true }).click();
       await page.locator('button[aria-label="分享成长报告"]:enabled').waitFor();
       await share.click(); await page.getByRole('dialog').getByRole('img').evaluate(img => img.decode());
-      assert.ok(await page.evaluate(() => window.__reportTexts.includes('小叶的成长'))); await page.keyboard.press('Escape');
+      assert.ok(await page.evaluate(() => window.__reportTexts.includes('小叶'))); await page.keyboard.press('Escape');
     } else {
       empty = true; await page.getByRole('group', { name: '成长统计时段' }).getByRole('button', { name: '7 天', exact: true }).click();
       await page.getByText('从今天的一件小事开始，慢慢留下成长的脚印。', { exact: true }).waitFor();

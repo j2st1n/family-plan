@@ -11,6 +11,14 @@ const server = await createServer({ root, server: { host: '127.0.0.1', port: 191
 const childRoot = fileURLToPath(new URL('../src/child-pwa/', import.meta.url));
 const childServer = await createServer({root:childRoot,server:{host:'127.0.0.1',port:19140,strictPort:true}});
 const output=process.env.BROWSER_ARTIFACT_DIR || join(tmpdir(),'family-plan-share-date-regression');
+function recordPosterText() {
+  window.__posterText = new Set();
+  const fillText = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function(value, ...args) {
+    window.__posterText.add(String(value));
+    return fillText.call(this, value, ...args);
+  };
+}
 let browser;
 try {
   await mkdir(output,{recursive:true});
@@ -21,6 +29,7 @@ try {
   page.setDefaultTimeout(15000);
   const errors = [];
   page.on('pageerror', err => errors.push(err.message));
+  await page.addInitScript(recordPosterText);
   await page.addInitScript(() => {
     localStorage.setItem('family_plan_theme','dark');
     localStorage.setItem('parent_token','synthetic-integration-token');
@@ -80,6 +89,7 @@ try {
   const shareDialog=page.getByRole('dialog',{name:'分享自律成长成就卡'});
   await shareDialog.getByRole('img',{name:'自律成长成就卡预览'}).waitFor();
   await shareDialog.getByRole('img',{name:'自律成长成就卡预览'}).evaluate(img=>img.decode());
+  assert.ok(await page.evaluate(() => window.__posterText.has('Daily Log')));
   const parentActions=await shareDialog.locator('.share-dialog-actions > button').evaluateAll(buttons=>buttons.map(button=>[button.offsetWidth,button.offsetHeight]));
   assert.deepEqual(parentActions,[parentActions[0],parentActions[0]]);
   assert.equal(parentActions[0][1],44);
@@ -122,6 +132,7 @@ try {
   const child=await browser.newPage({viewport:{width:768,height:900}});
   child.setDefaultTimeout(15000);
   child.on('pageerror',err=>errors.push(err.message));
+  await child.addInitScript(recordPosterText);
   await child.addInitScript(()=>{
     localStorage.setItem('family_plan_theme','dark');
     localStorage.setItem('device_token','synthetic-device-token');
@@ -155,6 +166,7 @@ try {
   const childDialog=child.getByRole('dialog',{name:'分享自律成长成就卡'});
   await childDialog.getByRole('img',{name:'自律成长成就卡预览'}).waitFor();
   await childDialog.getByRole('img',{name:'自律成长成就卡预览'}).evaluate(img=>img.decode());
+  assert.ok(await child.evaluate(() => window.__posterText.has('Today')));
   const childActions=await childDialog.locator('.share-dialog-actions > button').evaluateAll(buttons=>buttons.map(button=>[button.offsetWidth,button.offsetHeight]));
   assert.deepEqual(childActions,[childActions[0],childActions[0]]);
   assert.equal(childActions[0][1],44);

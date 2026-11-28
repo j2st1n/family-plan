@@ -3,7 +3,7 @@ import { createTaskShareImages } from "./taskShareImage.js";
 import "./TaskShareDialog.css";
 import "./share.css";
 
-export default function TaskShareDialog({ snapshot, onClose, nameLabel = "标题显示孩子姓名" }) {
+export default function TaskShareDialog({ snapshot, onClose, nameLabel = "显示孩子姓名" }) {
   const dialogRef = useRef(null);
   const titleId = useId();
   const [showName, setShowName] = useState(true);
