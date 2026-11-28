@@ -6,6 +6,7 @@ import { DownloadIcon } from "./Icons.jsx";
 export default function SharePosterModal({
   open = false,
   onClose,
+  onShowTaskList,
   childName = "小朋友",
   dateStr = "",
   isToday = true,
@@ -100,7 +101,11 @@ export default function SharePosterModal({
       <div className="ios-sheet-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "420px" }}>
         <div className="drawer-handle-bar" />
         <div className="ios-sheet-header">
-          <div style={{ width: "48px" }} />
+          {onShowTaskList ? (
+            <button type="button" className="ios-sheet-nav-btn share-poster-task-list" onClick={onShowTaskList} disabled={isSharing}>
+              任务清单
+            </button>
+          ) : <div />}
           <span className="ios-sheet-header-title">自律成长成就卡</span>
           <button type="button" className="ios-sheet-close-btn" onClick={onClose}>
             完成

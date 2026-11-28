@@ -3,7 +3,7 @@ import { createTaskShareImages } from "./taskShareImage.js";
 import "./TaskShareDialog.css";
 import "./share.css";
 
-export default function TaskShareDialog({ snapshot, onClose, nameLabel = "显示孩子姓名" }) {
+export default function TaskShareDialog({ snapshot, onClose, nameLabel = "显示孩子姓名", returnFocusRef }) {
   const dialogRef = useRef(null);
   const titleId = useId();
   const [showName, setShowName] = useState(true);
@@ -16,12 +16,12 @@ export default function TaskShareDialog({ snapshot, onClose, nameLabel = "显示
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    const previousFocus = document.activeElement;
+    const previousFocus = returnFocusRef?.current ?? document.activeElement;
     if (!dialog.open) dialog.showModal();
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = overflow; previousFocus?.focus?.(); };
-  }, []);
+  }, [returnFocusRef]);
 
   useEffect(() => {
     let cancelled = false;

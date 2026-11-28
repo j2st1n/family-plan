@@ -6,6 +6,7 @@ import useVisibilityRefresh from "../hooks/useVisibilityRefresh.js";
 import { formatStars } from "../utils/format.js";
 import { isValidTaskDate } from "../utils/date.js";
 import TaskShareDialog from "../components/TaskShareDialog.jsx";
+import { createTaskShareSnapshot } from "../utils/taskShareImage.js";
 import { createRefreshQueue } from "../utils/refreshQueue.js";
 import { useFeedback } from "../components/FeedbackContext.jsx";
 
@@ -88,14 +89,7 @@ export default function TaskManage({ token, child, isActive, onExpired, onBack }
 
   function openShare() {
     if (loading || syncing || savingTask || taskLoadFailed || loadedTaskDate !== date) return;
-    setShareSnapshot({
-      date, childName: child.name, generatedAt: new Date().toISOString(),
-      tasks: tasks.map(task => ({
-        title: task.title, status: task.status, approved: task.approved,
-        expected_minutes: task.expected_minutes, reward_stars: task.reward_stars,
-        scheduled_start: task.scheduled_start, scheduled_end: task.scheduled_end,
-      })),
-    });
+    setShareSnapshot(createTaskShareSnapshot(date, child.name, tasks));
   }
 
   const loadRoutines = useCallback((options = {}) => planReads.current(`${token}:${child.id}`, async () => {

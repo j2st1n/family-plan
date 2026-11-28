@@ -11,6 +11,8 @@ import { formatStars } from "../utils/format.js";
 import { CATEGORIES, CATEGORY_ICONS, inferCategory } from "../utils/category.js";
 import TaskCopilotModal from "../components/TaskCopilotModal.jsx";
 import SharePosterModal from "../components/SharePosterModal.jsx";
+import TaskShareDialog from "../components/TaskShareDialog.jsx";
+import { createTaskShareSnapshot } from "../utils/taskShareImage.js";
 import { useFeedback } from "../components/FeedbackContext.jsx";
 import { CheckCircleIcon, SparklesIcon, PlusIcon } from "../components/Icons.jsx";
 import { createRefreshQueue } from "../utils/refreshQueue.js";
@@ -92,7 +94,9 @@ export default function TodayDashboard({
   const [showCopilot, setShowCopilot] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [taskShareSnapshot, setTaskShareSnapshot] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
+  const shareButtonRef = useRef(null);
 
   // Regular task form state
   const [taskForm, setTaskForm] = useState({
@@ -116,6 +120,13 @@ export default function TodayDashboard({
   const loadedKey = useRef(null);
   const dataKey = JSON.stringify([token, activeChildId, date]);
   currentKey.current = dataKey;
+  const shareReady = !loading && !error && !actionInProgress && loadedKey.current === dataKey;
+
+  function openTaskShare() {
+    if (!shareReady) return;
+    setTaskShareSnapshot(createTaskShareSnapshot(date, activeChild?.name, tasks));
+    setShowShareModal(false);
+  }
 
   function selectDate(value) {
     if (isValidTaskDate(value)) setDate(value);
@@ -552,9 +563,10 @@ export default function TodayDashboard({
             ›
           </button>
           <ShareButton
+            ref={shareButtonRef}
             label="分享自律成长成就海报"
-            disabled={loading || !!error || actionInProgress || loadedKey.current !== dataKey}
-            onClick={() => { if (loadedKey.current === dataKey && !loading && !error && !actionInProgress) setShowShareModal(true); }}
+            disabled={!shareReady}
+            onClick={() => { if (shareReady) setShowShareModal(true); }}
           />
         </div>
       </div>
@@ -1124,6 +1136,7 @@ export default function TodayDashboard({
       <SharePosterModal
         open={showShareModal}
         onClose={() => setShowShareModal(false)}
+        onShowTaskList={shareReady ? openTaskShare : undefined}
         childName={activeChild?.name || "小朋友"}
         dateStr={date}
         isToday={date === fmtDate(new Date())}
@@ -1135,6 +1148,13 @@ export default function TodayDashboard({
         starsToday={earnedStarsToday}
         tasks={tasks}
       />
+      {taskShareSnapshot && (
+        <TaskShareDialog
+          snapshot={taskShareSnapshot}
+          onClose={() => setTaskShareSnapshot(null)}
+          returnFocusRef={shareButtonRef}
+        />
+      )}
     </div>
   );
 }

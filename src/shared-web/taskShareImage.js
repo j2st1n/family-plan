@@ -20,6 +20,17 @@ function amount(value) {
   return Number.isFinite(n) ? Math.max(0, n) : 0;
 }
 
+export function createTaskShareSnapshot(date, childName, tasks) {
+  return {
+    date, childName, generatedAt: new Date().toISOString(),
+    tasks: tasks.map(task => ({
+      title: task.title, status: task.status, approved: task.approved,
+      expected_minutes: task.expected_minutes, reward_stars: task.reward_stars,
+      scheduled_start: task.scheduled_start, scheduled_end: task.scheduled_end,
+    })),
+  };
+}
+
 export function buildTaskShareModel(snapshot, showName = true) {
   if (!isValidTaskDate(snapshot.date)) throw new Error("请选择有效的任务日期");
   const tasks = (snapshot.tasks || []).filter(task => task.status !== "deleted").map(task => {
@@ -31,7 +42,7 @@ export function buildTaskShareModel(snapshot, showName = true) {
     const end = task.scheduled_end?.slice(0, 5);
     return {
       title: String(task.title || "").replace(/\s+/g, " ").trim() || "未命名任务", approved, completed,
-      status: !approved ? "待认可" : completed ? "已完成" : "待完成",
+      status: !approved ? "待认可" : completed ? "已完成" : task.status === "submitted" ? "待点赞" : "待完成",
       details: [minutes ? `预计 ${minutes} 分钟` : null, start ? `${start}${end ? `–${end}` : " 开始"}` : "自由安排", stars ? `${completed ? "完成奖励" : "奖励"} ${formatStars(stars)} 星` : null].filter(Boolean).join("  ·  "),
       stars,
     };

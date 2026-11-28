@@ -8,9 +8,9 @@ export function ShareIcon({ size = 20 }) {
   );
 }
 
-export default function ShareButton({ label, disabled, onClick }) {
+export default function ShareButton({ label, disabled, onClick, ref }) {
   return (
-    <button type="button" className="share-button" aria-label={label} title={label} disabled={disabled} onClick={onClick}>
+    <button ref={ref} type="button" className="share-button" aria-label={label} title={label} disabled={disabled} onClick={onClick}>
       <ShareIcon />
     </button>
   );

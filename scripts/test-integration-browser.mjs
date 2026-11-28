@@ -52,7 +52,10 @@ try {
     if(path.endsWith('/daily-tasks')) {
       const date=url.searchParams.get('task_date');
       if(date==='2026-10-19') await new Promise(resolve=>setTimeout(resolve,500));
-      return route.fulfill({json:{tasks:[{id:'task',title:`任务 ${date}`,status:'pending',approved:true,reward_stars:2,expected_minutes:10,plan_id:'plan'}],rewards:{stars_total:20,current_streak_days:12}}});
+      return route.fulfill({json:{tasks:[
+        {id:'task',title:`任务 ${date}`,status:'pending',approved:true,reward_stars:2,expected_minutes:10,plan_id:'plan'},
+        {id:'review',title:'朗读练习',status:'submitted',approved:true,reward_stars:1,plan_id:'plan'},
+      ],rewards:{stars_total:20,current_streak_days:12}}});
     }
     if(path.endsWith('/reward-settings')) {
       if(request.method()==='PATCH') { saved=request.postDataJSON(); settings={...saved}; }
@@ -99,7 +102,35 @@ try {
   assert.ok(file.suggestedFilename().includes('2026-10-20'));
   const pngPath=join(output,'parent-growth-poster.png');await file.saveAs(pngPath);
   assert.deepEqual([...(await readFile(pngPath)).subarray(0,8)],[137,80,78,71,13,10,26,10]);
-  await shareDialog.getByRole('button',{name:'完成',exact:true}).click();
+  await page.setViewportSize({width:320,height:850});
+  await page.evaluate(() => window.__posterText.clear());
+  await shareDialog.getByRole('button',{name:'任务清单',exact:true}).click();
+  await shareDialog.waitFor({state:'detached'});
+  const taskDialog=page.getByRole('dialog',{name:'分享任务图片'});
+  const taskPreview=taskDialog.getByRole('img');
+  await taskPreview.evaluate(img=>img.decode());
+  assert.ok(await page.evaluate(() => ['任务清单','任务 2026-10-20','朗读练习','待点赞','合并测试'].every(value => window.__posterText.has(value))));
+  assert.ok(!await page.evaluate(() => window.__posterText.has('任务 2026-10-19')));
+  const namedPreview=await taskPreview.getAttribute('src');
+  await page.evaluate(() => window.__posterText.clear());
+  await taskDialog.getByLabel('显示孩子姓名').uncheck();
+  await page.waitForFunction(previous => {
+    const image=document.querySelector('.task-share-preview');
+    return image && image.src !== previous;
+  },namedPreview);
+  await taskPreview.evaluate(img=>img.decode());
+  assert.ok(!await page.evaluate(() => window.__posterText.has('合并测试')));
+  const taskDownload=page.waitForEvent('download');
+  await taskDialog.getByRole('button',{name:'保存图片',exact:true}).click();
+  const taskFile=await taskDownload;
+  assert.equal(taskFile.suggestedFilename(),'family-habit-planner-2026-10-20.png');
+  const taskPng=join(output,'parent-task-list.png');
+  await taskFile.saveAs(taskPng);
+  assert.equal((await readFile(taskPng)).readUInt32BE(16),1080);
+  await page.keyboard.press('Escape');
+  await taskDialog.waitFor({state:'detached'});
+  assert.ok(await share.evaluate(button => button === document.activeElement));
+  await page.setViewportSize({width:1440,height:900});
   await page.getByRole('button',{name:'前一天',exact:true}).click();
   assert.equal(await date.inputValue(),'2026-10-19');
   await page.getByText('任务 2026-10-19',{exact:true}).waitFor();
@@ -182,5 +213,5 @@ try {
   await child.waitForFunction(()=>document.querySelector('[aria-label="分享今日自律成就卡"]')?.disabled===false);
   assert.equal(writes,1);
   assert.deepEqual(errors,[]);
-  console.log('UI regression passed: one date, one growth-poster entry per app, responsive layouts, real PNG downloads, date race/navigation, child mutation guard, complete streak settings.');
+  console.log('UI regression passed: one share entry per app, parent task list with nickname toggle and focus return, responsive layouts, real PNG downloads, date race/navigation, child mutation guard, complete streak settings.');
 } finally { await browser?.close(); await server.close(); await childServer.close(); }
