@@ -70,7 +70,7 @@ try {
         await page.screenshot({ path: `${output}/${app}-${theme}-${width}.png`, animations: "disabled" });
       }
     }
-    // The downloaded poster must retain its vector mark and slogan without image/network dependencies.
+    // The downloaded poster renders the footer mark and brand name directly to the canvas.
     const poster = await page.evaluate(async () => {
       const { drawGrowthPoster } = await import("/src/utils/posterCanvas.js");
       const canvas = document.createElement("canvas");
@@ -84,11 +84,11 @@ try {
         if (bottom[i + 2] > 180 && bottom[i] < 40 && bottom[i + 1] > 70) blue++;
         if (bottom[i] > 230 && bottom[i + 1] > 140 && bottom[i + 1] < 210 && bottom[i + 2] < 120) gold++;
       }
-      return { slogan: texts.includes("Small steps. Shared growth."), blue, gold, png: canvas.toDataURL().startsWith("data:image/png") };
+      return { brandLabel: texts.includes("Family Habit Planner"), blue, gold, png: canvas.toDataURL().startsWith("data:image/png") };
     });
-    assert.ok(poster.slogan && poster.blue > 10 && poster.gold > 2 && poster.png, JSON.stringify(poster));
+    assert.ok(poster.brandLabel && poster.blue > 10 && poster.gold > 2 && poster.png, JSON.stringify(poster));
     await page.close();
   }
   assert.deepEqual(errors, []);
-  console.log("Brand browser passed: both entries, transparent favicon corners/interior with visible mark, opaque touch icon, 320/390/834 light/dark, real PNG/manifest resources, vector poster mark/slogan and export, no page errors.");
+  console.log("Brand browser passed: both entries, transparent favicon corners/interior with visible mark, opaque touch icon, 320/390/834 light/dark, real PNG/manifest resources, vector poster mark and brand label, no page errors.");
 } finally { await browser?.close(); for (const server of servers) await server.close(); }
