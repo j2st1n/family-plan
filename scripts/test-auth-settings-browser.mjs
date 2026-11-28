@@ -70,6 +70,10 @@ try {
    const bounds=await brand.boundingBox(), controls=await header.locator('.app-header-controls').boundingBox();
    assert.ok(bounds.x+bounds.width+8<=controls.x,'brand and navigation do not overlap at '+width);
    assert.ok(controls.x+controls.width<=width,'navigation remains within viewport');
+   const logo=await brand.getByRole('img',{name:'Family Habit Planner',exact:true}).boundingBox();
+   const name=await brand.locator('.app-header-child').boundingBox();
+   const offset=(logo.y+logo.height/2)-(name.y+name.height/2);
+   assert.ok(Math.abs(offset+2)<0.5,'logo is raised 2px above the name center at '+width);
    const nav=parent.locator(width>=768?'.desktop-nav-links':'.bottom-tabbar');
    assert.equal(await nav.getByRole('button',{name:'今天',exact:true}).count(),1);
    assert.equal(await header.getByText('今天',{exact:true}).count(),1,'one desktop Today label only');
@@ -120,5 +124,5 @@ try {
  }
 
  assert.deepEqual(errors,[]);
- console.log('Auth/settings browser passed: login/register and binding, authenticated brand mark/child name and no duplicated title, long-name bounds at 320/390/767/768/834/1280 in light/dark, stable brand across navigation, unchanged payload/session, theme text/alignment.');
+ console.log('Auth/settings browser passed: login/register and binding, authenticated parent logo alignment and long-name bounds at 320/390/767/768/834/1280 in light/dark, stable brand across navigation, unchanged payload/session, theme text/alignment.');
 } finally {await browser?.close();for(const server of servers)await server.close();}

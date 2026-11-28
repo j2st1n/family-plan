@@ -245,6 +245,8 @@ h1, h2, h3, h4, .display-text {
   display: block;
   flex-shrink: 0;
   object-fit: contain;
+  /* Center the blue figures optically alongside the child name. */
+  transform: translateY(-2px);
 }
 
 .app-header-child {
