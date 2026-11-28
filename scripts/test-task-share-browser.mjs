@@ -105,13 +105,16 @@ try {
   assert.equal(actions[0][1], 44);
   assert.equal(requests.length, requestsBeforeShare, 'generating an image adds no API requests');
   const painted = await page.evaluate(() => window.__paintedText);
-  assert.ok(painted.includes('小禾的任务记录'));
+  assert.ok(painted.includes('任务清单'));
+  assert.ok(painted.includes('小禾'));
   assert.ok(painted.includes('阅读《夏洛的网》'), 'collapsed completed tasks are included');
   assert.ok(painted.includes('整理书桌与书包'));
-  assert.ok(painted.includes('2/3'));
-  assert.ok(painted.includes('66%'));
-  assert.ok(painted.includes('3'));
-  assert.ok(painted.some(text => text.includes('2026 年 10 月 20 日')));
+  assert.ok(painted.includes('2'));
+  assert.ok(painted.includes('/ 3 项'));
+  assert.ok(painted.includes('完成率 66%'));
+  assert.ok(painted.includes('收获 3 星'));
+  assert.ok(painted.includes('Family Habit Planner'));
+  assert.ok(painted.includes('2026-10-20 · 星期二'));
   assert.ok(!painted.some(text => /PRIVATE_TOKEN|DO_NOT_SHARE|^999$/.test(text)));
   const download = page.waitForEvent('download');
   await dialog.getByRole('button', { name: '保存图片', exact: true }).click();
@@ -144,10 +147,10 @@ try {
   await page.screenshot({ path: `${output}/preview-mobile.png` });
   const oldUrl = await preview.getAttribute('src');
   await page.evaluate(() => { window.__paintedText = []; });
-  await dialog.getByLabel('标题显示孩子姓名').uncheck();
+  await dialog.getByLabel('显示孩子姓名').uncheck();
   await page.waitForFunction(url => { const img = document.querySelector('.task-share-preview'); return img && img.src !== url; }, oldUrl);
   const anonymousText = await page.evaluate(() => window.__paintedText);
-  assert.ok(anonymousText.includes('每日任务记录'));
+  assert.ok(anonymousText.includes('任务清单'));
   assert.ok(!anonymousText.some(text => text.includes('小禾')));
   await dialog.getByRole('button', { name: '关闭分享预览' }).click();
   await page.waitForFunction(url => window.__revokedUrls.includes(url), oldUrl);
@@ -156,7 +159,7 @@ try {
   await dateInput.fill('2026-10-22'); await ready(); await shareButton.click(); await preview.waitFor();
   assert.equal(await dialog.getByRole('button', { name: '系统分享', exact: true }).count(), 0);
   assert.equal(await dialog.getByRole('button', { name: '保存图片', exact: true }).isEnabled(), true);
-  assert.ok((await page.evaluate(() => window.__paintedText)).includes('这一天没有安排任务'));
+  assert.ok((await page.evaluate(() => window.__paintedText)).includes('没有安排任务'));
   await page.keyboard.press('Escape'); await dialog.waitFor({ state: 'detached' });
   await page.evaluate(() => { window.__failNextBlob = true; });
   await shareButton.click();
@@ -185,7 +188,7 @@ try {
   const verification = {
     result: 'passed',
     tested: ['selected date/failure guard', 'full task statuses and rewards', 'actual PNG download', 'native share success/cancel/failure via mocks', 'unsupported fallback', 'hide name', 'mobile layout', 'empty day', 'generation failure/retry', 'long-list pagination', 'URL cleanup'],
-    selectedDateCheck: { selected: selectedShareDate, paintedDateLabel: painted.find(text => /^\d+ 年 \d+ 月 \d+ 日/.test(text)), downloadedFilename: file.suggestedFilename(), pngWidth: png.readUInt32BE(16), pngHeight: png.readUInt32BE(20), validPngSignature: true },
+    selectedDateCheck: { selected: selectedShareDate, paintedDateLabel: painted.find(text => /^\d{4}-\d{2}-\d{2} · /.test(text)), downloadedFilename: file.suggestedFilename(), pngWidth: png.readUInt32BE(16), pngHeight: png.readUInt32BE(20), validPngSignature: true },
     nativeSharingMocked: true, longListPages: pages.length, example: `${output}/share-example.png`,
   };
   await writeFile(`${output}/verification.json`, JSON.stringify(verification, null, 2));

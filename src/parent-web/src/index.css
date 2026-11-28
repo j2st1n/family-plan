@@ -1347,6 +1347,15 @@ textarea {
   z-index: 1;
 }
 
+.share-poster-task-list {
+  min-height: 44px;
+}
+
+.share-poster-task-list:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .ios-sheet-nav-action-btn {
   background: none;
   border: none;

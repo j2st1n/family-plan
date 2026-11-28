@@ -1,1 +1,1 @@
-export { buildTaskShareModel, createTaskShareImages } from "../../../shared-web/taskShareImage.js";
+export { buildTaskShareModel, createTaskShareImages, createTaskShareSnapshot } from "../../../shared-web/taskShareImage.js";

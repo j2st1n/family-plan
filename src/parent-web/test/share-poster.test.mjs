@@ -15,7 +15,8 @@ function createMockCanvas() {
     bezierCurveTo: (...points) => operations.push({ op: "bezierCurveTo", points }),
     restore: () => operations.push({ op: "restore" }),
     scale: (x, y) => operations.push({ op: "scale", x, y }),
-    clearRect: (x, y, w, h) => operations.push({ op: "clearRect", x, y, w, h }),
+    fillRect: (x, y, w, h) => operations.push({ op: "fillRect", x, y, w, h }),
+    measureText: value => ({ width: Array.from(value).length * 7 }),
     beginPath: () => operations.push({ op: "beginPath" }),
     closePath: () => operations.push({ op: "closePath" }),
     moveTo: (x, y) => operations.push({ op: "moveTo", x, y }),
@@ -26,7 +27,7 @@ function createMockCanvas() {
     fill: () => operations.push({ op: "fill" }),
     stroke: () => operations.push({ op: "stroke" }),
     fillText: (text, x, y) => {
-      operations.push({ op: "fillText", text, x, y });
+      operations.push({ op: "fillText", text, x, y, font: ctx.font });
       textDrawn.push(String(text));
     },
     fillStyle: "#000",
@@ -56,32 +57,31 @@ function createMockCanvas() {
   };
 }
 
-test("posterCanvas exposes Apple System Colors conforming to HIG spec", async () => {
-  const { APPLE_SYSTEM_COLORS } = await import("../src/utils/posterCanvas.js");
-  assert.equal(APPLE_SYSTEM_COLORS.forestGreen, "#248A3D", "Forest green must be #248A3D");
-  assert.equal(APPLE_SYSTEM_COLORS.appleBlue, "#0071E3", "Apple blue must be #0071E3");
-  assert.equal(APPLE_SYSTEM_COLORS.warmGold, "#FF9500", "Warm gold must be #FF9500");
-  assert.equal(APPLE_SYSTEM_COLORS.pureLightGray, "#F5F5F7", "Light gray must be #F5F5F7");
+test("both clients share the same daily achievement card renderer", async () => {
+  const { drawGrowthPoster } = await import("../src/utils/posterCanvas.js");
+  const child = await import("../../child-pwa/src/utils/posterCanvas.js");
+  assert.equal(drawGrowthPoster, child.drawGrowthPoster);
 });
 
 test("drawGrowthPoster configures 2x Retina canvas scale and renders all achievement elements", async () => {
-  const { drawGrowthPoster, APPLE_SYSTEM_COLORS } = await import("../src/utils/posterCanvas.js");
+  const { drawGrowthPoster } = await import("../src/utils/posterCanvas.js");
   const canvas = createMockCanvas();
 
   drawGrowthPoster(canvas, {
     childName: "小明",
     dateStr: "2026-11-04",
+    isToday: false,
     completionRate: 100,
     completedCount: 3,
     totalCount: 3,
     streakDays: 7,
-    stars: 15,
+    stars: 15.25,
+    starsToday: 4.75,
     tasks: [
       { id: "t1", title: "晨读 20 分钟", reward_stars: 1, status: "completed" },
       { id: "t2", title: "口算练习", reward_stars: 2, status: "completed" },
       { id: "t3", title: "自主阅读", reward_stars: 1, status: "completed" },
     ],
-    quote: "每一份小小的坚持，都是未来大大的光芒 ✨",
   });
 
   // 1. Retina 2x 物理分辨率校验（宽度严格固定 720，高度随任务数自适应动态计算）
@@ -95,10 +95,19 @@ test("drawGrowthPoster configures 2x Retina canvas scale and renders all achieve
 
   // 2. 核心文本要素渲染验证
   const texts = canvas._textDrawn.join(" ");
-  assert.ok(texts.includes("小明"), "Must render child name");
+  assert.ok(canvas._textDrawn.includes("Daily Log"), "Must label a historical card");
+  assert.ok(canvas._textDrawn.includes("小明"), "Must display the child’s name");
   assert.equal(texts.includes("100%"), true, "Must render 100% completion rate");
+  const count = canvas._operations.find(operation => operation.text === "3");
+  const unit = canvas._operations.find(operation => operation.text === "件事");
+  const rate = canvas._operations.find(operation => operation.text?.includes("完成率"));
+  const fontSize = operation => Number.parseInt(operation.font.split(" ")[1]);
+  assert.ok(count.x < unit.x && Math.abs(count.y - unit.y) < 8);
+  assert.ok(count.y < rate.y && fontSize(count) > fontSize(unit) && fontSize(unit) > fontSize(rate));
   assert.ok(texts.includes("7 天"), "Must render 7 days streak");
-  assert.ok(texts.includes("15"), "Must render stars count");
+  assert.ok(texts.includes("15.25 星"), "Must show the fractional balance");
+  assert.ok(texts.includes("+4.75 星"), "Must show the daily reward");
+  assert.doesNotMatch(texts, /\p{Extended_Pictographic}/u);
   assert.ok(texts.includes("晨读 20 分钟"), "Must render completed task 1");
   assert.ok(texts.includes("口算练习"), "Must render completed task 2");
 
@@ -107,71 +116,29 @@ test("drawGrowthPoster configures 2x Retina canvas scale and renders all achieve
   assert.equal(hasExternalImageCall, false, "Must use 100% native vector drawing without external images to eliminate CORS taint");
 });
 
-test("drawGrowthPoster eliminates title overlap, enforces 10px breathing gap, dynamic height & alignment", async () => {
+test("daily card fits long titles and sizes the task list for empty and overflow states", async () => {
   const { drawGrowthPoster } = await import("../src/utils/posterCanvas.js");
+  const empty = createMockCanvas();
+  drawGrowthPoster(empty, { completionRate: 0 });
+  assert.ok(empty._textDrawn.includes("没有安排任务"));
+  assert.ok(!empty._textDrawn.includes("件事"));
+  const pending = createMockCanvas();
+  drawGrowthPoster(pending, { completionRate: 0, totalCount: 1, tasks: [{ title: "晚间阅读", status: "pending" }] });
+  assert.ok(pending._textDrawn.includes("还没有完成的任务"));
 
-  // 1. 单任务场景自适应高度紧凑收拢验证
-  const canvas1 = createMockCanvas();
-  drawGrowthPoster(canvas1, {
-    childName: "小明",
-    completedCount: 1,
-    totalCount: 1,
-    tasks: [{ id: "t1", title: "晨读 20 分钟", reward_stars: 1, status: "completed" }],
-  });
-
-  // 1 任务逻辑高度 424，物理 848（包含品牌落款）
-  assert.equal(canvas1.width, 720);
-  assert.equal(canvas1.height, 848, "1 task poster height should be adaptively compacted to 848px");
-
-  // 3 任务场景自适应高度扩展验证
-  const canvas3 = createMockCanvas();
-  drawGrowthPoster(canvas3, {
-    childName: "小明",
-    completedCount: 3,
-    totalCount: 3,
-    tasks: [
-      { id: "t1", title: "晨读 20 分钟", reward_stars: 1, status: "completed" },
-      { id: "t2", title: "口算练习", reward_stars: 2, status: "completed" },
-      { id: "t3", title: "自主阅读", reward_stars: 1, status: "completed" },
-    ],
-  });
-  assert.equal(canvas3.height, 976, "3 tasks poster height should expand to 976px");
-
-  // 2. 检查标题与白框的垂直间距（杜绝切字）
-  const titleOp = canvas3._operations.find((op) => op.op === "fillText" && op.text === "今日自律清单");
-  assert.ok(titleOp, "Must render '今日自律清单' title");
-  // 标题中心位于 274，字体高度 16，底部为 282
-  const titleBottom = titleOp.y + 8;
-
-  // 找到任务容器白框 roundRect 操作
-  const taskBoxOp = canvas3._operations.find(
-    (op) => op.op === "roundRect" && op.w === 308 && op.x === 26 && op.y >= 280
-  );
-  assert.ok(taskBoxOp, "Must render taskBox roundRect");
-  assert.ok(
-    taskBoxOp.y - titleBottom >= 10,
-    `taskBox top (${taskBoxOp.y}) must have >= 10px breathing gap from title bottom (${titleBottom})`
-  );
-
-  // 3. 检查概览卡片第 3 行激励语缩进与前两行正文对齐（而非图标边缘）
-  const line1Op = canvas3._operations.find((op) => op.op === "fillText" && String(op.text).includes("今日打卡"));
-  const line2Op = canvas3._operations.find((op) => op.op === "fillText" && String(op.text).includes("今日奖励"));
-  const line3Op = canvas3._operations.find(
-    (op) => op.op === "fillText" && (String(op.text).includes("圆满达标") || String(op.text).includes("持之以恒"))
-  );
-  assert.ok(line1Op && line2Op && line3Op, "All 3 lines in daily card must be rendered");
-  assert.equal(line1Op.x, 138, "Line 1 body text should start at x=138");
-  assert.equal(line2Op.x, 138, "Line 2 body text should start at x=138");
-  assert.equal(line3Op.x, 138, "Line 3 quote text should be indented to x=138, aligning with body text");
-
-  // 4. 任务白框内部 padding 左右对称（各 16px）与垂直居中
-  const starOp = canvas3._operations.find((op) => op.op === "fillText" && String(op.text).includes("+1"));
-  assert.ok(starOp, "Must render task star reward");
-  assert.equal(starOp.x, 26 + 308 - 16, "Stars text right margin must be 16px from box edge (318)");
-
-  const checkArcOp = canvas3._operations.find((op) => op.op === "arc" && op.cx === 26 + 16 + 7);
-  assert.ok(checkArcOp, "Checkmark circle left edge must be 16px from box edge (cx=49, r=7)");
-  assert.equal(checkArcOp.cy, starOp.y, "Checkmark and star text must be vertically centered on same line");
+  const canvas = createMockCanvas();
+  const tasks = Array.from({ length: 4 }, (_, index) => ({
+    title: index === 0 ? "很长的阅读任务".repeat(14) : `任务 ${index + 1}`,
+    status: "completed",
+    reward_stars: 1,
+    stars_awarded: index === 0 ? 2.25 : 1,
+  }));
+  drawGrowthPoster(canvas, { completedCount: 4, totalCount: 4, tasks });
+  assert.ok(canvas.height > empty.height);
+  assert.ok(canvas._textDrawn.some(value => value.startsWith("很长的阅读任务") && value.endsWith("…")));
+  assert.ok(canvas._textDrawn.includes("+2.25 星"));
+  assert.ok(canvas._textDrawn.includes("另有 1 项已完成"));
+  assert.ok(!canvas._textDrawn.includes("任务 4"));
 });
 
 test("shareOrDownloadPoster handles Web Share API and graceful fallback download", async () => {
